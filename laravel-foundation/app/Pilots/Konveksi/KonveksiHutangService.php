@@ -116,7 +116,7 @@ final class KonveksiHutangService
             $connection, $tableHutang, $tableHist, $tableKeu, $idp, $nom, $rek,
             $tgl, $now, $operator, $p, $user
         ): array {
-            $hutangRows = $connection->table($tableHutang)->get();
+            $hutangRows = $connection->table($tableHutang)->lockForUpdate()->get();
             $applicable = [];
             foreach ($hutangRows as $row) {
                 $dec = json_decode((string) $row->_data_json, true);

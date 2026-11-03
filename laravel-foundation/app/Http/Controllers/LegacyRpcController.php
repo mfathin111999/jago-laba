@@ -7,11 +7,13 @@ use App\Auth\LegacySessionStore;
 use App\Auth\LegacyUser;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
+use App\Exceptions\KonveksiRequestRejected;
 use App\Http\Responses\LegacyResponse;
 use App\Pilots\Konveksi\KonveksiBackupService;
 use App\Pilots\Konveksi\KonveksiDocumentAndAiService;
 use App\Pilots\Konveksi\KonveksiHutangService;
 use App\Pilots\Konveksi\KonveksiInventoryService;
+use App\Pilots\Konveksi\KonveksiOperationGate;
 use App\Pilots\Konveksi\KonveksiPilotReadService;
 use App\Pilots\Konveksi\KonveksiPurchaseWriteService;
 use App\Pilots\Konveksi\KonveksiSalesWriteService;
@@ -26,6 +28,16 @@ final class LegacyRpcController
 {
     /** Methods any Konveksi user may call; every other method requires an administrator. */
     private const READ_METHODS = ['loadSemuaData', 'getRiwayatBackupJagoLaba', 'getGeminiApiKeyStatusServerRpc'];
+
+    /** Writes that must run through the operation gate: serialised, idempotent and checked for stale data. */
+    private const GATED_METHODS = [
+        'saveDraftPenjualanProduksiServer', 'postPenjualanProduksiServer', 'correctPenjualanProduksiServer',
+        'voidPenjualanProduksiServer', 'retryBackupPenjualanProduksiServer', 'createHutangKonveksiManual',
+        'bayarHutangKonveksi', 'saveMaterialMasterServerRpc', 'savePurchaseInvoiceServerRpc', 'syncTab',
+        'syncMultiTabs', 'activateHppProductionServerRpc', 'syncBahanHppFromPurchasesServerRpc',
+        'saveDocumentTemplate', 'saveGeminiApiKeyServerRpc', 'auditInventoryConsistencyServer',
+        'migrateInventoryIdStokItemServer',
+    ];
 
     public function __construct(
         private readonly LegacyAuthenticationService $authentication,
@@ -42,6 +54,7 @@ final class LegacyRpcController
         private readonly KonveksiSyncAndHppService $syncAndHpp,
         private readonly KonveksiDocumentAndAiService $docsAndAi,
         private readonly KonveksiInventoryService $inventory,
+        private readonly KonveksiOperationGate $gate,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -70,6 +83,16 @@ final class LegacyRpcController
             return $denied;
         }
 
+        if (in_array($method, self::GATED_METHODS, true)) {
+            return $this->runGated($request, $method, $args);
+        }
+
+        return $this->dispatch($request, $method, $args);
+    }
+
+    /** @param array<int, mixed> $args */
+    private function dispatch(Request $request, string $method, array $args): JsonResponse
+    {
         if ($method === 'loadSemuaData') {
             return $this->loadKonveksiData($request);
         }
@@ -305,6 +328,37 @@ final class LegacyRpcController
         $res = $this->backup->create($user, $mode ?: 'MANUAL');
 
         return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    /**
+     * Runs a write RPC inside the operation gate. The wrapped call keeps its normal behaviour; the gate adds
+     * the write lock, idempotent replay, stale-data and reset-epoch checks, and the receipt.
+     *
+     * @param  array<int, mixed>  $args
+     */
+    private function runGated(Request $request, string $method, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        if ($companyKey === null) {
+            return $this->error('Company context tidak tersedia.', 'COMPANY_REQUIRED', 403);
+        }
+
+        try {
+            $result = $this->gate->run($user, $companyKey, $method, $args, $request, function () use ($request, $method, $args): array {
+                $response = $this->dispatch($request, $method, $args);
+                $body = json_decode((string) $response->getContent(), true);
+                if (! is_array($body) || ($body['ok'] ?? false) !== true) {
+                    throw KonveksiRequestRejected::passthrough($response);
+                }
+
+                return is_array($body['result'] ?? null) ? $body['result'] : [];
+            });
+        } catch (KonveksiRequestRejected $rejection) {
+            return $rejection->response ?? $this->error($rejection->getMessage(), $rejection->errorCode, $rejection->status);
+        }
+
+        return response()->json(['ok' => true, 'result' => $result])->header('Cache-Control', 'no-store, private');
     }
 
     private function scheduleSnapshot(): JsonResponse

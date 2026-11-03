@@ -133,7 +133,26 @@ final class KonveksiPilotReadService
             ->all();
     }
 
-    private function resetEpoch(): string
+    /**
+     * Content hash of each requested collection (all collections by default). A client sends the hashes it
+     * loaded; a write is refused when the stored data no longer matches, so stale screens cannot overwrite newer data.
+     *
+     * @param  list<string>|null  $keys
+     * @return array<string, string>
+     */
+    public function collectionVersions(?array $keys = null): array
+    {
+        $versions = [];
+        foreach ($keys ?? self::COLLECTIONS as $key) {
+            if (in_array($key, self::COLLECTIONS, true)) {
+                $versions[$key] = hash('sha256', json_encode($this->get($key), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+            }
+        }
+
+        return $versions;
+    }
+
+    public function resetEpoch(): string
     {
         try {
             if (! $this->connection()->getSchemaBuilder()->hasTable('system_settings')) {
