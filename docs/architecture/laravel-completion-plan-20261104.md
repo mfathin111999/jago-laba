@@ -64,7 +64,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B0 Fondasi UI: build frontend diperbaiki (sebelumnya gagal `vue-tsc`), `lib/format.ts` + `lib/api.ts` (8 tes Node), komponen bersama (`MarketplaceShell`, `DataTable`, `Modal`, `StatusBadge`, `FlashBanner`, `KpiCard`), navigasi nyata `lib/marketplaceNav.ts`
 - [x] B1 Dashboard toko + analytics toko + global analytics/charts
 - [ ] B2 Produk (global & toko) + HPP editor + stok
-- [ ] B3 Orders (lengkapi detail, return case) + income + expenses global
+- [x] B3 Pengeluaran toko (daftar, filter, CSV, catat, hapus) + rincian pesanan/retur (modal di Pesanan). Ditunda: pengeluaran lintas-toko (global) dan pemasukan (income) — income menyatu dengan penarikan dana, dikerjakan di B6
 - [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
 - [ ] B5 Integrasi + OAuth + settings tabs + branding
 - [ ] B6 Marketing/iklan + withdrawals

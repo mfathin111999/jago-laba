@@ -4,9 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class MarketplaceReportRequest extends FormRequest
+class MarketplaceReportRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     protected function prepareForValidation(): void
     {

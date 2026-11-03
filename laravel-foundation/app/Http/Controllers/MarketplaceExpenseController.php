@@ -46,7 +46,7 @@ final class MarketplaceExpenseController
             return $this->error('Pengeluaran belum berhasil disimpan.', 'WRITE_FAILED', 500, $requestId);
         }
 
-        if ($request->routeIs('pilot.marketplace.expenses')) {
+        if ($request->routeIs('pilot.marketplace.expenses') && ! $request->expectsJson()) {
             return redirect()->route('pilot.marketplace', [
                 'store' => (string) $request->validated('store_id'),
             ], 303)->with('write_result', $result);

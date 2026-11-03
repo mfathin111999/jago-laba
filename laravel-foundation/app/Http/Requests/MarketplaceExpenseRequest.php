@@ -52,7 +52,7 @@ final class MarketplaceExpenseRequest extends FormRequest
 
     protected function failedValidation(Validator $validator): void
     {
-        if ($this->routeIs('pilot.marketplace.expenses')) {
+        if ($this->routeIs('pilot.marketplace.expenses') && ! $this->expectsJson()) {
             throw new HttpResponseException(
                 redirect()->back(303)->withErrors($validator)->withInput(),
             );
