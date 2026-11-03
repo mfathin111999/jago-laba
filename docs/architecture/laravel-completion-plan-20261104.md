@@ -51,7 +51,8 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] Sudah diaudit, sesuai legacy: klaim retur, impor laporan iklan
   - [x] Sales (post/void/correct) diaudit dan diport penuh: stok, mutasi, kas, total dihitung server, penomoran berurutan, kontrol koreksi
   - [x] Pembelian (saveInvoice) diport penuh: stok, mutasi, harga terakhir, kas, hutang supplier, anti timpa/duplikat
-  - [ ] Belum diaudit: `KonveksiInventoryService`, `KonveksiSyncAndHppService` (activateHpp, syncFromPurchases), template/Gemini di `KonveksiDocumentAndAiService`, `MarketplaceOrderWriteService`, `MarketplaceStoreWriteService`, `MarketplaceSettingsService`, `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService`, `MarketplaceSyncCommand`/job queue, `bin/workers/*`
+  - [x] Inventori (audit/migrasi id) sesuai legacy, ditambah tes; HPP (activateHpp, syncFromPurchases) diport penuh: versi per model, tolak material tanpa harga, riwayat lengkap, BOM tersimpan
+  - [ ] Belum diaudit: template/Gemini di `KonveksiDocumentAndAiService`, `MarketplaceOrderWriteService`, `MarketplaceStoreWriteService`, `MarketplaceSettingsService`, `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService`, `MarketplaceSyncCommand`/job queue, `bin/workers/*`
   - Catatan minor: parsing nominal klaim `str_replace('.', '')` mengubah `"1500.50"` jadi `150050` (sama dengan legacy, kontrak format Indonesia); status klaim tidak divalidasi di controller (enum MySQL menolak → 500, bukan 422)
 - [ ] A8 Suite penuh + commit
 

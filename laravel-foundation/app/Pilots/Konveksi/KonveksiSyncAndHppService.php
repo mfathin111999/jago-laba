@@ -12,6 +12,7 @@ final class KonveksiSyncAndHppService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     public function syncTab(LegacyUser $user, string $companyKey, string $tab, mixed $payload): array
@@ -105,6 +106,15 @@ final class KonveksiSyncAndHppService
         return ['success' => true, 'synced_tabs' => $synced];
     }
 
+    /**
+     * Activates a new HPP (cost price) for every product of a model. The cost is built from the bill of
+     * materials, labour, packaging, overhead and manual costs. A material without an active price is refused
+     * (otherwise the cost would be understated), the version number increases per model, and the formula
+     * snapshot is kept in the history so any HPP can be explained later.
+     *
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>
+     */
     public function activateHpp(LegacyUser $user, string $companyKey, array $p): array
     {
         $model = trim((string) ($p['model_key'] ?? ''));
@@ -112,164 +122,159 @@ final class KonveksiSyncAndHppService
             throw new RuntimeException('Model HPP wajib dipilih.');
         }
 
-        $bom = (array) ($p['bom_items'] ?? []);
+        $bom = array_values((array) ($p['bom_items'] ?? []));
+        $upah = (array) ($p['upah'] ?? []);
+        $oper = (array) ($p['operasional'] ?? []);
+        $now = now()->toIso8601String();
+
         $material = 0.0;
-        foreach ($bom as $it) {
-            $qty = (float) ($it['qty_pakai_per_pcs'] ?? ($it['qty_per_unit'] ?? 0));
-            $waste = (float) ($it['waste_pct'] ?? 0);
-            $price = (float) ($it['harga_satuan_pakai'] ?? ($it['harga_satuan'] ?? 0));
-            $eff = $qty * (1 + $waste / 100);
-            $material += $eff * $price;
+        $bomRows = [];
+        foreach ($bom as $index => $rawItem) {
+            $item = is_array($rawItem) ? $rawItem : [];
+            $qty = (float) ($item['qty_pakai_per_pcs'] ?? $item['qty_per_unit'] ?? 0);
+            $waste = (float) ($item['waste_pct'] ?? 0);
+            $price = (float) ($item['harga_satuan_pakai'] ?? $item['harga_satuan'] ?? 0);
+            $effective = $qty * (1 + $waste / 100);
+            $cost = $effective * $price;
+            if ($qty > 0 && $price <= 0) {
+                throw new RuntimeException('Material '.($item['nama_bahan'] ?? $item['nama_item'] ?? ($index + 1)).' belum memiliki harga aktif.');
+            }
+            $material += $cost;
+            $bomRows[] = array_merge($item, [
+                'id_bom' => $item['id_bom'] ?? $this->historyId('BOM'), 'model_key' => $model, 'qty_efektif_per_pcs' => $effective,
+                'hpp_material_per_pcs' => $cost, 'urutan' => $index + 1, 'status' => 'Aktif', 'updated_at' => $now, 'created_at' => $item['created_at'] ?? $now,
+            ]);
         }
 
-        $sumArr = function (array $a): float {
-            $s = 0.0;
-            foreach ($a as $v) {
-                if (is_numeric($v)) {
-                    $s += (float) $v;
-                } elseif (is_array($v)) {
-                    $s += (float) ($v['total'] ?? ($v['nominal'] ?? 0));
-                }
-            }
-
-            return $s;
-        };
-
-        $upahTotal = $sumArr((array) ($p['upah'] ?? []));
-        $packTotal = $sumArr((array) ($p['packaging'] ?? []));
-        $manualTotal = $sumArr((array) ($p['biaya_manual'] ?? []));
-        $oper = (array) ($p['operasional'] ?? []);
-        $op = ($oper['mode'] ?? '') === 'persen'
+        $upahTotal = $this->sumCosts($upah);
+        $packTotal = $this->sumCosts((array) ($p['packaging'] ?? []));
+        $manualTotal = $this->sumCosts((array) ($p['biaya_manual'] ?? []));
+        $overhead = ($oper['mode'] ?? 'nominal') === 'persen'
             ? ($material + $upahTotal) * (float) ($oper['persen'] ?? 0) / 100
             : (float) ($oper['nominal'] ?? 0);
-
-        $hpp = round($material + $upahTotal + $packTotal + $op + $manualTotal);
+        $hpp = round($material + $upahTotal + $packTotal + $overhead + $manualTotal);
         if ($hpp <= 0) {
             throw new RuntimeException('Total HPP harus lebih dari 0.');
         }
 
-        $connection = $this->konveksi->connection();
-        $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
-        $tableHist = (string) $connection->table('system_table_map')->where('api_key', 'hpp_history')->value('table_name');
-        $now = now()->toIso8601String();
-        $ver = 'V01';
+        $operator = (string) ($user->getUsername() ?: $user->getAuthIdentifier() ?: 'system');
 
-        if ($tableProduk) {
-            $connection->transaction(function () use ($connection, $tableProduk, $tableHist, $model, $hpp, $ver, $now): void {
-                $rows = $connection->table($tableProduk)->get();
-                foreach ($rows as $row) {
-                    $dec = json_decode((string) $row->_data_json, true);
-                    if (is_array($dec)) {
-                        $mk = trim((string) ($dec['model_tas'] ?? ($dec['nama'] ?? '')));
-                        if ($mk === $model) {
-                            $dec['hpp_produk'] = $hpp;
-                            $dec['hpp_version'] = $ver;
-                            $dec['hpp_updated_at'] = $now;
-                            $connection->table($tableProduk)->where('_row_id', $row->_row_id)->update([
-                                '_data_json' => json_encode($dec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                            ]);
-                        }
-                    }
+        return $this->konveksi->connection()->transaction(function () use ($model, $p, $upah, $bomRows, $material, $upahTotal, $packTotal, $manualTotal, $overhead, $hpp, $operator, $now, $user): array {
+            $history = $this->collections->rows('hpp_history', true);
+            $versions = [];
+            foreach ($history as $row) {
+                if ((string) ($row['data']['model_key'] ?? '') === $model && preg_match('/V(\d+)/i', (string) ($row['data']['version'] ?? ''), $match) === 1) {
+                    $versions[] = (int) $match[1];
                 }
+            }
+            $version = 'V'.str_pad((string) (max($versions ?: [0]) + 1), 2, '0', STR_PAD_LEFT);
 
-                if ($tableHist && $this->konveksi->connection()->getSchemaBuilder()->hasTable($tableHist)) {
-                    $hist = [
-                        'id' => 'HIST-'.date('YmdHis').'-'.strtoupper(substr(bin2hex(random_bytes(3)), 0, 6)),
-                        'model_key' => $model,
-                        'version' => $ver,
-                        'hpp_baru' => $hpp,
-                        'created_at' => $now,
-                    ];
-                    $connection->table($tableHist)->insert([
-                        '_row_order' => 0,
-                        '_data_json' => json_encode($hist, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                    ]);
+            $previous = 0.0;
+            foreach ($this->collections->rows('produk', true) as $row) {
+                $product = $row['data'];
+                if (trim((string) ($product['model_tas'] ?? $product['nama'] ?? '')) !== $model) {
+                    continue;
                 }
-            });
-        }
+                $previous = max($previous, (float) ($product['hpp_produk'] ?? 0));
+                $product['hpp_produk'] = $hpp;
+                $product['hpp_version'] = $version;
+                $product['hpp_updated_at'] = $now;
+                if (isset($upah['potong'])) {
+                    $product['upah_potong'] = (float) $upah['potong'];
+                }
+                if (isset($upah['jahit'])) {
+                    $product['upah_jahit'] = (float) $upah['jahit'];
+                }
+                $this->collections->update('produk', $row['id'], $product);
+            }
 
-        $this->audit->record(
-            $user,
-            'Konveksi',
-            'ACTIVATE_HPP',
-            $model,
-            $model,
-            null,
-            ['model' => $model, 'hpp' => $hpp, 'version' => $ver],
-            "Aktivasi HPP model {$model}: Rp ".number_format($hpp, 0, ',', '.'),
-        );
+            foreach ($this->collections->rows('hpp_model_bom', true) as $row) {
+                if ((string) ($row['data']['model_key'] ?? '') === $model) {
+                    $this->collections->delete('hpp_model_bom', $row['id']);
+                }
+            }
+            foreach ($bomRows as $bomRow) {
+                $this->collections->insert('hpp_model_bom', $bomRow);
+            }
 
-        return [
-            'status' => 'success',
-            'message' => 'HPP berhasil diaktifkan.',
-            'data' => [
-                'model_key' => $model,
-                'hpp' => $hpp,
-                'version' => $ver,
-            ],
-        ];
+            $entry = [
+                'id' => $this->historyId('HIST'), 'tanggal' => $p['effective_date'] ?? date('Y-m-d'), 'model_key' => $model, 'version' => $version,
+                'hpp_lama' => $previous, 'hpp_baru' => $hpp, 'material_total' => $material, 'upah_total' => $upahTotal, 'packaging_total' => $packTotal,
+                'operasional_total' => $overhead, 'manual_total' => $manualTotal,
+                'formula_snapshot' => json_encode($p, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 'catatan' => $p['catatan'] ?? '',
+                'operator' => $operator, 'created_at' => $now,
+            ];
+            $this->collections->insert('hpp_history', $entry);
+
+            $this->audit->record($user, 'Konveksi', 'ACTIVATE_HPP', $entry['id'], $model, ['hpp' => $previous], ['hpp' => $hpp, 'version' => $version], "Aktivasi HPP model {$model}: Rp ".number_format($hpp, 0, ',', '.'));
+
+            return ['status' => 'success', 'message' => 'HPP berhasil diaktifkan.', 'data' => ['model_key' => $model, 'hpp' => $hpp, 'version' => $version, 'history' => $entry]];
+        });
     }
 
+    /**
+     * Copies the latest purchase price of each material onto its HPP record and flags it for review.
+     *
+     * @return array<string, mixed>
+     */
     public function syncFromPurchases(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->konveksi->connection();
-        $tablePemb = (string) $connection->table('system_table_map')->where('api_key', 'pembelian')->value('table_name');
-        $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
-
-        if (! $tablePemb || ! $tableHpp) {
-            return ['status' => 'success', 'updated' => 0, 'message' => 'Tabel pembelian/HPP belum dipetakan.'];
-        }
-
-        $latestPrices = [];
-        $pembRows = $connection->table($tablePemb)->get();
-        foreach ($pembRows as $row) {
-            $dec = json_decode((string) $row->_data_json, true);
-            if (is_array($dec) && isset($dec['items']) && is_array($dec['items'])) {
-                foreach ($dec['items'] as $it) {
-                    $bid = (string) ($it['id_bahan'] ?? '');
-                    $price = (float) ($it['harga_satuan'] ?? 0);
-                    if ($bid !== '' && $price > 0) {
-                        $latestPrices[$bid] = $price;
+        return $this->konveksi->connection()->transaction(function () use ($user): array {
+            $latest = [];
+            foreach ($this->collections->rows('pembelian') as $row) {
+                foreach ((array) ($row['data']['items'] ?? []) as $item) {
+                    $materialId = (string) ($item['id_bahan'] ?? '');
+                    if ($materialId === '') {
+                        continue;
+                    }
+                    $price = (float) ($item['harga_satuan'] ?? 0);
+                    if ($price <= 0 && ($item['qty'] ?? 0)) {
+                        $price = (float) ($item['total_harga'] ?? $item['subtotal'] ?? 0) / max(1, (float) $item['qty']);
+                    }
+                    if ($price > 0) {
+                        $latest[$materialId] = $price;
                     }
                 }
             }
-        }
 
-        $count = 0;
-        $connection->transaction(function () use ($connection, $tableHpp, $latestPrices, &$count): void {
-            $hppRows = $connection->table($tableHpp)->get();
-            foreach ($hppRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec)) {
-                    $bid = (string) ($dec['id_bahan'] ?? ($dec['id_bahan_gudang'] ?? ''));
-                    if (isset($latestPrices[$bid])) {
-                        $dec['harga_beli_terakhir'] = $latestPrices[$bid];
-                        $dec['price_review_required'] = true;
-                        $dec['updated_at'] = now()->toIso8601String();
-                        $connection->table($tableHpp)->where('_row_id', $row->_row_id)->update([
-                            '_data_json' => json_encode($dec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                        ]);
-                        $count++;
-                    }
+            $count = 0;
+            $now = now()->toIso8601String();
+            foreach ($this->collections->rows('bahan_hpp', true) as $row) {
+                $record = $row['data'];
+                $materialId = (string) ($record['id_bahan'] ?? $record['id_bahan_gudang'] ?? '');
+                if (! isset($latest[$materialId])) {
+                    continue;
                 }
+                $record['harga_beli_terakhir'] = $latest[$materialId];
+                $record['price_review_required'] = true;
+                $record['updated_at'] = $now;
+                $this->collections->update('bahan_hpp', $row['id'], $record);
+                $count++;
             }
+
+            $this->audit->record($user, 'Konveksi', 'SYNC_HPP_PURCHASES', 'SYNC', 'PURCHASES', null, ['updated_count' => $count], "Sinkronisasi HPP pembelian untuk {$count} material.");
+
+            return ['status' => 'success', 'message' => "Harga pembelian terbaru berhasil disinkronkan untuk {$count} material.", 'updated' => $count];
         });
+    }
 
-        $this->audit->record(
-            $user,
-            'Konveksi',
-            'SYNC_HPP_PURCHASES',
-            'SYNC',
-            'PURCHASES',
-            null,
-            ['updated_count' => $count],
-            "Sinkronisasi HPP pembelian untuk {$count} material.",
-        );
+    /** @param array<int|string, mixed> $costs numbers, or entries carrying a total/nominal */
+    private function sumCosts(array $costs): float
+    {
+        $sum = 0.0;
+        foreach ($costs as $value) {
+            if (is_numeric($value)) {
+                $sum += (float) $value;
+            } elseif (is_array($value)) {
+                $sum += (float) ($value['total'] ?? $value['nominal'] ?? 0);
+            }
+        }
 
-        return [
-            'status' => 'success',
-            'message' => "Harga pembelian terbaru berhasil disinkronkan untuk {$count} material.",
-            'updated' => $count,
-        ];
+        return $sum;
+    }
+
+    private function historyId(string $prefix): string
+    {
+        return $prefix.'-'.date('YmdHis').'-'.strtoupper(substr(bin2hex(random_bytes(4)), 0, 6));
     }
 }
