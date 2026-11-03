@@ -167,3 +167,7 @@ th.is-right, td.is-right { text-align: right; }
 .form-stack .hint { color: #657a91; font-size: .75rem; }
 .inline-error { margin: 0; color: #9e2834; font-size: .8rem; font-weight: 600; }
 .section-stack { display: grid; gap: 1rem; }
+.link-button { padding: 0; border: 0; background: none; color: #1d4f91; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.cell-note { margin-top: .25rem; font-size: .74rem; white-space: normal; }
+.warn-text { color: #965a00; }
+.page-controls { margin-top: 1rem; justify-content: space-between; }

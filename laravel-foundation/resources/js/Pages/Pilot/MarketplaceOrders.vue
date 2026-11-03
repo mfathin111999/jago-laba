@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
-import WorkspaceNavigation from '../../Components/WorkspaceNavigation.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
+import { computed, reactive, ref } from 'vue';
+import DataTable, { type Column } from '../../Components/DataTable.vue';
+import KpiCard from '../../Components/KpiCard.vue';
+import MarketplaceShell from '../../Components/MarketplaceShell.vue';
+import Modal from '../../Components/Modal.vue';
+import StatusBadge from '../../Components/StatusBadge.vue';
+import { ApiError, apiRequest } from '../../lib/api';
+import { formatDate, formatText, formatValue } from '../../lib/format';
 
 type Store = Record<string, any>;
 type Order = Record<string, any>;
@@ -19,6 +25,15 @@ const props = defineProps<{
     message?: string;
 }>();
 
+const TAB_LABELS: Record<string, string> = {
+    all: 'Semua',
+    new: 'Pesanan baru',
+    pickup: 'Menunggu pickup',
+    shipped: 'Dikirim',
+    cancelled: 'Dibatalkan',
+    returns: 'Pengembalian barang',
+};
+
 const form = reactive({
     store: props.scope.store_id ?? '',
     period: props.filters.period ?? 'month',
@@ -35,89 +50,171 @@ const form = reactive({
     return_date: props.filters.return_date ?? 'created',
 });
 
-const detail = ref<Record<string, any> | null>(null);
-const detailBusy = ref(false);
-const detailError = ref('');
-
-function loadOrders(page = 1): void {
-    const params: Record<string, any> = { ...form, page };
-    if (params.period !== 'custom') {
-        delete params.date_start;
-        delete params.date_end;
+function params(page = 1): Record<string, any> {
+    const result: Record<string, any> = { ...form, page };
+    if (result.period !== 'custom') {
+        delete result.date_start;
+        delete result.date_end;
     }
-    Object.keys(params).forEach((key) => { if (params[key] === '') delete params[key]; });
-    router.get('/pilot/marketplace/orders', params, { preserveState: true, preserveScroll: true, replace: true });
+    Object.keys(result).forEach((key) => {
+        if (result[key] === '') delete result[key];
+    });
+
+    return result;
 }
 
+function loadOrders(page = 1): void {
+    router.get('/pilot/marketplace/orders', params(page), { preserveState: true, preserveScroll: true, replace: true });
+}
+
+const exportUrl = computed(() => {
+    const { page: _page, per_page: _perPage, ...rest } = params(1);
+
+    return `/pilot/marketplace/orders/export?${new URLSearchParams(rest as Record<string, string>).toString()}`;
+});
+
+// ----- detail -----
+const detail = ref<Record<string, any> | null>(null);
+const detailOpen = ref(false);
+const detailBusy = ref(false);
+const detailError = ref<string | null>(null);
+
 async function openDetail(order: Order): Promise<void> {
+    detailOpen.value = true;
     detailBusy.value = true;
-    detailError.value = '';
+    detailError.value = null;
     detail.value = null;
     try {
-        const response = await fetch(`/pilot/marketplace/orders/${encodeURIComponent(String(order.id))}/detail?store_id=${encodeURIComponent(String(props.scope.store_id ?? ''))}`, { credentials: 'same-origin', cache: 'no-store' });
-        const result = await response.json();
-        if (!response.ok || !result.success) throw new Error(result.message || 'Rincian pesanan belum tersedia.');
-        detail.value = result.data;
+        const url = `/pilot/marketplace/orders/${encodeURIComponent(String(order.id))}/detail?store_id=${encodeURIComponent(String(props.scope.store_id ?? ''))}`;
+        detail.value = (await apiRequest(url, undefined, { method: 'GET' })).data ?? null;
     } catch (error) {
-        detailError.value = error instanceof Error ? error.message : 'Rincian pesanan belum tersedia.';
+        detailError.value = error instanceof ApiError ? error.message : 'Rincian pesanan belum tersedia.';
     } finally {
         detailBusy.value = false;
     }
 }
 
-function money(value: unknown): string {
-    if (value === null || value === undefined || value === '') return 'Belum tersedia';
-    return `Rp ${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Number(value))}`;
-}
+// ----- display -----
+const columns: Column[] = [
+    { key: 'date', label: 'Tanggal', kind: 'date' },
+    { key: 'order', label: 'Kode & produk' },
+    { key: 'status', label: 'Status' },
+    { key: 'amount', label: 'Nilai', kind: 'currency', align: 'right' },
+    { key: 'payment', label: 'Pembayaran' },
+    { key: 'shipping', label: 'Kurir / resi' },
+];
 
-function dateLabel(value: unknown): string {
-    return value ? String(value).replace('T', ' ').slice(0, 19) : 'Belum tersedia';
-}
+const payment = (order: Order): string => (order.is_cod === true ? 'COD' : order.is_cod === false ? (order.payment_method || 'Non-COD') : formatText(null));
+const counts = computed(() => Object.entries(props.orders?.counts ?? {}).map(([key, value]) => ({ key, label: TAB_LABELS[key] ?? key, value })));
+const presentation = computed(() => (detail.value?.presentation ?? null) as Record<string, any> | null);
 </script>
 
 <template>
-    <WorkspaceNavigation workspace="marketplace" :store-id="scope.store_id" />
-    <Head title="Pesanan Marketplace · Read-only" />
-    <main class="min-h-screen bg-slate-50 p-4 text-slate-900 md:p-8">
-        <header class="mx-auto flex max-w-7xl flex-wrap items-start justify-between gap-4">
-            <div>
-                <p class="text-xs font-bold uppercase tracking-widest text-orange-600">Marketplace · Pesanan</p>
-                <h1 class="mt-2 text-3xl font-black">Transaksi dan retur</h1>
-                <p class="mt-2 text-sm text-slate-600">Daftar dan detail pesanan dari data legacy yang dibaca tanpa provider atau mutasi.</p>
+    <MarketplaceShell
+        active="orders"
+        title="Transaksi dan retur"
+        eyebrow="Marketplace / Pesanan"
+        subtitle="Daftar dan rincian pesanan dari data toko yang tersimpan."
+        :store-id="scope.store_id"
+        :company-key="scope.company_key"
+    >
+        <template #actions>
+            <a v-if="orders" class="button button-secondary" :href="exportUrl">Unduh CSV</a>
+        </template>
+
+        <form class="panel filter-bar" @submit.prevent="loadOrders(1)">
+            <div class="field filter-store">
+                <label for="o-store">Toko</label>
+                <select id="o-store" v-model="form.store"><option value="" disabled>Pilih toko</option><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select>
             </div>
-            <div class="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700">Read-only pilot · {{ scope.company_key }}</div>
-        </header>
-
-        <section class="mx-auto mt-6 max-w-7xl rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <form class="grid gap-3 md:grid-cols-4" @submit.prevent="loadOrders(1)">
-                <label class="text-xs font-bold text-slate-600">Toko<select v-model="form.store" class="mt-1 w-full rounded-lg border p-2 text-sm"><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select></label>
-                <label class="text-xs font-bold text-slate-600">Periode<select v-model="form.period" class="mt-1 w-full rounded-lg border p-2 text-sm"><option value="today">Hari ini</option><option value="week">7 hari terakhir</option><option value="month">Bulan ini</option><option value="last_month">Bulan lalu</option><option value="custom">Rentang tanggal</option></select></label>
-                <label class="text-xs font-bold text-slate-600">Tab<select v-model="form.order_tab" class="mt-1 w-full rounded-lg border p-2 text-sm"><option value="all">Semua</option><option value="new">Pesanan Baru</option><option value="pickup">Menunggu Pickup</option><option value="shipped">Dikirim</option><option value="cancelled">Dibatalkan</option><option value="returns">Pengembalian</option></select></label>
-                <label class="text-xs font-bold text-slate-600">Cari berdasarkan<select v-model="form.search_by" class="mt-1 w-full rounded-lg border p-2 text-sm"><option value="order">Kode pesanan</option><option value="sku">SKU</option><option value="product">Produk</option><option value="tracking">Resi</option><option value="recipient">Penerima</option></select></label>
-                <label v-if="form.period === 'custom'" class="text-xs font-bold text-slate-600">Mulai<input v-model="form.date_start" type="date" class="mt-1 w-full rounded-lg border p-2 text-sm" required /></label>
-                <label v-if="form.period === 'custom'" class="text-xs font-bold text-slate-600">Sampai<input v-model="form.date_end" type="date" class="mt-1 w-full rounded-lg border p-2 text-sm" required /></label>
-                <label class="text-xs font-bold text-slate-600 md:col-span-2">Pencarian<input v-model="form.search" type="search" maxlength="200" placeholder="Kode, SKU, produk, resi..." class="mt-1 w-full rounded-lg border p-2 text-sm" /></label>
-                <label class="text-xs font-bold text-slate-600">Pembayaran<select v-model="form.payment" class="mt-1 w-full rounded-lg border p-2 text-sm"><option value="">Semua</option><option value="cod">COD</option><option value="non_cod">Non-COD</option></select></label>
-                <label class="text-xs font-bold text-slate-600">Baris<select v-model="form.per_page" class="mt-1 w-full rounded-lg border p-2 text-sm"><option :value="25">25</option><option :value="50">50</option><option :value="100">100</option></select></label>
-                <div class="flex items-end"><button class="w-full rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white" type="submit">Terapkan filter</button></div>
-            </form>
-        </section>
-
-        <p v-if="message" class="mx-auto mt-4 max-w-7xl rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{{ message }}</p>
-
-        <section v-if="orders" class="mx-auto mt-6 max-w-7xl">
-            <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <div v-for="(value, key) in orders.counts" :key="key" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs uppercase text-slate-500">{{ key }}</p><p class="mt-2 text-2xl font-black">{{ value }}</p></div>
+            <div class="field">
+                <label for="o-period">Periode</label>
+                <select id="o-period" v-model="form.period">
+                    <option value="today">Hari ini</option><option value="yesterday">Kemarin</option><option value="week">7 hari terakhir</option>
+                    <option value="month">Bulan ini</option><option value="last_month">Bulan lalu</option><option value="custom">Kustom</option>
+                </select>
             </div>
-            <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4"><div><h2 class="font-black">{{ orders.total }} pesanan</h2><p class="text-xs text-slate-500">{{ orders.period.start }} sampai sebelum {{ orders.period.exclusive_end }}</p></div><span class="text-xs text-slate-500">Halaman {{ orders.page }} / {{ orders.pages }}</span></div>
-                <div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="p-3">Tanggal</th><th class="p-3">Kode & produk</th><th class="p-3">Status</th><th class="p-3">Nilai</th><th class="p-3">Pembayaran</th><th class="p-3">Kurir / resi</th><th class="p-3">Aksi</th></tr></thead><tbody><tr v-for="order in orders.rows" :key="order.id" class="border-t border-slate-100 align-top"><td class="p-3 whitespace-nowrap">{{ dateLabel(order.date) }}</td><td class="p-3"><button class="font-bold text-orange-700 hover:underline" type="button" @click="openDetail(order)">{{ order.id }}</button><div v-for="item in order.items" :key="`${order.id}-${item.sku}-${item.name}`" class="mt-2 text-xs text-slate-600">{{ item.name || 'Produk belum tersedia' }} · {{ item.sku || 'SKU belum tersedia' }}</div></td><td class="p-3"><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold">{{ order.status }}</span><p v-if="order.cancel_requested" class="mt-2 text-xs text-amber-700">Pengajuan pembatalan</p></td><td class="p-3 font-bold">{{ money(order.amount) }}</td><td class="p-3">{{ order.is_cod === true ? 'COD' : order.is_cod === false ? (order.payment_method || 'Non-COD') : 'Belum tersedia' }}</td><td class="p-3">{{ order.courier || 'Belum tersedia' }}<br /><span class="text-xs text-slate-500">{{ order.tracking || 'Resi belum tersedia' }}</span></td><td class="p-3"><button class="rounded-lg border border-orange-200 px-3 py-2 text-xs font-bold text-orange-700" type="button" @click="openDetail(order)">Lihat detail</button></td></tr><tr v-if="orders.rows.length === 0"><td colspan="7" class="p-8 text-center text-slate-500">Tidak ada pesanan pada filter ini.</td></tr></tbody></table></div>
-                <div class="flex justify-between border-t border-slate-100 p-4"><button class="rounded-lg border px-3 py-2 text-xs font-bold disabled:opacity-40" :disabled="orders.page <= 1" type="button" @click="loadOrders(orders.page - 1)">Sebelumnya</button><button class="rounded-lg border px-3 py-2 text-xs font-bold disabled:opacity-40" :disabled="orders.page >= orders.pages" type="button" @click="loadOrders(orders.page + 1)">Berikutnya</button></div>
+            <div v-if="form.period === 'custom'" class="field"><label for="o-start">Mulai</label><input id="o-start" v-model="form.date_start" type="date" required /></div>
+            <div v-if="form.period === 'custom'" class="field"><label for="o-end">Sampai</label><input id="o-end" v-model="form.date_end" type="date" required /></div>
+            <div class="field">
+                <label for="o-tab">Tab</label>
+                <select id="o-tab" v-model="form.order_tab"><option v-for="(label, key) in TAB_LABELS" :key="key" :value="key">{{ label }}</option></select>
             </div>
-        </section>
+            <div class="field">
+                <label for="o-by">Cari berdasarkan</label>
+                <select id="o-by" v-model="form.search_by"><option value="order">Kode pesanan</option><option value="sku">SKU</option><option value="product">Produk</option><option value="tracking">Resi</option><option value="recipient">Penerima</option></select>
+            </div>
+            <div class="field"><label for="o-search">Pencarian</label><input id="o-search" v-model="form.search" type="search" maxlength="200" placeholder="Kode, SKU, produk, resi…" /></div>
+            <div class="field">
+                <label for="o-payment">Pembayaran</label>
+                <select id="o-payment" v-model="form.payment"><option value="">Semua</option><option value="cod">COD</option><option value="non_cod">Non-COD</option></select>
+            </div>
+            <div class="field">
+                <label for="o-rows">Baris</label>
+                <select id="o-rows" v-model="form.per_page"><option :value="25">25</option><option :value="50">50</option><option :value="100">100</option></select>
+            </div>
+            <button class="button button-primary" type="submit">Terapkan</button>
+        </form>
 
-        <div v-if="detailBusy || detailError || detail" class="fixed inset-0 z-20 flex items-start justify-center overflow-y-auto bg-slate-950/40 p-4 md:p-10" role="dialog" aria-modal="true">
-            <section class="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl"><div class="flex justify-between gap-4"><h2 class="text-xl font-black">Rincian pesanan</h2><button class="rounded-lg border px-3 py-1 text-sm" type="button" @click="detail = null; detailError = ''">Tutup</button></div><p v-if="detailBusy" class="mt-6 text-slate-500">Memuat rincian read-only...</p><p v-else-if="detailError" class="mt-6 text-red-600">{{ detailError }}</p><div v-else-if="detail" class="mt-6 space-y-5"><div class="grid gap-3 sm:grid-cols-3"><div><p class="text-xs text-slate-500">Kode</p><p class="font-bold">{{ detail.presentation.order_id }}</p></div><div><p class="text-xs text-slate-500">Status</p><p class="font-bold">{{ detail.presentation.status }}</p></div><div><p class="text-xs text-slate-500">Nilai</p><p class="font-bold">{{ money(detail.presentation.gross_amount) }}</p></div></div><div class="grid gap-3 sm:grid-cols-3"><div><p class="text-xs text-slate-500">Net income</p><p class="font-bold">{{ money(detail.presentation.net_income) }}</p></div><div><p class="text-xs text-slate-500">HPP</p><p class="font-bold">{{ money(detail.presentation.total_cogs) }}</p></div><div><p class="text-xs text-slate-500">Laba bersih</p><p class="font-bold">{{ money(detail.presentation.net_profit) }}</p></div></div><div><h3 class="font-bold">Produk</h3><div v-for="item in detail.presentation.items" :key="`${item.sku}-${item.name}`" class="mt-2 rounded-lg bg-slate-50 p-3 text-sm">{{ item.name || 'Produk belum tersedia' }} · {{ item.variant || 'Varian belum tersedia' }} · {{ item.quantity }} unit · {{ money(item.total_price) }}</div></div><div><h3 class="font-bold">Paket dan retur</h3><p v-for="pack in (detail.presentation.packages || [])" :key="pack.id" class="mt-2 text-sm">Paket {{ pack.id }} · {{ pack.courier || 'Kurir belum tersedia' }} · {{ pack.tracking || 'Resi belum tersedia' }}</p><p v-for="item in (detail.presentation.return_cases || [])" :key="item.id" class="mt-2 text-sm text-amber-700">{{ item.type_label }} · {{ item.status }} · {{ item.refund_status }}</p><p v-if="!(detail.presentation.return_cases || []).length" class="mt-2 text-sm text-slate-500">Tidak ada kasus retur yang tersedia.</p></div></div></section>
-        </div>
-    </main>
+        <section v-if="message" class="panel empty-state"><h2>Toko belum siap</h2><p class="muted">{{ message }}</p></section>
+
+        <template v-if="orders">
+            <section class="kpi-grid" aria-label="Jumlah pesanan per tab">
+                <KpiCard v-for="count in counts" :key="count.key" :label="count.label" :value="count.value" kind="count" />
+            </section>
+
+            <section class="panel">
+                <div class="section-heading compact">
+                    <div><span class="eyebrow">Periode {{ orders.period.start }} s/d {{ orders.period.end ?? orders.period.exclusive_end }}</span><h2>{{ formatValue(orders.total, 'count') }} pesanan</h2></div>
+                    <span class="muted">Halaman {{ orders.page }} dari {{ orders.pages }}</span>
+                </div>
+
+                <DataTable :columns="columns" :rows="orders.rows" row-key="id" empty="Tidak ada pesanan pada filter ini.">
+                    <template #cell-date="{ row }">{{ formatDate(row.date) }}</template>
+                    <template #cell-order="{ row }">
+                        <button class="link-button" type="button" @click="openDetail(row)">{{ row.id }}</button>
+                        <div v-for="item in row.items" :key="`${row.id}-${item.sku}-${item.name}`" class="muted cell-note">{{ item.name || 'Produk belum tersedia' }} · {{ item.sku || 'SKU belum tersedia' }}</div>
+                    </template>
+                    <template #cell-status="{ row }">
+                        <StatusBadge :label="formatText(row.status)" tone="info" />
+                        <div v-if="row.cancel_requested" class="cell-note warn-text">Pengajuan pembatalan</div>
+                    </template>
+                    <template #cell-payment="{ row }">{{ payment(row) }}</template>
+                    <template #cell-shipping="{ row }">{{ formatText(row.courier) }}<div class="muted cell-note">{{ row.tracking || 'Resi belum tersedia' }}</div></template>
+                    <template #actions="{ row }"><button class="button button-secondary button-small" type="button" @click="openDetail(row)">Lihat detail</button></template>
+                </DataTable>
+
+                <div class="form-actions page-controls">
+                    <button class="button button-secondary" type="button" :disabled="orders.page <= 1" @click="loadOrders(orders.page - 1)">Sebelumnya</button>
+                    <button class="button button-secondary" type="button" :disabled="orders.page >= orders.pages" @click="loadOrders(orders.page + 1)">Berikutnya</button>
+                </div>
+            </section>
+        </template>
+
+        <Modal :open="detailOpen" title="Rincian pesanan" :busy="detailBusy" @close="detailOpen = false">
+            <p v-if="detailBusy" class="muted">Memuat rincian…</p>
+            <p v-else-if="detailError" class="inline-error" role="alert">{{ detailError }}</p>
+            <div v-else-if="presentation" class="form-stack">
+                <div class="grid grid-3">
+                    <KpiCard label="Nilai" :value="presentation.gross_amount" />
+                    <KpiCard label="Net income" :value="presentation.net_income" />
+                    <KpiCard label="HPP" :value="presentation.total_cogs" />
+                    <KpiCard label="Laba bersih" :value="presentation.net_profit" />
+                </div>
+                <p><strong>Status:</strong> {{ formatText(presentation.status) }} · <strong>Kode:</strong> {{ presentation.order_id }}</p>
+                <div>
+                    <h3>Produk</h3>
+                    <p v-for="item in presentation.items" :key="`${item.sku}-${item.name}`" class="cell-note">
+                        {{ item.name || 'Produk belum tersedia' }} · {{ item.variant || 'Varian belum tersedia' }} · {{ item.quantity }} unit · {{ formatValue(item.total_price) }}
+                    </p>
+                </div>
+                <div>
+                    <h3>Paket dan retur</h3>
+                    <p v-for="pack in presentation.packages || []" :key="pack.id" class="cell-note">Paket {{ pack.id }} · {{ pack.courier || 'Kurir belum tersedia' }} · {{ pack.tracking || 'Resi belum tersedia' }}</p>
+                    <p v-for="item in presentation.return_cases || []" :key="item.id" class="cell-note warn-text">{{ item.type_label }} · {{ item.status }} · {{ item.refund_status }}</p>
+                    <p v-if="!(presentation.return_cases || []).length" class="muted cell-note">Tidak ada kasus retur.</p>
+                </div>
+            </div>
+        </Modal>
+    </MarketplaceShell>
 </template>

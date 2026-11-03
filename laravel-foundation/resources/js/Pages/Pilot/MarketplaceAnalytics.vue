@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
-import WorkspaceNavigation from '../../Components/WorkspaceNavigation.vue';
-import { Head, router } from '@inertiajs/vue3';
+import MarketplaceShell from '../../Components/MarketplaceShell.vue';
+import StatusBadge from '../../Components/StatusBadge.vue';
+import { router } from '@inertiajs/vue3';
 
 type Store = Record<string, any>;
 type Analytics = Record<string, any>;
@@ -107,28 +108,12 @@ function dateLabel(value: unknown): string {
 </script>
 
 <template>
-    <WorkspaceNavigation workspace="marketplace" :store-id="scope.store_id" />
-    <Head title="Pilot Marketplace · Analitik" />
-    <main class="analytics-page">
-        <header class="analytics-header">
-            <div>
-                <p class="eyebrow">Marketplace · Analitik & HPP</p>
-                <h1>Keuangan dan rekonsiliasi</h1>
-                <p class="muted">Panel read-only Laravel/Inertia dengan kontrak angka dari runtime legacy.</p>
-            </div>
-            <div class="analytics-badges">
-                <span class="badge badge-read">● Read-only</span>
-                <span class="badge badge-scope">Company: {{ scope.company_key }}</span>
-                <span class="badge badge-scope">Provider: tidak dipanggil</span>
-            </div>
-        </header>
+    <MarketplaceShell active="analytics" title="Analitik & laporan" eyebrow="Marketplace / Analitik & HPP" subtitle="Keuangan dan rekonsiliasi dengan kontrak angka dari runtime legacy." :store-id="scope.store_id" :company-key="scope.company_key">
+        <template #actions>
+            <StatusBadge label="Read-only" tone="ok" />
+            <StatusBadge label="Provider tidak dipanggil" tone="muted" />
+        </template>
 
-        <nav class="analytics-nav" aria-label="Navigasi Marketplace">
-            <a href="/pilot/marketplace">Dashboard</a>
-            <a href="/pilot/marketplace/orders">Pesanan</a>
-            <a class="active" href="/pilot/marketplace/analytics">Analitik</a>
-            <span class="muted">URL lama tetap aktif sebagai rollback: marketplace.php?tab=analitik</span>
-        </nav>
 
         <section class="panel analytics-filter-panel">
             <form class="analytics-filter-grid" @submit.prevent="loadAnalytics">
@@ -179,5 +164,5 @@ function dateLabel(value: unknown): string {
 
             <section class="panel analytics-proof"><span class="eyebrow">Bukti boundary</span><h2>Query dan operasi</h2><p class="muted">Company/store scope dipasang server-side. Data berasal dari order API/import aktif; tidak ada write, refresh provider, atau token yang diteruskan ke halaman.</p><div class="analytics-proof-grid"><span>Scope: {{ query.where?.company_key }} / {{ query.where?.store_id }}</span><span>Provider call: {{ query.provider_call ? 'ya' : 'tidak' }}</span><span>Write: {{ query.write ? 'ya' : 'tidak' }}</span><span>Basis: {{ query.where?.date_basis }}</span></div></section>
         </template>
-    </main>
+    </MarketplaceShell>
 </template>
