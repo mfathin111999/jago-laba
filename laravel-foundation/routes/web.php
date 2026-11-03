@@ -21,6 +21,7 @@ use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
 use App\Http\Controllers\MarketplacePriceController;
+use App\Http\Controllers\MarketplaceProviderBoundaryController;
 use App\Http\Controllers\MarketplaceStockMinimumController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
@@ -190,6 +191,12 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
         ->name('legacy.marketplace.dashboard');
+    Route::post('/api/marketplace-order-finance.php', [MarketplaceProviderBoundaryController::class, 'orderFinance'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:integration.manage'])
+        ->name('legacy.marketplace.order-finance');
+    Route::post('/api/marketplace-partner-settings.php', [MarketplaceProviderBoundaryController::class, 'partnerSettings'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:integration.manage'])
+        ->name('legacy.marketplace.partner-settings');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

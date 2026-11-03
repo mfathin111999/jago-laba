@@ -451,6 +451,32 @@ final class PilotReadOnlyTest extends TestCase
         $this->get('/api/marketplace-orders.php?store=store-foreign&format=csv')->assertForbidden();
     }
 
+    public function test_provider_boundary_endpoints_answer_from_local_data_and_never_accept_partner_secrets(): void
+    {
+        $this->loginAndSelect('marketplace');
+        $headers = ['X-CSRF-TOKEN' => csrf_token()];
+
+        $this->withHeaders($headers)->postJson('/api/marketplace-order-finance.php', ['store_id' => 'store-a', 'order_id' => 'FINAL'])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('synced', false)
+            ->assertJsonPath('provider_call', false)
+            ->assertJsonStructure(['presentation']);
+        $this->withHeaders($headers)->postJson('/api/marketplace-order-finance.php', ['store_id' => 'store-a', 'order_id' => 'NOPE'])
+            ->assertForbidden()->assertJsonPath('message', 'Pesanan tidak ditemukan.');
+        $this->withHeaders($headers)->postJson('/api/marketplace-order-finance.php', ['store_id' => 'store-foreign', 'order_id' => 'FINAL'])->assertForbidden();
+        $this->withHeaders(['X-CSRF-TOKEN' => 'wrong'])->postJson('/api/marketplace-order-finance.php', ['store_id' => 'store-a', 'order_id' => 'FINAL'])->assertStatus(419);
+
+        foreach (['Shopee', 'TikTok Shop'] as $platform) {
+            $response = $this->withHeaders($headers)->postJson('/api/marketplace-partner-settings.php', [
+                'platform' => $platform, 'partner_id' => '123', 'partner_key' => 'super-secret-key', 'app_secret' => 'super-secret-key',
+            ])->assertStatus(503)->assertJsonPath('error_code', 'PARTNER_SETTINGS_MANAGED_BY_SERVER');
+            $this->assertStringNotContainsString('super-secret-key', $response->getContent());
+        }
+        $this->withHeaders($headers)->postJson('/api/marketplace-partner-settings.php', ['platform' => 'Lazada'])->assertStatus(400);
+        $this->withHeaders(['X-CSRF-TOKEN' => 'wrong'])->postJson('/api/marketplace-partner-settings.php', ['platform' => 'Shopee'])->assertStatus(419);
+    }
+
     public function test_marketplace_order_detail_and_return_filter_are_scoped_read_only(): void
     {
         Schema::create('marketplace_order_items', function (Blueprint $table): void {
