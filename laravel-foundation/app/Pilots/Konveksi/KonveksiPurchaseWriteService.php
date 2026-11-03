@@ -4,6 +4,7 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
+use DomainException;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -13,6 +14,7 @@ final class KonveksiPurchaseWriteService
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
         private readonly KonveksiDocumentAndAiService $documents,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     /**
@@ -204,98 +206,198 @@ final class KonveksiPurchaseWriteService
         });
     }
 
+    /**
+     * Posts a supplier invoice. Stock of every material goes up with a movement, the last purchase price is
+     * recorded for HPP review, what was paid leaves the cash book and the unpaid rest becomes a supplier debt.
+     * Reposting the same invoice is ignored; changing a posted invoice is refused. All or nothing.
+     *
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>
+     */
     public function saveInvoice(LegacyUser $user, string $companyKey, array $p): array
     {
-        $connection = $this->konveksi->connection();
-        $tablePemb = (string) $connection->table('system_table_map')->where('api_key', 'pembelian')->value('table_name');
-        $tableBahan = (string) $connection->table('system_table_map')->where('api_key', 'bahan')->value('table_name');
-        $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
-        $tableItems = (string) $connection->table('system_table_map')->where('api_key', 'pembelian_item')->value('table_name');
-
-        if (! $tablePemb || ! $tableBahan || ! $tableItems) {
-            throw new RuntimeException('Tabel pembelian/bahan belum dipetakan.');
-        }
-
-        $id = trim((string) ($p['id_transaksi'] ?? $p['id'] ?? ''));
-        if ($id === '') {
-            $id = 'PBL-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
-        }
-
-        $items = (array) ($p['items'] ?? []);
+        $items = array_values((array) ($p['items'] ?? []));
         if ($items === []) {
             throw new InvalidArgumentException('Faktur minimal memiliki 1 item.');
         }
 
-        $now = now()->toIso8601String();
-        $invoice = trim((string) ($p['no_faktur_supplier'] ?? ($p['no_faktur'] ?? '')));
+        $requestHash = hash('sha256', json_encode($p, JSON_THROW_ON_ERROR));
+        $id = trim((string) ($p['id_transaksi'] ?? $p['id'] ?? '')) ?: $this->newId('PBL');
+        $invoice = trim((string) ($p['no_faktur_supplier'] ?? $p['no_faktur'] ?? ''));
+        $supplier = (string) ($p['id_supplier'] ?? '');
+        $operator = (string) ($user->getUsername() ?: $user->getAuthIdentifier() ?: 'system');
 
-        return $connection->transaction(function () use (
-            $connection, $tablePemb, $tableItems,
-            $id, $invoice, $items, $p, $now, $user
-        ): array {
-            $existingRows = $connection->table($tablePemb)->get();
-            foreach ($existingRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec) && (string) ($dec['id'] ?? ($dec['id_transaksi'] ?? '')) === $id) {
-                    return ['status' => 'success', 'code' => 'DUPLICATE_IGNORED', 'purchase' => $dec, 'data' => $dec, 'message' => 'Faktur sudah diposting sebelumnya.'];
+        return $this->konveksi->connection()->transaction(function () use ($items, $requestHash, $id, $invoice, $supplier, $operator, $p, $user): array {
+            $purchases = $this->collections->rows('pembelian', true);
+            foreach ($purchases as $row) {
+                $existing = $row['data'];
+                if ((string) ($existing['id'] ?? $existing['id_transaksi'] ?? '') !== $id) {
+                    continue;
+                }
+                if (isset($existing['request_hash']) && hash_equals((string) $existing['request_hash'], $requestHash)) {
+                    return ['status' => 'success', 'code' => 'DUPLICATE_IGNORED', 'purchase' => $existing, 'data' => $existing, 'message' => 'Faktur sudah diposting sebelumnya.'];
+                }
+
+                throw new DomainException('Faktur terposting tidak boleh ditimpa. Gunakan koreksi atau retur.', 409);
+            }
+            if ($invoice !== '') {
+                foreach ($purchases as $row) {
+                    $other = $row['data'];
+                    if ((string) ($other['id_supplier'] ?? '') === $supplier
+                        && strcasecmp((string) ($other['no_faktur_supplier'] ?? $other['no_faktur'] ?? ''), $invoice) === 0
+                        && (string) ($other['id'] ?? $other['id_transaksi'] ?? '') !== $id) {
+                        throw new RuntimeException('Faktur supplier ini sudah pernah dicatat.');
+                    }
                 }
             }
 
-            $total = 0;
+            $materials = $this->collections->rows('bahan', true);
+            $prices = $this->collections->rows('bahan_hpp', true);
+            $dirtyMaterials = [];
+            $dirtyPrices = [];
+            $total = 0.0;
+            $updates = [];
+            $movements = [];
             $detailRows = [];
+            $now = now()->toIso8601String();
+            $date = (string) ($p['tanggal'] ?? date('Y-m-d'));
 
-            foreach ($items as $idx => $it) {
-                $qtyBeli = (float) ($it['qty'] ?? 0);
-                $harga = (float) ($it['harga_satuan'] ?? 0);
-                $subtotal = (float) ($it['subtotal'] ?? ($it['total_harga'] ?? ($harga * $qtyBeli)));
+            foreach ($items as $index => $rawItem) {
+                $item = is_array($rawItem) ? $rawItem : [];
+                $materialId = (string) ($item['id_bahan'] ?? '');
+                if ($materialId === '') {
+                    throw new RuntimeException('Item #'.($index + 1).' belum dipetakan ke Master Bahan.');
+                }
+                $mi = $this->indexOf($materials, ['id_bahan', 'id'], $materialId);
+                if ($mi < 0) {
+                    throw new RuntimeException('Material tidak ditemukan: '.$materialId);
+                }
+
+                $qtyBought = (float) ($item['qty'] ?? 0);
+                $factor = max(0.0000001, (float) ($item['conversion_factor'] ?? $item['isi_satuan_beli'] ?? 1));
+                $qtyStock = (float) ($item['qty_satuan_pakai'] ?? $item['qty_stok'] ?? ($qtyBought * $factor));
+                $price = (float) ($item['harga_satuan'] ?? 0);
+                $subtotal = (float) ($item['subtotal'] ?? $item['total_harga'] ?? ($price * $qtyBought));
+                if (! is_finite($qtyBought) || $qtyBought <= 0 || ! is_finite($qtyStock) || $qtyStock <= 0 || $price < 0 || $subtotal < 0) {
+                    throw new InvalidArgumentException('Kuantitas dan harga pembelian tidak valid.');
+                }
+
                 $total += $subtotal;
+                $before = (float) ($materials[$mi]['data']['stok'] ?? 0);
+                $after = $before + $qtyStock;
+                $materials[$mi]['data']['stok'] = $after;
+                $materials[$mi]['data']['harga_beli'] = $price;
+                $materials[$mi]['data']['updated_at'] = $now;
+                $dirtyMaterials[$mi] = true;
 
-                $detailRows[] = array_merge($it, [
-                    'id_item' => $it['id_item'] ?? ('PBI-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8))),
-                    'id_pembelian' => $id,
-                    'no_faktur_supplier' => $invoice,
-                    'created_at' => $now,
+                $movements[] = [
+                    'id_mutasi' => $this->newId('MUT'), 'tanggal' => $date, 'waktu' => date('H:i:s'), 'jenis_mutasi' => 'IN_PURCHASE',
+                    'id_bahan' => $materialId, 'kode_sku' => $materials[$mi]['data']['kode_bahan'] ?? $materials[$mi]['data']['kode'] ?? '',
+                    'qty_masuk' => $qtyStock, 'qty_keluar' => 0, 'stok_sebelum' => $before, 'stok_setelah' => $after, 'sumber_modul' => 'PEMBELIAN',
+                    'id_referensi' => $id, 'no_referensi' => $invoice ?: $id, 'idempotency_key' => 'PURCHASE|'.$id.'|'.$materialId.'|'.$index,
+                    'operator' => $operator, 'created_at' => $now,
+                ];
+                $updates[] = ['id_bahan' => $materialId, 'stok_sebelum' => $before, 'stok_setelah' => $after, 'harga_terakhir' => $price];
+
+                $pi = $this->indexOf($prices, ['id_bahan', 'id_bahan_gudang'], $materialId);
+                if ($pi >= 0) {
+                    $prices[$pi]['data']['harga_beli_terakhir'] = $price;
+                    $prices[$pi]['data']['price_review_required'] = true;
+                    $prices[$pi]['data']['updated_at'] = $now;
+                    $dirtyPrices[$pi] = true;
+                }
+
+                $detailRows[] = array_merge($item, [
+                    'id_item' => $item['id_item'] ?? $this->newId('PBI'), 'id_pembelian' => $id, 'no_faktur_supplier' => $invoice, 'created_at' => $now,
                 ]);
             }
 
             $record = array_merge($p, [
-                'id' => $id,
-                'id_transaksi' => $id,
-                'items' => $items,
-                'total_harga' => (float) ($p['total_tagihan'] ?? ($p['total_harga'] ?? $total)),
-                'status' => $p['status'] ?? 'POSTED',
-                'created_at' => $p['created_at'] ?? $now,
-                'updated_at' => $now,
+                'request_hash' => $requestHash, 'id' => $id, 'id_transaksi' => $id, 'items' => $items,
+                'total_harga' => (float) ($p['total_tagihan'] ?? $p['total_harga'] ?? $total),
+                'status' => $p['status'] ?? 'POSTED', 'created_at' => $p['created_at'] ?? $now, 'updated_at' => $now,
             ]);
 
-            $connection->table($tablePemb)->insert([
-                '_row_order' => 0,
-                '_data_json' => json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ]);
+            $paid = (float) ($p['nominal_bayar'] ?? 0);
+            if ($paid < 0 || $paid > (float) $record['total_harga']) {
+                throw new InvalidArgumentException('Pembayaran tidak boleh negatif atau melebihi total faktur.');
+            }
+            if ($paid > 0 && empty($p['id_rekening'])) {
+                throw new InvalidArgumentException('Rekening pembayaran wajib dipilih.');
+            }
+            $remaining = max(0.0, (float) $record['total_harga'] - $paid);
+            if ($remaining > 0 && ! $this->collections->available('hutangsupplier')) {
+                throw new RuntimeException('Tabel hutang supplier belum dipetakan.');
+            }
 
-            foreach ($detailRows as $d) {
-                $connection->table($tableItems)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            // Every check has passed: from here on only writes.
+            $this->saveCollection('bahan', $materials, array_keys($dirtyMaterials));
+            $this->saveCollection('bahan_hpp', $prices, array_keys($dirtyPrices));
+            foreach ($movements as $movement) {
+                $this->collections->insert('mutasi_stok', $movement);
+            }
+            $this->collections->insert('pembelian', $record);
+            foreach ($detailRows as $detail) {
+                $this->collections->insert('pembelian_item', $detail);
+            }
+
+            $journal = null;
+            if ($paid > 0) {
+                $journal = [
+                    'id' => $this->newId('K'), 'tanggal' => $date, 'tipe' => 'Keluar', 'nominal' => $paid, 'kategori' => 'Pembelian Bahan',
+                    'modul' => 'Pembelian', 'id_rekening' => $p['id_rekening'] ?? '', 'id_referensi' => $id, 'no_referensi' => $invoice ?: $id,
+                    'idempotency_key' => 'FINANCE|PURCHASE|'.$id, 'keterangan' => 'Pembelian bahan '.($invoice ?: $id), 'created_at' => $now, 'created_by' => $operator,
+                ];
+                $this->collections->insert('keuangan', $journal);
+            }
+            if ($remaining > 0) {
+                $this->collections->insert('hutangsupplier', [
+                    'id_hutang' => $this->newId('HTS'), 'id_supplier' => $supplier, 'nama_supplier' => $p['nama_supplier'] ?? '', 'id_pembelian' => $id,
+                    'no_referensi' => $invoice ?: $id, 'tanggal' => $date, 'jatuh_tempo' => $p['jatuh_tempo'] ?? '', 'total_hutang' => $remaining,
+                    'saldo_hutang' => $remaining, 'status' => 'Aktif', 'created_at' => $now,
                 ]);
             }
 
-            $this->audit->record(
-                $user,
-                'Konveksi',
-                'SAVE_PURCHASE_INVOICE',
-                $id,
-                $invoice,
-                null,
-                $record,
-                'Catat faktur pembelian bahan baku',
-            );
+            $this->audit->record($user, 'Konveksi', 'POST_PURCHASE', $id, $invoice, null, $record, 'Posting faktur pembelian bahan baku');
 
             return [
-                'status' => 'success',
-                'message' => 'Faktur pembelian berhasil dicatat.',
-                'data' => $record,
+                'status' => 'success', 'message' => 'Faktur pembelian berhasil diposting.', 'purchase' => $record, 'transaksi' => $record, 'data' => $record,
+                'items_count' => count($items), 'stok_updates' => $updates, 'mutasi_entries' => $movements, 'jurnal_kas' => $journal,
+                'nominal_bayar' => $paid, 'new_materials' => [], 'new_aliases' => [],
             ];
         });
+    }
+
+    /** @param list<array{id: int|string|null, data: array<string, mixed>}> $rows */
+    private function saveCollection(string $key, array $rows, array $dirty): void
+    {
+        foreach ($dirty as $index) {
+            $this->collections->update($key, $rows[$index]['id'], $rows[$index]['data']);
+        }
+    }
+
+    /**
+     * @param  list<array{id: int|string|null, data: array<string, mixed>}>  $rows
+     * @param  list<string>  $fields
+     */
+    private function indexOf(array $rows, array $fields, string $value): int
+    {
+        foreach ($rows as $index => $row) {
+            foreach ($fields as $field) {
+                if (isset($row['data'][$field])) {
+                    if ((string) $row['data'][$field] === $value) {
+                        return $index;
+                    }
+                    break;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private function newId(string $prefix): string
+    {
+        return $prefix.'-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
     }
 }
