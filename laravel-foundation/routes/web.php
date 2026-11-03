@@ -28,6 +28,7 @@ use App\Http\Controllers\MarketplaceProviderBoundaryController;
 use App\Http\Controllers\MarketplaceShippingDocumentController;
 use App\Http\Controllers\MarketplaceStockMinimumController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
+use App\Http\Controllers\MarketplaceStoresPageController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncApiController;
 use App\Http\Controllers\MarketplaceSyncController;
@@ -48,6 +49,8 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.expenses.read');
     Route::get('/marketplace/catalog', MarketplaceCatalogController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.catalog');
+    Route::get('/marketplace/stores', MarketplaceStoresPageController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.stores');
     Route::get('/pilot/marketplace', MarketplacePilotController::class)
         ->middleware('workspace.context:marketplace')
         ->name('pilot.marketplace');

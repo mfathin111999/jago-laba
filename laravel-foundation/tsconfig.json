@@ -9,5 +9,6 @@
         "types": ["vite/client"],
         "noEmit": true
     },
-    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"]
+    "include": ["resources/js/**/*.ts", "resources/js/**/*.vue"],
+    "exclude": ["resources/js/**/__tests__/**"]
 }

@@ -61,11 +61,11 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] A8 Fase A ditutup: 216 tes / 1.925 assertion hijau; endpoint publik tersisa hanya UI (lihat Fase B/C)
 
 ### Fase B — UI Marketplace (36 view → ±8 halaman)
-- [ ] B0 Komponen bersama: layout, sidebar global/toko, store picker, date range, tabel+paging, modal form, KPI card, ikon/logo platform
+- [x] B0 Fondasi UI: build frontend diperbaiki (sebelumnya gagal `vue-tsc`), `lib/format.ts` + `lib/api.ts` (8 tes Node), komponen bersama (`MarketplaceShell`, `DataTable`, `Modal`, `StatusBadge`, `FlashBanner`, `KpiCard`), navigasi nyata `lib/marketplaceNav.ts`
 - [ ] B1 Dashboard toko + analytics toko + global analytics/charts
 - [ ] B2 Produk (global & toko) + HPP editor + stok
 - [ ] B3 Orders (lengkapi detail, return case) + income + expenses global
-- [ ] B4 Toko: tambah, arsip, picker, deletion
+- [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
 - [ ] B5 Integrasi + OAuth + settings tabs + branding
 - [ ] B6 Marketing/iklan + withdrawals
 - [ ] B7 Sync, auto-sync controls, background sync, price editor
@@ -99,6 +99,12 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 ## Urutan eksekusi
 
 0 → A → B → C selesai tanpa menunggu siapa pun. D, E, F1 diminta ke pemilik/operator sekarang agar siap ketika B/C selesai. F2–F4 menyusul.
+
+### Cara memverifikasi UI (tanpa dependensi baru)
+- `npm run build` = `vue-tsc --noEmit` (strict) + `vite build`; wajib hijau sebelum commit.
+- `node --experimental-strip-types --test resources/js/lib/__tests__/lib.test.ts` untuk logika murni (format, klien API). Berkas tes dikecualikan dari tsconfig karena berjalan di Node.
+- Tiap halaman punya tes PHP yang memeriksa props Inertia (cakupan perusahaan, tanpa rahasia, flag hak akses) dan setiap panggilan API yang dipakai halaman itu.
+- **Belum ada tes interaksi di browser** (klik, modal, polling): perlu uji manual atau penambahan alat uji browser (butuh persetujuan dependensi).
 
 ## Prasyarat operator hasil Fase A (kumpulan satu tempat)
 

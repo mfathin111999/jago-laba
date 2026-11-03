@@ -85,10 +85,10 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | KONVEKSI_MENU-63b9b06b3d | konveksi-menu / `rekening` | belum | 8 | [00_Base.html](../../app/Modules/Konveksi/Views/00_Base.html) |
 | KONVEKSI_MENU-c085249797 | konveksi-menu / `supplier` | belum | 8 | [00_Base.html](../../app/Modules/Konveksi/Views/00_Base.html) |
 | MARKETPLACE_VIEW-64a6196bf1 | marketplace-view / `browser_auto_sync_driver.php` | belum | 11 | [browser_auto_sync_driver.php](../../app/Modules/Marketplace/Views/browser_auto_sync_driver.php) |
-| MARKETPLACE_VIEW-21f06f0c79 | marketplace-view / `marketplace_add_stores.php` | belum | 6 | [marketplace_add_stores.php](../../app/Modules/Marketplace/Views/marketplace_add_stores.php) |
+| MARKETPLACE_VIEW-21f06f0c79 | marketplace-view / `marketplace_add_stores.php` | pilot | 6 | [marketplace_add_stores.php](../../app/Modules/Marketplace/Views/marketplace_add_stores.php) |
 | MARKETPLACE_VIEW-4c89b8ae81 | marketplace-view / `marketplace_advertising_center.php` | belum | 6 | [marketplace_advertising_center.php](../../app/Modules/Marketplace/Views/marketplace_advertising_center.php) |
 | MARKETPLACE_VIEW-606c7cec21 | marketplace-view / `marketplace_analytics_charts.php` | belum | 6 | [marketplace_analytics_charts.php](../../app/Modules/Marketplace/Views/marketplace_analytics_charts.php) |
-| MARKETPLACE_VIEW-b1e62c7d0f | marketplace-view / `marketplace_archived_stores.php` | belum | 6 | [marketplace_archived_stores.php](../../app/Modules/Marketplace/Views/marketplace_archived_stores.php) |
+| MARKETPLACE_VIEW-b1e62c7d0f | marketplace-view / `marketplace_archived_stores.php` | pilot | 6 | [marketplace_archived_stores.php](../../app/Modules/Marketplace/Views/marketplace_archived_stores.php) |
 | MARKETPLACE_VIEW-adee0b929a | marketplace-view / `marketplace_auto_sync_controls.php` | belum | 11 | [marketplace_auto_sync_controls.php](../../app/Modules/Marketplace/Views/marketplace_auto_sync_controls.php) |
 | MARKETPLACE_VIEW-62847cbfbb | marketplace-view / `marketplace_background_sync.php` | belum | 11 | [marketplace_background_sync.php](../../app/Modules/Marketplace/Views/marketplace_background_sync.php) |
 | MARKETPLACE_VIEW-55658f2c6a | marketplace-view / `marketplace_brand.php` | belum | 6 | [marketplace_brand.php](../../app/Modules/Marketplace/Views/marketplace_brand.php) |

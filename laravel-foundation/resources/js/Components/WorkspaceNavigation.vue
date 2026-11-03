@@ -12,6 +12,7 @@ const href = (path: string) => props.storeId ? `${path}?store=${encodeURICompone
             <Link :href="href('/pilot/marketplace/analytics')">Analitik</Link>
             <Link v-if="storeId" :href="href('/marketplace/catalog')">Katalog &amp; HPP</Link>
             <Link v-if="storeId" :href="href('/marketplace/expenses')">Pengeluaran</Link>
+            <Link href="/marketplace/stores">Toko</Link>
         </template>
         <Link v-else href="/pilot/konveksi">Konveksi</Link>
     </nav>
