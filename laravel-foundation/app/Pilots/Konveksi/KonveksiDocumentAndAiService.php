@@ -223,21 +223,23 @@ final class KonveksiDocumentAndAiService
         }
 
         $connection = $this->konveksi->connection();
-        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('system_settings')) {
-            $existing = $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->first();
-            if ($existing) {
-                $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->update([
-                    'setting_value' => $key,
-                    'updated_at' => now(),
-                ]);
-            } else {
-                $connection->table('system_settings')->insert([
-                    'setting_key' => 'GEMINI_API_KEY',
-                    'setting_value' => $key,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+        if (! $connection->getSchemaBuilder()->hasTable('system_settings')) {
+            throw new RuntimeException('Tabel pengaturan sistem belum tersedia; API key tidak tersimpan.');
+        }
+
+        $existing = $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->first();
+        if ($existing) {
+            $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->update([
+                'setting_value' => $key,
+                'updated_at' => now(),
+            ]);
+        } else {
+            $connection->table('system_settings')->insert([
+                'setting_key' => 'GEMINI_API_KEY',
+                'setting_value' => $key,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         $this->audit->record(
@@ -270,14 +272,12 @@ final class KonveksiDocumentAndAiService
             ];
         }
 
+        // Reading an invoice sends the image to Google Gemini. That outbound call stays disabled, and nothing is
+        // invented in its place: the screen must fall back to manual entry.
         return [
-            'status' => 'success',
-            'data' => [
-                'supplier' => ['nama' => 'Supplier OCR', 'alamat' => '', 'no_telepon' => ''],
-                'invoice' => ['no_faktur' => 'INV-'.time(), 'tanggal' => now('Asia/Jakarta')->format('Y-m-d'), 'total' => 0],
-                'items' => [],
-            ],
-            'provider' => 'Gemini',
+            'status' => 'error',
+            'code' => 'PROVIDER_CONNECTOR_INACTIVE',
+            'message' => 'Pembacaan faktur otomatis (OCR) belum aktif. Gunakan Input Manual.',
         ];
     }
 }

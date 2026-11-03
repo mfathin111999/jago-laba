@@ -158,7 +158,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | RPC-e80c533719 | rpc / `buatBackupManualSekarang` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-3701d057f3 | rpc / `correctPenjualanProduksiServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-575b926401 | rpc / `createHutangKonveksiManual` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
-| RPC-118b260558 | rpc / `extractPurchaseInvoiceServerRpc` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
+| RPC-118b260558 | rpc / `extractPurchaseInvoiceServerRpc` | sebagian | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-fe6f5b879a | rpc / `getGeminiApiKeyStatusServerRpc` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-f7e67c403e | rpc / `getRiwayatBackupJagoLaba` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-de36fcff58 | rpc / `jadwalkanSnapshotRinganJagoLaba` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |

@@ -6273,7 +6273,7 @@
             "source": "app/Modules/Konveksi/Controllers/RpcService.php",
             "line": 15,
             "source_sha256": "86c1651774cde1751c74f5bff30c69663bd18c721ad60a38b684e5d0cc6cc766",
-            "status": "pilot",
+            "status": "sebagian",
             "target": "PROPOSED compatibility POST /api/rpc.php method=extractPurchaseInvoiceServerRpc",
             "step": 8,
             "owner": "pengembang-konveksi",
