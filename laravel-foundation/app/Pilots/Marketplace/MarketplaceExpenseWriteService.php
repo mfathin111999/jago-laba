@@ -138,6 +138,76 @@ final class MarketplaceExpenseWriteService
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function delete(LegacyUser $user, string $companyKey, string $storeId, int $expenseId): array
+    {
+        $companyKey = trim($companyKey);
+        $storeId = trim($storeId);
+        if ($companyKey === '' || strlen($companyKey) > 120) {
+            throw new RuntimeException('Company scope tidak valid.');
+        }
+        if ($storeId === '' || strlen($storeId) > 50) {
+            throw new RuntimeException('Store ID tidak valid.');
+        }
+
+        $connection = $this->database->connection();
+
+        return $connection->transaction(function () use ($connection, $user, $companyKey, $storeId, $expenseId): array {
+            $store = $connection->table('marketplace_stores')
+                ->where('id', $storeId)
+                ->where('company_key', $companyKey)
+                ->whereNull('archived_at')
+                ->first();
+
+            if ($store === null) {
+                throw new \DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
+            }
+
+            $expense = $connection->table('marketplace_expenses')
+                ->where('id', $expenseId)
+                ->where('store_id', $storeId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($expense === null) {
+                throw new \DomainException('Pengeluaran marketplace tidak ditemukan.', 404);
+            }
+
+            $connection->table('marketplace_expenses')
+                ->where('id', $expenseId)
+                ->where('store_id', $storeId)
+                ->delete();
+
+            $this->audit->record(
+                $user,
+                'Marketplace',
+                'DELETE_EXPENSE',
+                (string) $expenseId,
+                'EXP-MKT-'.$expenseId,
+                [
+                    'company_key' => $companyKey,
+                    'store_id' => $storeId,
+                    'amount' => (float) $expense->amount,
+                    'category' => (string) $expense->category,
+                    'description' => (string) $expense->description,
+                    'expense_date' => (string) $expense->expense_date,
+                ],
+                null,
+                'Marketplace expense delete',
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Pengeluaran marketplace berhasil dihapus.',
+                'expense_id' => $expenseId,
+                'store_id' => $storeId,
+            ];
+        });
+    }
+
     private function assertScopedIdempotencySchema(): void
     {
         if (! Schema::hasTable('idempotency_keys')) {

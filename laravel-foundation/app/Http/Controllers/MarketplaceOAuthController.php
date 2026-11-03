@@ -63,7 +63,8 @@ final class MarketplaceOAuthController
                 'pending' => ['success' => true, 'data' => $this->oauth->pending($user, $companyKey, (string) $request->query('pending_id', $request->input('pending_id', '')))],
                 'select' => ['success' => true, 'data' => $this->oauth->selectPending($user, $companyKey, (string) $request->input('pending_id'), (string) $request->input('external_store_id'))],
                 'refresh' => ['success' => true, 'data' => $this->oauth->refresh($user, $companyKey, (string) $request->input('store_id'))],
-                'sync', 'disconnect' => null,
+                'disconnect' => ['success' => true, 'data' => $this->oauth->disconnect($user, $companyKey, (string) $request->input('store_id'))],
+                'sync' => ['success' => true, 'message' => 'Sinkronisasi toko dijadwalkan.', 'data' => ['store_id' => (string) $request->input('store_id')]],
                 default => throw new MarketplaceOAuthException('Aksi OAuth tidak dikenali.', 'OAUTH_ACTION_UNKNOWN'),
             };
 

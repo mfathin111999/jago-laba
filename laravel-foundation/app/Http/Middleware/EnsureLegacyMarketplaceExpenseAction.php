@@ -13,7 +13,7 @@ final class EnsureLegacyMarketplaceExpenseAction
     {
         $action = trim((string) ($request->input('action') ?: $request->query('action', '')));
 
-        if ($action !== 'add_expense') {
+        if (! in_array($action, ['add_expense', 'delete_expense'], true)) {
             return LegacyResponse::unavailable('rpc');
         }
 

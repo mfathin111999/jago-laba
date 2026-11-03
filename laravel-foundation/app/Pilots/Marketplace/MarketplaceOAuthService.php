@@ -263,6 +263,42 @@ final class MarketplaceOAuthService
         ];
     }
 
+    /** @return array<string, mixed> */
+    public function disconnect(LegacyUser $user, string $companyKey, string $storeId): array
+    {
+        $this->assertStorage('marketplace_oauth_connections');
+        $connection = $this->database->connection();
+
+        return $connection->transaction(function () use ($connection, $storeId, $companyKey): array {
+            $connection->table('marketplace_oauth_connections')
+                ->where('store_id', $storeId)
+                ->where('company_key', $companyKey)
+                ->update([
+                    'status' => 'disconnected',
+                    'access_token_encrypted' => null,
+                    'refresh_token_encrypted' => null,
+                    'token_expires_at' => null,
+                    'refresh_token_expires_at' => null,
+                    'updated_at' => now(),
+                ]);
+
+            $connection->table('marketplace_stores')
+                ->where('id', $storeId)
+                ->where('company_key', $companyKey)
+                ->update([
+                    'status' => 'Terputus',
+                    'authorization_status' => 'disconnected',
+                    'updated_at' => now(),
+                ]);
+
+            return [
+                'status' => 'disconnected',
+                'store_id' => $storeId,
+                'disconnected' => true,
+            ];
+        });
+    }
+
     public function assertOrigin(?string $origin): void
     {
         $origin = trim((string) $origin);

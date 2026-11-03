@@ -8,7 +8,14 @@ use App\Auth\LegacyUser;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
 use App\Http\Responses\LegacyResponse;
+use App\Pilots\Konveksi\KonveksiBackupService;
+use App\Pilots\Konveksi\KonveksiDocumentAndAiService;
+use App\Pilots\Konveksi\KonveksiHutangService;
+use App\Pilots\Konveksi\KonveksiInventoryService;
 use App\Pilots\Konveksi\KonveksiPilotReadService;
+use App\Pilots\Konveksi\KonveksiPurchaseWriteService;
+use App\Pilots\Konveksi\KonveksiSalesWriteService;
+use App\Pilots\Konveksi\KonveksiSyncAndHppService;
 use App\Security\CsrfTokenValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +30,13 @@ final class LegacyRpcController
         private readonly CompanyContext $company,
         private readonly WorkspaceContext $workspace,
         private readonly KonveksiPilotReadService $konveksi,
+        private readonly KonveksiSalesWriteService $salesWrite,
+        private readonly KonveksiHutangService $hutang,
+        private readonly KonveksiPurchaseWriteService $purchase,
+        private readonly KonveksiBackupService $backup,
+        private readonly KonveksiSyncAndHppService $syncAndHpp,
+        private readonly KonveksiDocumentAndAiService $docsAndAi,
+        private readonly KonveksiInventoryService $inventory,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -51,7 +65,332 @@ final class LegacyRpcController
             return $this->loadKonveksiData($request);
         }
 
+        if ($method === 'saveDraftPenjualanProduksiServer') {
+            return $this->saveDraftSale($request, $args);
+        }
+
+        if ($method === 'postPenjualanProduksiServer') {
+            return $this->postSale($request, $args);
+        }
+
+        if ($method === 'createHutangKonveksiManual') {
+            return $this->createHutang($request, $args);
+        }
+
+        if ($method === 'bayarHutangKonveksi') {
+            return $this->bayarHutang($request, $args);
+        }
+
+        if ($method === 'saveMaterialMasterServerRpc') {
+            return $this->saveMaterial($request, $args);
+        }
+
+        if ($method === 'savePurchaseInvoiceServerRpc') {
+            return $this->savePurchaseInvoice($request, $args);
+        }
+
+        if ($method === 'correctPenjualanProduksiServer') {
+            return $this->correctSale($request, $args);
+        }
+
+        if ($method === 'voidPenjualanProduksiServer') {
+            return $this->voidSale($request, $args);
+        }
+
+        if (in_array($method, ['backupSekarangJagoLaba', 'buatBackupManualSekarang'], true)) {
+            return $this->backupNow($request, $args);
+        }
+
+        if ($method === 'getRiwayatBackupJagoLaba') {
+            return $this->backupHistory($request);
+        }
+
+        if ($method === 'syncTab') {
+            return $this->syncSingleTab($request, $args);
+        }
+
+        if ($method === 'syncMultiTabs') {
+            return $this->syncMultipleTabs($request, $args);
+        }
+
+        if ($method === 'activateHppProductionServerRpc') {
+            return $this->activateHpp($request, $args);
+        }
+
+        if ($method === 'syncBahanHppFromPurchasesServerRpc') {
+            return $this->syncPurchasesHpp($request);
+        }
+
+        if ($method === 'saveDocumentFileServer') {
+            return $this->saveDocument($request, $args);
+        }
+
+        if ($method === 'saveDocumentTemplate') {
+            return $this->saveTemplate($request, $args);
+        }
+
+        if ($method === 'getGeminiApiKeyStatusServerRpc') {
+            return $this->geminiStatus();
+        }
+
+        if ($method === 'saveGeminiApiKeyServerRpc') {
+            return $this->saveGeminiKey($request, $args);
+        }
+
+        if ($method === 'extractPurchaseInvoiceServerRpc') {
+            return $this->extractInvoice($request, $args);
+        }
+
+        if ($method === 'auditInventoryConsistencyServer') {
+            return $this->auditInventory($request);
+        }
+
+        if ($method === 'migrateInventoryIdStokItemServer') {
+            return $this->migrateInventoryIds($request);
+        }
+
         return LegacyResponse::unavailable('rpc');
+    }
+
+    private function auditInventory(Request $request): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $res = $this->inventory->audit($user, (string) $companyKey);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function migrateInventoryIds(Request $request): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $res = $this->inventory->migrateIds($user, (string) $companyKey);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function saveDocument(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $base64 = (string) ($args[0] ?? '');
+        $fileName = (string) ($args[1] ?? 'document.pdf');
+        $type = (string) ($args[2] ?? 'General');
+        $refId = (string) ($args[3] ?? '');
+        $res = $this->docsAndAi->saveBase64Document($user, (string) $companyKey, $base64, $fileName, $type, $refId);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function saveTemplate(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->docsAndAi->saveTemplate($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function geminiStatus(): JsonResponse
+    {
+        $res = $this->docsAndAi->geminiStatus();
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function saveGeminiKey(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $key = (string) ($args[0] ?? '');
+        $res = $this->docsAndAi->saveGeminiKey($user, $key);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function extractInvoice(Request $request, array $args): JsonResponse
+    {
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->docsAndAi->extractInvoice((array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function syncSingleTab(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $tab = (string) ($args[0] ?? '');
+        $payload = $args[1] ?? [];
+        $res = $this->syncAndHpp->syncTab($user, (string) $companyKey, $tab, $payload);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function syncMultipleTabs(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $payload = $args[0] ?? [];
+        $res = $this->syncAndHpp->syncMultiTabs($user, (string) $companyKey, $payload);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function activateHpp(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->syncAndHpp->activateHpp($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function syncPurchasesHpp(Request $request): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $res = $this->syncAndHpp->syncFromPurchases($user, (string) $companyKey);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function correctSale(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->salesWrite->correct($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function voidSale(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->salesWrite->void($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function backupNow(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $mode = (string) ($args[0] ?? 'MANUAL');
+        $res = $this->backup->create($user, $mode ?: 'MANUAL');
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function backupHistory(Request $request): JsonResponse
+    {
+        $res = $this->backup->history();
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function createHutang(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->hutang->createManual($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function bayarHutang(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->hutang->pay($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function saveMaterial(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->purchase->saveMaterial($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function savePurchaseInvoice(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->purchase->saveInvoice($user, (string) $companyKey, (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function saveDraftSale(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $activeWorkspace = $this->workspace->active($user);
+
+        if ($activeWorkspace !== WorkspaceContext::KONVEKSI) {
+            return $this->error('Workspace Konveksi belum aktif.', 'WORKSPACE_NOT_ACTIVE', 403);
+        }
+
+        $companyKey = $this->company->key($user);
+        if ($companyKey === null) {
+            return $this->error('Company context tidak tersedia.', 'COMPANY_REQUIRED', 403);
+        }
+
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        if (! is_array($data)) {
+            $data = [];
+        }
+
+        $res = $this->salesWrite->saveDraft($user, $companyKey, $data);
+
+        return response()->json([
+            'ok' => true,
+            'result' => $res,
+        ])->withHeaders([
+            'Cache-Control' => 'no-store, private',
+            'X-Request-Id' => bin2hex(random_bytes(8)),
+        ]);
+    }
+
+    private function postSale(Request $request, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $activeWorkspace = $this->workspace->active($user);
+
+        if ($activeWorkspace !== WorkspaceContext::KONVEKSI) {
+            return $this->error('Workspace Konveksi belum aktif.', 'WORKSPACE_NOT_ACTIVE', 403);
+        }
+
+        $companyKey = $this->company->key($user);
+        if ($companyKey === null) {
+            return $this->error('Company context tidak tersedia.', 'COMPANY_REQUIRED', 403);
+        }
+
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        if (! is_array($data)) {
+            $data = [];
+        }
+
+        $res = $this->salesWrite->post($user, $companyKey, $data);
+
+        return response()->json([
+            'ok' => true,
+            'result' => $res,
+        ])->withHeaders([
+            'Cache-Control' => 'no-store, private',
+            'X-Request-Id' => bin2hex(random_bytes(8)),
+        ]);
     }
 
     private function loadKonveksiData(Request $request): JsonResponse

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureBrowserCsrf;
 use App\Http\Middleware\EnsureCompanyContext;
+use App\Http\Middleware\EnsureLegacyMarketplaceAjaxContract;
 use App\Http\Middleware\EnsureLegacyMarketplaceExpenseAction;
 use App\Http\Middleware\EnsureRoleAction;
 use App\Http\Middleware\EnsureStoreContext;
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'workspace' => EnsureWorkspace::class,
             'role.action' => EnsureRoleAction::class,
             'role' => EnsureRoleAction::class,
+            'legacy.marketplace.ajax' => EnsureLegacyMarketplaceAjaxContract::class,
             'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,
         ]);

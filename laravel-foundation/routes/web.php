@@ -9,9 +9,12 @@ use App\Http\Controllers\LegacyRpcController;
 use App\Http\Controllers\MarketplaceAnalyticsController;
 use App\Http\Controllers\MarketplaceCatalogController;
 use App\Http\Controllers\MarketplaceExpenseController;
+use App\Http\Controllers\MarketplaceExpenseDeleteController;
+use App\Http\Controllers\MarketplaceHppWriteController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
+use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
 use App\Http\Controllers\SandboxMarketplaceOAuthController;
@@ -49,6 +52,33 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
     Route::post('/pilot/marketplace/expenses', MarketplaceExpenseController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:expense.manage', 'store.context:store_id', 'browser.csrf'])
         ->name('pilot.marketplace.expenses');
+    Route::delete('/pilot/marketplace/expenses/{id}', MarketplaceExpenseDeleteController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:expense.manage', 'store.context:store_id', 'browser.csrf'])
+        ->name('pilot.marketplace.expenses.delete');
+    Route::post('/pilot/marketplace/stores', [MarketplaceStoreWriteController::class, 'create'])
+        ->middleware(['workspace.context:marketplace', 'role.action:integration.manage', 'browser.csrf'])
+        ->name('pilot.marketplace.stores.create');
+    Route::put('/pilot/marketplace/stores/{store}', [MarketplaceStoreWriteController::class, 'update'])
+        ->middleware(['workspace.context:marketplace', 'role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+        ->name('pilot.marketplace.stores.update');
+    Route::patch('/pilot/marketplace/stores/{store}/status', [MarketplaceStoreWriteController::class, 'toggleStatus'])
+        ->middleware(['workspace.context:marketplace', 'role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+        ->name('pilot.marketplace.stores.toggle');
+    Route::post('/pilot/marketplace/stores/{store}/archive', [MarketplaceStoreWriteController::class, 'archive'])
+        ->middleware(['workspace.context:marketplace', 'role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+        ->name('pilot.marketplace.stores.archive');
+    Route::post('/pilot/marketplace/stores/{store}/restore', [MarketplaceStoreWriteController::class, 'restore'])
+        ->middleware(['workspace.context:marketplace', 'role.action:integration.manage', 'browser.csrf'])
+        ->name('pilot.marketplace.stores.restore');
+    Route::post('/pilot/marketplace/hpp/sku', [MarketplaceHppWriteController::class, 'updateSku'])
+        ->middleware(['workspace.context:marketplace', 'role.action:hpp.edit', 'store.context:store_id', 'browser.csrf'])
+        ->name('pilot.marketplace.hpp.sku');
+    Route::post('/pilot/marketplace/hpp/global', [MarketplaceHppWriteController::class, 'updateGlobal'])
+        ->middleware(['workspace.context:marketplace', 'role.action:hpp.edit', 'store.context:store_id', 'browser.csrf'])
+        ->name('pilot.marketplace.hpp.global');
+    Route::post('/pilot/marketplace/hpp/batch', [MarketplaceHppWriteController::class, 'saveBatch'])
+        ->middleware(['workspace.context:marketplace', 'role.action:hpp.edit', 'browser.csrf'])
+        ->name('pilot.marketplace.hpp.batch');
     Route::post('/pilot/marketplace/sync', MarketplaceSyncController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:sync.trigger', 'store.context:store_id', 'browser.csrf'])
         ->name('pilot.marketplace.sync');
@@ -107,9 +137,12 @@ Route::middleware('legacy.session')->group(function (): void {
     // Login remains available under the old RPC contract. Other methods stay
     // reserved until their business adapter is migrated.
     Route::post('/api/rpc.php', LegacyRpcController::class)->name('legacy.rpc');
-    Route::post('/api/marketplace-ajax.php', MarketplaceExpenseController::class)
-        ->middleware(['legacy.marketplace.expense', 'auth', 'company.context', 'workspace.context:marketplace', 'role.action:expense.manage', 'store.context:store_id', 'browser.csrf'])
+    Route::post('/api/marketplace-ajax.php', \App\Http\Controllers\LegacyMarketplaceAjaxController::class)
+        ->middleware(['legacy.marketplace.ajax', 'auth', 'company.context', 'workspace.context:marketplace', 'browser.csrf'])
         ->name('legacy.marketplace.ajax');
+    Route::post('/api/marketplace-fulfillment.php', [\App\Http\Controllers\MarketplaceFulfillmentController::class, 'handle'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:shipping.fulfill', 'browser.csrf'])
+        ->name('legacy.marketplace.fulfillment');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

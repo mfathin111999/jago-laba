@@ -1,0 +1,78 @@
+# Rencana & checklist penuntasan migrasi Laravel — 4 November 2026
+
+Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-completion-plan-20261101.md) (isi langkah 1–14 di sana tetap berlaku sebagai definisi "selesai"). Dokumen ini hanya mengatur **urutan kerja yang efisien** berdasarkan kondisi kode nyata per 4 November.
+
+## Posisi saat ini (hasil audit 4 Nov)
+
+- Checklist: 178 item → 66 pilot, 5 sebagian, 6 stub/utilitas (butuh keputusan pemilik), 101 belum.
+- Backend Marketplace lokal (AJAX/OAuth/fulfillment/worker) sudah jauh; **UI hampir nol**: 4 halaman Vue Marketplace, 1 halaman Konveksi.
+- Tes: 80 tes (PHP 8.4), 2 gagal. Perubahan ±46 file belum di-commit.
+- PHP default terminal 8.1 → selalu pakai `C:\xampp\php8_4\php.exe vendor/bin/phpunit`.
+
+## Prinsip efisiensi
+
+1. **Satu komponen bersama, banyak halaman.** 36 view Marketplace dan 24 menu Konveksi dibangun dari beberapa komponen generik (tabel+filter+paging, form modal, kartu KPI, sidebar), bukan 60 halaman ditulis satu-satu. [ReadReport.vue](../../laravel-foundation/resources/js/Pages/Marketplace/ReadReport.vue) jadi dasar.
+2. **Kelompokkan per domain**, bukan per file: satu controller + service + request + halaman + tes per kelompok.
+3. **Tes bertarget per langkah**, suite penuh hanya di akhir fase. Commit per langkah.
+4. **Backend sebelum UI**: UI hanya dibangun di atas endpoint yang sudah hijau.
+5. **Pekerjaan yang butuh pemilik/operator** (orphan, HTTPS staging, sandbox provider, Live) berjalan paralel dan tidak memblokir fase A–D.
+6. Setelah tiap langkah: centang di sini, ubah status di CSV/JSON checklist.
+
+## Checklist kerja
+
+### Fase 0 — Stabilkan (hari ini)
+- [x] 0.1 Perbaiki `MarketplaceCatalogReadTest::test_hpp_write_updates_sku_global_and_batch...` (HPP 60000 vs 65000) — penyebab: asersi tes memakai urutan id, bukan tanggal efektif
+- [x] 0.2 Perbaiki `OAuthSandboxTest::test_all_supported_platforms_report_sandbox_only...` (400 vs 503, QueryException) — penyebab: fixture tanpa kolom status/updated_at; disconnect kini sudah diimplementasi
+- [x] 0.3 Suite penuh hijau (80 tes, 811 assertion) dengan PHP 8.4
+- [ ] 0.4 Commit pekerjaan yang belum tersimpan
+- [x] 0.5 Sinkronkan checklist .md/.csv/.json dengan status nyata
+
+### Fase A — Sisa backend (tanpa UI)
+- [ ] A1 AJAX `sync_marketing_ads`, `test_api_connection` (sandbox/stub)
+- [ ] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada
+- [ ] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status)
+- [ ] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save)
+- [ ] A5 Endpoint baca publik: orders, order-finance, stock, dashboard, analytics, integration-status, branding, browser-pulse, partner-settings, auto-sync
+- [ ] A6 RPC Konveksi sisa: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
+- [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`
+- [ ] A8 Suite penuh + commit
+
+### Fase B — UI Marketplace (36 view → ±8 halaman)
+- [ ] B0 Komponen bersama: layout, sidebar global/toko, store picker, date range, tabel+paging, modal form, KPI card, ikon/logo platform
+- [ ] B1 Dashboard toko + analytics toko + global analytics/charts
+- [ ] B2 Produk (global & toko) + HPP editor + stok
+- [ ] B3 Orders (lengkapi detail, return case) + income + expenses global
+- [ ] B4 Toko: tambah, arsip, picker, deletion
+- [ ] B5 Integrasi + OAuth + settings tabs + branding
+- [ ] B6 Marketing/iklan + withdrawals
+- [ ] B7 Sync, auto-sync controls, background sync, price editor
+- [ ] B8 Suite + smoke visual desktop/mobile + commit
+
+### Fase C — UI Konveksi (24 menu → ±7 halaman)
+- [ ] C0 Layout Konveksi + komponen bersama (pakai komponen B0)
+- [ ] C1 Dashboard + master (produk, bahan, bahan_hpp, supplier, pegawai, rekening)
+- [ ] C2 Stok + pembelian (bahan, vendor) + distribusi
+- [ ] C3 Produksi: potong, jahit, hpp_produksi, penjualan_produksi
+- [ ] C4 Keuangan: keuangan, kasbon, piutang, hutang, hutang_konveksi
+- [ ] C5 Pengaturan: profil, pengguna, hak_akses, backup
+- [ ] C6 Suite + commit
+
+### Fase D — Hosting & operasi (butuh operator, paralel)
+- [ ] D1 Staging HTTPS + trusted proxy + secure cookie (langkah 5)
+- [ ] D2 Cron scheduler + queue worker di host, bukti run/stop/restart (langkah 10)
+- [ ] D3 Izin file privat & checksum dokumen (langkah 9)
+
+### Fase E — Provider
+- [ ] E1 Sandbox per platform (callback terdaftar) — butuh pemilik akun
+- [ ] E2 Adapter sync nyata + webhook (keputusan pemilik: stub vs bangun)
+- [ ] E3 Live terbatas — hanya dengan persetujuan tertulis
+
+### Fase F — Penutupan
+- [ ] F1 Keputusan pemilik: 17 orphan, 4 stub, `install.php`/`repair_owner.php`
+- [ ] F2 UAT per peran, bandingkan data dengan baseline
+- [ ] F3 Artifact baru + scan secret + rehearsal rollback
+- [ ] F4 Cutover + observasi + arsip legacy
+
+## Urutan eksekusi
+
+0 → A → B → C selesai tanpa menunggu siapa pun. D, E, F1 diminta ke pemilik/operator sekarang agar siap ketika B/C selesai. F2–F4 menyusul.

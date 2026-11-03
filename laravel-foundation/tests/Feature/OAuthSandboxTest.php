@@ -37,8 +37,10 @@ final class OAuthSandboxTest extends TestCase
             $table->string('platform');
             $table->string('store_name')->nullable();
             $table->string('store_identifier')->nullable();
+            $table->string('status')->default('Terhubung');
             $table->string('authorization_status')->nullable();
             $table->timestamp('archived_at')->nullable();
+            $table->timestamp('updated_at')->nullable();
         });
         Schema::create('marketplace_oauth_states', function (Blueprint $table): void {
             $table->bigIncrements('id');
@@ -133,7 +135,9 @@ final class OAuthSandboxTest extends TestCase
 
         $this->withHeader('X-CSRF-TOKEN', csrf_token())
             ->postJson('/api/marketplace-oauth.php?action=disconnect', ['store_id' => 'sandbox-store'])
-            ->assertStatus(503);
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'disconnected');
     }
 
     public function test_sandbox_callback_persists_one_store_encrypts_tokens_and_replay_is_rejected(): void

@@ -31,8 +31,17 @@ final class PilotReadOnlyTest extends TestCase
             $table->string('platform')->nullable();
             $table->string('store_name')->nullable();
             $table->string('store_identifier')->nullable();
+            $table->unsignedBigInteger('default_account_id')->nullable();
+            $table->decimal('default_admin_fee_pct', 5, 2)->default(11.0);
+            $table->decimal('default_free_shipping_pct', 5, 2)->default(4.0);
+            $table->decimal('default_payment_fee_pct', 5, 2)->default(1.0);
+            $table->string('sync_mode')->default('API');
+            $table->string('status')->default('Terputus');
             $table->string('authorization_status')->nullable();
+            $table->unsignedInteger('total_transactions')->default(0);
+            $table->dateTime('last_synced_at')->nullable();
             $table->timestamp('archived_at')->nullable();
+            $table->timestamps();
         });
         Schema::create('marketplace_oauth_connections', function (Blueprint $table): void {
             $table->bigIncrements('id');
@@ -603,7 +612,7 @@ final class PilotReadOnlyTest extends TestCase
             ->assertJsonPath('code', 'STORE_FORBIDDEN');
 
         $this->withHeader('X-CSRF-TOKEN', csrf_token())
-            ->postJson('/api/marketplace-ajax.php?action=delete_expense', ['store_id' => 'store-a'])
+            ->postJson('/api/marketplace-ajax.php?action=unsupported_action', ['store_id' => 'store-a'])
             ->assertStatus(503);
 
         $this->assertSame(0, DB::table('marketplace_expenses')->count());
@@ -651,6 +660,165 @@ final class PilotReadOnlyTest extends TestCase
         $this->get('/marketplace.php?tab=dashboard&store=store-a&period=month')
             ->assertStatus(303)
             ->assertRedirect('/pilot/marketplace?store=store-a&tab=dashboard&period=month');
+    }
+
+    public function test_marketplace_expense_delete_via_legacy_and_pilot_routes(): void
+    {
+        $this->loginAndSelect('marketplace');
+
+        // Create an expense first
+        $res = $this->postExpense(['description' => 'Expense to delete', 'amount' => '3000'], 'expense-to-delete-key')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $expenseId = $res->json('expense_id');
+        $this->assertNotNull($expenseId);
+        $this->assertSame(1, DB::table('marketplace_expenses')->where('id', $expenseId)->count());
+
+        // Attempt delete on foreign store should fail 403
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=delete_expense', [
+                'store_id' => 'store-foreign',
+                'id' => $expenseId,
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'STORE_FORBIDDEN');
+
+        // Attempt delete with invalid ID should fail 404
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=delete_expense', [
+                'store_id' => 'store-a',
+                'id' => 999999,
+            ])
+            ->assertStatus(404)
+            ->assertJsonPath('code', 'EXPENSE_NOT_FOUND');
+
+        // Successful delete via legacy route /api/marketplace-ajax.php?action=delete_expense
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=delete_expense', [
+                'store_id' => 'store-a',
+                'id' => $expenseId,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('expense_id', $expenseId);
+
+        $this->assertSame(0, DB::table('marketplace_expenses')->where('id', $expenseId)->count());
+
+        // Create another expense and delete via pilot DELETE route
+        $res2 = $this->postExpense(['description' => 'Expense pilot delete', 'amount' => '4000'], 'expense-pilot-delete-key')
+            ->assertOk();
+        $expenseId2 = $res2->json('expense_id');
+
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->deleteJson("/pilot/marketplace/expenses/{$expenseId2}?store_id=store-a")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('expense_id', $expenseId2);
+
+        $this->assertSame(0, DB::table('marketplace_expenses')->where('id', $expenseId2)->count());
+    }
+
+    public function test_marketplace_store_create_update_and_toggle_via_legacy_and_pilot_routes(): void
+    {
+        $this->loginAndSelect('marketplace');
+
+        // 1. Add store via legacy route
+        $res = $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=add_store', [
+                'platform' => 'Shopee',
+                'store_name' => 'Toko Baru Legacy',
+                'store_identifier' => 'toko_baru_legacy',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $newStoreId = $res->json('store_id');
+        $this->assertNotEmpty($newStoreId);
+        $this->assertSame(1, DB::table('marketplace_stores')->where('id', $newStoreId)->count());
+        $this->assertSame('Terputus', DB::table('marketplace_stores')->where('id', $newStoreId)->value('status'));
+
+        // Direct credentials must be rejected
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=add_store', [
+                'platform' => 'Shopee',
+                'store_name' => 'Toko Kredensial',
+                'partner_id' => '12345',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+
+        // 2. Update store via legacy route
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=update_store', [
+                'store_id' => $newStoreId,
+                'platform' => 'Shopee',
+                'store_name' => 'Toko Baru Updated',
+                'store_identifier' => 'toko_baru_updated',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame('Toko Baru Updated', DB::table('marketplace_stores')->where('id', $newStoreId)->value('store_name'));
+
+        // 3. Toggle status to Nonaktif via legacy route
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=toggle_store_status', [
+                'store_id' => $newStoreId,
+                'status' => 'Nonaktif',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('status', 'Nonaktif');
+
+        $this->assertSame('Nonaktif', DB::table('marketplace_stores')->where('id', $newStoreId)->value('status'));
+
+        // Setting directly to 'Terhubung' must be prohibited
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/api/marketplace-ajax.php?action=toggle_store_status', [
+                'store_id' => $newStoreId,
+                'status' => 'Terhubung',
+            ])
+            ->assertStatus(422);
+
+        // 4. Create store via pilot REST route
+        $resPilot = $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->postJson('/pilot/marketplace/stores', [
+                'platform' => 'TikTok Shop',
+                'store_name' => 'Toko Pilot Native',
+                'store_identifier' => 'toko_pilot_native',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $pilotStoreId = $resPilot->json('store_id');
+        $this->assertNotEmpty($pilotStoreId);
+        $this->assertSame(1, DB::table('marketplace_stores')->where('id', $pilotStoreId)->count());
+
+        // 5. Update store via pilot REST route
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->putJson("/pilot/marketplace/stores/{$pilotStoreId}", [
+                'store_id' => $pilotStoreId,
+                'platform' => 'TikTok Shop',
+                'store_name' => 'Toko Pilot Native Edit',
+                'store_identifier' => 'toko_pilot_native_edit',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertSame('Toko Pilot Native Edit', DB::table('marketplace_stores')->where('id', $pilotStoreId)->value('store_name'));
+
+        // 6. Toggle status via pilot REST route
+        $this->withHeader('X-CSRF-TOKEN', csrf_token())
+            ->patchJson("/pilot/marketplace/stores/{$pilotStoreId}/status", [
+                'store_id' => $pilotStoreId,
+                'status' => 'Terputus',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('status', 'Terputus');
+
+        $this->assertSame('Terputus', DB::table('marketplace_stores')->where('id', $pilotStoreId)->value('status'));
+        $this->assertSame('disconnected', DB::table('marketplace_stores')->where('id', $pilotStoreId)->value('authorization_status'));
     }
 
     public function test_konveksi_pilot_preserves_load_semua_data_shape_without_writes(): void
