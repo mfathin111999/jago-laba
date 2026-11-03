@@ -170,4 +170,27 @@ final class MarketplaceCatalogReadTest extends TestCase
             ->where('effective_from', $effectiveFrom)
             ->value('unit_hpp');
     }
+
+    public function test_provider_inactive_actions_keep_legacy_contract_and_enforce_scope(): void
+    {
+        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        session(['_token' => 'test-csrf-token', 'workspace' => 'marketplace']);
+
+        foreach (['test_api_connection', 'sync_marketing_ads'] as $action) {
+            $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')
+                ->postJson('/api/marketplace-ajax.php?action='.$action, ['store_id' => 'a'])
+                ->assertOk()
+                ->assertJsonPath('success', false)
+                ->assertJsonStructure(['success', 'message']);
+
+            $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')
+                ->postJson('/api/marketplace-ajax.php?action='.$action, ['store_id' => 'b'])
+                ->assertForbidden();
+        }
+
+        $this->actingAs(new LegacyUser(['id' => 'reader', 'role_id' => 'ROLE-PEMBACA', 'company_key' => 'A']), 'web');
+        $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')
+            ->postJson('/api/marketplace-ajax.php?action=test_api_connection', ['store_id' => 'a'])
+            ->assertForbidden();
+    }
 }

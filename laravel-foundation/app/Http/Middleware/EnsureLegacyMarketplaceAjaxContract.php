@@ -37,6 +37,8 @@ final class EnsureLegacyMarketplaceAjaxContract
         'update_return_claim',
         'import_product_ad_report',
         'import_settlement_csv',
+        'test_api_connection',
+        'sync_marketing_ads',
     ];
 
     public function __construct(
@@ -60,7 +62,8 @@ final class EnsureLegacyMarketplaceAjaxContract
         // Action-specific role check
         $requiredRoleAction = match ($action) {
             'add_expense', 'delete_expense' => 'expense.manage',
-            'add_store', 'update_store', 'toggle_store_status', 'archive_store', 'restore_store' => 'integration.manage',
+            'add_store', 'update_store', 'toggle_store_status', 'archive_store', 'restore_store', 'test_api_connection' => 'integration.manage',
+            'sync_marketing_ads' => 'sync.trigger',
             'update_sku_hpp', 'update_global_product_hpp', 'save_hpp_batch' => 'hpp.edit',
             'trigger_cron_worker', 'sync_store' => 'sync.trigger',
             'add_order', 'update_manual_order', 'archive_order', 'update_return_claim' => 'orders.manage',
@@ -75,7 +78,7 @@ final class EnsureLegacyMarketplaceAjaxContract
         }
 
         // Store context check for actions targeting a specific store
-        if (in_array($action, ['add_expense', 'delete_expense', 'update_store', 'toggle_store_status', 'archive_store', 'restore_store', 'update_sku_hpp', 'update_global_product_hpp', 'trigger_cron_worker', 'sync_store', 'add_order', 'update_manual_order', 'archive_order', 'get_store_detail', 'update_return_claim', 'import_product_ad_report', 'import_settlement_csv'], true)) {
+        if (in_array($action, ['add_expense', 'delete_expense', 'update_store', 'toggle_store_status', 'archive_store', 'restore_store', 'update_sku_hpp', 'update_global_product_hpp', 'trigger_cron_worker', 'sync_store', 'add_order', 'update_manual_order', 'archive_order', 'get_store_detail', 'update_return_claim', 'import_product_ad_report', 'import_settlement_csv', 'test_api_connection', 'sync_marketing_ads'], true)) {
             $value = $request->input('store_id') ?? $request->query('store_id') ?? $request->header('X-Store-Id');
             $storeId = is_scalar($value) ? trim((string) $value) : '';
 

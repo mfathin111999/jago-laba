@@ -22,9 +22,9 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | AJAX-aa50aa29bf | ajax / `save_app_settings` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-acdc72271b | ajax / `save_hpp_batch` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-f50fd32ff9 | ajax / `simulate_price` | pilot | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
-| AJAX-b934f32fcf | ajax / `sync_marketing_ads` | belum | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
+| AJAX-b934f32fcf | ajax / `sync_marketing_ads` | pilot | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-d547330e76 | ajax / `sync_store` | pilot | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
-| AJAX-9cfeef9710 | ajax / `test_api_connection` | belum | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
+| AJAX-9cfeef9710 | ajax / `test_api_connection` | pilot | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-4957c6e35a | ajax / `toggle_store_status` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-93fa0d442f | ajax / `trigger_cron_worker` | pilot | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-2e48c391b4 | ajax / `update_global_product_hpp` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |

@@ -47,4 +47,28 @@ final class MarketplaceSettingsController
 
         return response()->json($res);
     }
+    /** Legacy contract: no provider call is made until the official connector is approved. */
+    public function testConnection(Request $request): JsonResponse
+    {
+        return $this->inactiveProviderAction($request, 'Koneksi belum diverifikasi ke API resmi. Konfigurasi lama bukan bukti otorisasi toko.');
+    }
+
+    public function syncMarketingAds(Request $request): JsonResponse
+    {
+        return $this->inactiveProviderAction($request, 'Sinkronisasi iklan belum aktif karena sumber resmi belum terhubung.');
+    }
+
+    private function inactiveProviderAction(Request $request, string $message): JsonResponse
+    {
+        $storeId = trim((string) ($request->input('store_id') ?? $request->query('store_id') ?? ''));
+        if ($storeId === '') {
+            return response()->json(['success' => false, 'message' => 'ID Toko wajib diisi.'], 422);
+        }
+
+        if ($this->service->getStoreDetail((string) $request->attributes->get('company_key'), $storeId) === null) {
+            return response()->json(['success' => false, 'message' => 'Toko tidak ditemukan.'], 404);
+        }
+
+        return response()->json(['success' => false, 'message' => $message]);
+    }
 }

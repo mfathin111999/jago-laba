@@ -24,11 +24,11 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] 0.1 Perbaiki `MarketplaceCatalogReadTest::test_hpp_write_updates_sku_global_and_batch...` (HPP 60000 vs 65000) — penyebab: asersi tes memakai urutan id, bukan tanggal efektif
 - [x] 0.2 Perbaiki `OAuthSandboxTest::test_all_supported_platforms_report_sandbox_only...` (400 vs 503, QueryException) — penyebab: fixture tanpa kolom status/updated_at; disconnect kini sudah diimplementasi
 - [x] 0.3 Suite penuh hijau (80 tes, 811 assertion) dengan PHP 8.4
-- [ ] 0.4 Commit pekerjaan yang belum tersimpan
+- [x] 0.4 Commit pekerjaan yang belum tersimpan
 - [x] 0.5 Sinkronkan checklist .md/.csv/.json dengan status nyata
 
 ### Fase A — Sisa backend (tanpa UI)
-- [ ] A1 AJAX `sync_marketing_ads`, `test_api_connection` (sandbox/stub)
+- [x] A1 AJAX `sync_marketing_ads`, `test_api_connection` (sandbox/stub) — kontrak legacy dipertahankan (success:false, tanpa panggilan provider) + validasi toko/peran
 - [ ] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada
 - [ ] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status)
 - [ ] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save)

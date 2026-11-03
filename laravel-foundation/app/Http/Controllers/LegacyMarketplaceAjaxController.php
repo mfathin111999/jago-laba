@@ -42,6 +42,8 @@ final class LegacyMarketplaceAjaxController
             'simulate_price' => app()->call([$this->settings, 'simulate']),
             'get_saved_simulations' => app()->call([$this->settings, 'getSimulations']),
             'get_store_detail' => app()->call([$this->settings, 'getStoreDetail']),
+            'test_api_connection' => app()->call([$this->settings, 'testConnection']),
+            'sync_marketing_ads' => app()->call([$this->settings, 'syncMarketingAds']),
             'save_app_settings' => app()->call([$this->settings, 'saveSettings']),
             'update_return_claim' => app()->call([$this->claimsAndSettlement, 'updateClaim']),
             'import_product_ad_report' => app()->call([$this->claimsAndSettlement, 'importAdReport']),
