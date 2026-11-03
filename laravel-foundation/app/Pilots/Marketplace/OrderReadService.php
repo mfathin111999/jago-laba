@@ -3,10 +3,10 @@
 namespace App\Pilots\Marketplace;
 
 use DomainException;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Carbon;
 use InvalidArgumentException;
-use Throwable;
 
 /**
  * Read-only adapter for the legacy Marketplace order/list/detail contract.
@@ -15,8 +15,12 @@ use Throwable;
 final class OrderReadService
 {
     public const NO_INTEGRATED_STORE = 4101;
+
     public const STORE_SELECTION_REQUIRED = 4102;
+
     public const STORE_FORBIDDEN = 4103;
+
+    public const EXPORT_LIMIT = 5000;
 
     /** @var array<string, string> */
     private const TABS = [
@@ -36,8 +40,7 @@ final class OrderReadService
     public function overview(string $companyKey, ?string $requestedStore, array $filters): array
     {
         $stores = $this->stores($companyKey);
-        $integrated = array_values(array_filter($stores, static fn (array $store): bool =>
-            (string) ($store['oauth_connection_id'] ?? '') !== ''
+        $integrated = array_values(array_filter($stores, static fn (array $store): bool => (string) ($store['oauth_connection_id'] ?? '') !== ''
             && (string) ($store['oauth_authorized_at'] ?? '') !== '',
         ));
 
@@ -184,6 +187,10 @@ final class OrderReadService
         $selected = array_values(array_filter($prepared, static function (array $row) use ($tab): bool {
             return $tab === 'all' || ($tab === 'returns' && ($row['return_cases'] ?? []) !== []) || ($row['group'] ?? 'all') === $tab;
         }));
+        $export = ! empty($filters['export']);
+        if ($export && count($selected) > self::EXPORT_LIMIT) {
+            throw new InvalidArgumentException('Ekspor maksimal 5.000 pesanan. Persempit periode atau filter.');
+        }
         $perPage = in_array((int) ($filters['per_page'] ?? 50), [25, 50, 100], true) ? (int) $filters['per_page'] : 50;
         $pages = max(1, (int) ceil(count($selected) / $perPage));
         $page = min($pages, max(1, (int) ($filters['page'] ?? 1)));
@@ -193,7 +200,7 @@ final class OrderReadService
             'period' => $period,
             'counts' => $counts,
             'tab' => $tab,
-            'rows' => array_values(array_slice($selected, ($page - 1) * $perPage, $perPage)),
+            'rows' => $export ? $selected : array_values(array_slice($selected, ($page - 1) * $perPage, $perPage)),
             'total' => count($selected),
             'page' => $page,
             'pages' => $pages,
@@ -406,7 +413,7 @@ final class OrderReadService
             'released_at' => $snapshot['released_at'] ?? $row['completion_date'] ?? null, 'source_updated_at' => $snapshot['source_updated_at'] ?? null,
             'items' => $items, 'components' => $components, 'gross_amount' => $gross, 'total_fees' => $fees,
             'net_income' => $net, 'total_cogs' => $hpp, 'net_profit' => $profit,
-             'packages' => $packages, 'timeline' => $timeline,
+            'packages' => $packages, 'timeline' => $timeline,
             'financial_state' => $net === null ? 'waiting_income' : ($hpp === null ? 'waiting_hpp' : 'complete'),
             'fee_percent' => $gross > 0 && $fees !== null ? round($fees / $gross * 100, 1) : null,
             'profit_percent' => $gross > 0 && $profit !== null ? round($profit / $gross * 100, 1) : null,
@@ -447,7 +454,9 @@ final class OrderReadService
             }
             $case = [
                 'id' => (string) ($payload['return_id'] ?? $payload['id'] ?? ''), 'order_id' => $orderId, 'type' => $type,
-                'type_label' => match ($type) { 'REFUND' => 'Dana Saja', 'RETURN_AND_REFUND' => 'Barang & Dana', 'REPLACEMENT' => 'Penggantian', 'EXCHANGE' => 'Penukaran', default => 'Jenis belum dipetakan' },
+                'type_label' => match ($type) {
+                    'REFUND' => 'Dana Saja', 'RETURN_AND_REFUND' => 'Barang & Dana', 'REPLACEMENT' => 'Penggantian', 'EXCHANGE' => 'Penukaran', default => 'Jenis belum dipetakan'
+                },
                 'source_status' => $status, 'status' => $this->returnStatus($status, $platform),
                 'refund_status' => $complete ? 'Refund selesai' : ($status === 'RETURN_OR_REFUND_REQUEST_SUCCESS' ? 'Refund sedang diproses' : 'Belum dikonfirmasi'),
                 'refund_amount' => is_numeric($amount) ? (string) $amount : null, 'refund_complete' => $complete,
@@ -525,13 +534,25 @@ final class OrderReadService
             return false;
         }
         $condition = (string) ($filters['condition'] ?? '');
-        if ($condition === 'unpaid' && $row['source_status'] !== 'UNPAID') return false;
-        if ($condition === 'cancel_request' && ! $row['cancel_requested']) return false;
-        if ($condition === 'partial' && $row['source_status'] !== 'PARTIALLY_SHIPPING') return false;
-        if ($condition === 'completed' && ! in_array($row['source_status'], ['COMPLETED', 'Selesai'], true)) return false;
+        if ($condition === 'unpaid' && $row['source_status'] !== 'UNPAID') {
+            return false;
+        }
+        if ($condition === 'cancel_request' && ! $row['cancel_requested']) {
+            return false;
+        }
+        if ($condition === 'partial' && $row['source_status'] !== 'PARTIALLY_SHIPPING') {
+            return false;
+        }
+        if ($condition === 'completed' && ! in_array($row['source_status'], ['COMPLETED', 'Selesai'], true)) {
+            return false;
+        }
         $returnCases = is_array($row['return_cases'] ?? null) ? $row['return_cases'] : [];
-        if ($condition === 'return' && ! $this->hasReturnType($returnCases, ['RETURN_AND_REFUND'])) return false;
-        if ($condition === 'refund' && ! $this->hasReturnType($returnCases, ['REFUND'])) return false;
+        if ($condition === 'return' && ! $this->hasReturnType($returnCases, ['RETURN_AND_REFUND'])) {
+            return false;
+        }
+        if ($condition === 'refund' && ! $this->hasReturnType($returnCases, ['REFUND'])) {
+            return false;
+        }
 
         $returnType = (string) ($filters['return_type'] ?? '');
         if ($returnType !== '') {
@@ -541,7 +562,9 @@ final class OrderReadService
                 'replacement' => ['REPLACEMENT', 'EXCHANGE'],
                 default => [],
             };
-            if ($allowed === [] || ! $this->hasReturnType($returnCases, $allowed)) return false;
+            if ($allowed === [] || ! $this->hasReturnType($returnCases, $allowed)) {
+                return false;
+            }
         }
 
         return true;
@@ -551,7 +574,9 @@ final class OrderReadService
     private function hasReturnType(array $cases, array $types): bool
     {
         foreach ($cases as $case) {
-            if (in_array((string) ($case['type'] ?? ''), $types, true)) return true;
+            if (in_array((string) ($case['type'] ?? ''), $types, true)) {
+                return true;
+            }
         }
 
         return false;
@@ -607,11 +632,15 @@ final class OrderReadService
     {
         if ($requestedStore !== null) {
             foreach ($stores as $store) {
-                if ((string) $store['id'] === $requestedStore) return $store;
+                if ((string) $store['id'] === $requestedStore) {
+                    return $store;
+                }
             }
             throw new DomainException('Store Marketplace tidak diizinkan.', self::STORE_FORBIDDEN);
         }
-        if (count($stores) === 1) return $stores[0];
+        if (count($stores) === 1) {
+            return $stores[0];
+        }
 
         throw new DomainException('Pilih store Marketplace terlebih dahulu.', self::STORE_SELECTION_REQUIRED);
     }
@@ -619,7 +648,9 @@ final class OrderReadService
     /** @return array<string, mixed> */
     private function returnCoverage(string $storeId): array
     {
-        if (! $this->hasTable('marketplace_sync_jobs')) return ['available' => false, 'last_success' => null, 'status' => 'unavailable', 'error' => null];
+        if (! $this->hasTable('marketplace_sync_jobs')) {
+            return ['available' => false, 'last_success' => null, 'status' => 'unavailable', 'error' => null];
+        }
         $last = $this->connection()->table('marketplace_sync_jobs')->where('store_id', $storeId)->where('job_type', 'returns')->orderByDesc('id')->first();
         $success = $this->connection()->table('marketplace_sync_jobs')->where('store_id', $storeId)->where('job_type', 'returns')->where('status', 'succeeded')->max('finished_at');
 
@@ -636,7 +667,7 @@ final class OrderReadService
         return $this->connection()->getSchemaBuilder()->hasTable($table);
     }
 
-    private function connection(): \Illuminate\Database\Connection
+    private function connection(): Connection
     {
         return $this->database->connection();
     }

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceOrderRequest;
+use App\Http\Responses\CsvDownload;
 use App\Pilots\Marketplace\OrderReadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
 
 final class MarketplaceOrderController
@@ -68,5 +70,36 @@ final class MarketplaceOrderController
             }
             throw $exception;
         }
+    }
+
+    public function export(MarketplaceOrderRequest $request): SymfonyResponse
+    {
+        try {
+            $payload = $this->orders->overview(
+                (string) $request->attributes->get('company_key'),
+                $request->storeId(),
+                $request->filters() + ['export' => true],
+            );
+        } catch (\InvalidArgumentException $exception) {
+            return response($exception->getMessage(), 422);
+        } catch (\DomainException $exception) {
+            return match ($exception->getCode()) {
+                OrderReadService::NO_INTEGRATED_STORE, OrderReadService::STORE_SELECTION_REQUIRED => response($exception->getMessage(), 422),
+                OrderReadService::STORE_FORBIDDEN => response($exception->getMessage(), 403),
+                default => throw $exception,
+            };
+        }
+
+        $storeName = (string) ($payload['active_store']['store_name'] ?? '');
+        $rows = array_map(static fn (array $order): array => [
+            $storeName, $order['date'], "'".$order['id'], $order['amount'], $order['quantity'],
+            $order['courier'], "'".$order['tracking'], $order['status'],
+        ], $payload['orders']['rows']);
+
+        return CsvDownload::stream(
+            'pesanan-toko.csv',
+            ['Toko', 'Tanggal', 'Kode Pesanan', 'Nilai Pesanan', 'Unit', 'Kurir', 'Resi', 'Status'],
+            $rows,
+        );
     }
 }

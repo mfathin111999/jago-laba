@@ -37,7 +37,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A5a `marketplace-stock` (minimum stok) + `marketplace-auto-sync` + `marketplace-browser-pulse` — termasuk menggantikan command auto-sync yang ternyata stub
   - [x] A5b `marketplace-branding` (logo) — validasi gambar (MIME+dimensi), CSP sandbox saat disajikan, hanya Owner/Admin yang menyimpan
   - [ ] A5e `marketplace-integration-status` (GET kesehatan integrasi + retry lewat antrian) — bergantung pada port IntegrationRuntime/IntegrationPolicy/PartnerSettings, jadi dikerjakan terpisah
-  - [ ] A5c Ekspor CSV: orders, dashboard (halaman HTML-nya masuk Fase B)
+  - [x] A5c Ekspor CSV: orders, dashboard (halaman HTML-nya masuk Fase B) — export saja; checklist PUBLIC orders/dashboard tetap "sebagian" sampai halamannya dibangun (B1/B3)
   - [ ] A5d Menyentuh provider/rahasia → kontrak saja, tanpa panggilan provider: `marketplace-order-finance`, `marketplace-partner-settings` (butuh keputusan pemilik, sama seperti `save_api_credentials`)
 - [ ] A6 RPC Konveksi sisa: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
 - [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`

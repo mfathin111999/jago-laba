@@ -420,6 +420,37 @@ final class PilotReadOnlyTest extends TestCase
         $this->inertiaGet('/pilot/marketplace/orders?store=store-foreign')->assertForbidden();
     }
 
+    public function test_marketplace_orders_and_dashboard_csv_exports_cover_all_rows_and_stay_scoped(): void
+    {
+        $this->loginAndSelect('marketplace');
+        $query = 'store=store-a&period=custom&date_start=2026-10-01&date_end=2026-10-31';
+
+        $orders = $this->get('/pilot/marketplace/orders/export?'.$query.'&per_page=25&page=2')->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $orders->headers->get('Content-Type'));
+        $this->assertStringContainsString('pesanan-toko.csv', (string) $orders->headers->get('Content-Disposition'));
+        $lines = array_values(array_filter(preg_split('/\r?\n/', ltrim($orders->streamedContent(), "\xEF\xBB\xBF"))));
+        $this->assertSame(['Toko', 'Tanggal', 'Kode Pesanan', 'Nilai Pesanan', 'Unit', 'Kurir', 'Resi', 'Status'], str_getcsv($lines[0], ',', '"', ''));
+        $this->assertCount(6, $lines, 'header plus all 5 orders, regardless of page and per_page');
+        $this->assertStringStartsWith("'", str_getcsv($lines[1], ',', '"', '')[2]);
+
+        $legacy = $this->get('/api/marketplace-orders.php?'.$query.'&format=csv')->assertOk();
+        $this->assertSame($orders->streamedContent(), $legacy->streamedContent());
+        $this->get('/api/marketplace-orders.php?'.$query)->assertRedirect('/pilot/marketplace/orders?'.$query);
+
+        $dashboard = $this->get('/pilot/marketplace/export?'.$query.'&finance_mode=final')->assertOk();
+        $this->assertStringContainsString('rincian-dashboard.csv', (string) $dashboard->headers->get('Content-Disposition'));
+        $rows = array_values(array_filter(preg_split('/\r?\n/', ltrim($dashboard->streamedContent(), "\xEF\xBB\xBF"))));
+        $this->assertSame(['Pesanan', 'Keuangan', 'Penjualan', 'Untuk Dibayar', 'HPP Produk', 'Laba setelah HPP'], str_getcsv($rows[0], ',', '"', ''));
+        $expected = count($this->inertiaGet('/pilot/marketplace?'.$query.'&finance_mode=final')->json('props.dashboard.rows'));
+        $this->assertCount($expected + 1, $rows);
+        $this->assertGreaterThan(0, $expected);
+        $this->get('/api/marketplace-dashboard.php?'.$query.'&format=csv')->assertOk();
+
+        $this->get('/pilot/marketplace/orders/export?store=store-foreign')->assertForbidden();
+        $this->get('/pilot/marketplace/export?store=store-foreign')->assertForbidden();
+        $this->get('/api/marketplace-orders.php?store=store-foreign&format=csv')->assertForbidden();
+    }
+
     public function test_marketplace_order_detail_and_return_filter_are_scoped_read_only(): void
     {
         Schema::create('marketplace_order_items', function (Blueprint $table): void {

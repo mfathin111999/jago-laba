@@ -16,6 +16,7 @@ use App\Http\Controllers\MarketplaceExpenseDeleteController;
 use App\Http\Controllers\MarketplaceExpensesReadController;
 use App\Http\Controllers\MarketplaceFulfillmentController;
 use App\Http\Controllers\MarketplaceHppWriteController;
+use App\Http\Controllers\MarketplaceLegacyReportController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
@@ -53,6 +54,12 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
     Route::get('/pilot/marketplace/orders', [MarketplaceOrderController::class, 'index'])
         ->middleware('workspace.context:marketplace')
         ->name('pilot.marketplace.orders');
+    Route::get('/pilot/marketplace/orders/export', [MarketplaceOrderController::class, 'export'])
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])
+        ->name('pilot.marketplace.orders.export');
+    Route::get('/pilot/marketplace/export', [MarketplacePilotController::class, 'export'])
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])
+        ->name('pilot.marketplace.export');
     Route::get('/pilot/marketplace/orders/{order}/detail', [MarketplaceOrderController::class, 'detail'])
         ->middleware('workspace.context:marketplace')
         ->name('pilot.marketplace.orders.detail');
@@ -177,6 +184,12 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
         ->name('legacy.marketplace.branding');
+    Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
+        ->name('legacy.marketplace.orders');
+    Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
+        ->name('legacy.marketplace.dashboard');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

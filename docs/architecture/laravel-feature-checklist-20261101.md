@@ -130,12 +130,12 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-676e7578ef | public / `api/marketplace-auto-sync.php` | pilot | 11 | [marketplace-auto-sync.php](../../public/api/marketplace-auto-sync.php) |
 | PUBLIC-2121cf0a8c | public / `api/marketplace-branding.php` | pilot | 6 | [marketplace-branding.php](../../public/api/marketplace-branding.php) |
 | PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | pilot | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
-| PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | belum | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
+| PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | sebagian | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
 | PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | pilot | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
 | PUBLIC-5a046b374d | public / `api/marketplace-integration-status.php` | belum | 6 | [marketplace-integration-status.php](../../public/api/marketplace-integration-status.php) |
 | PUBLIC-a23813a6be | public / `api/marketplace-oauth.php` | pilot | 11 | [marketplace-oauth.php](../../public/api/marketplace-oauth.php) |
 | PUBLIC-5abed94f63 | public / `api/marketplace-order-finance.php` | belum | 6 | [marketplace-order-finance.php](../../public/api/marketplace-order-finance.php) |
-| PUBLIC-032437fc39 | public / `api/marketplace-orders.php` | belum | 6 | [marketplace-orders.php](../../public/api/marketplace-orders.php) |
+| PUBLIC-032437fc39 | public / `api/marketplace-orders.php` | sebagian | 6 | [marketplace-orders.php](../../public/api/marketplace-orders.php) |
 | PUBLIC-3599a1df42 | public / `api/marketplace-partner-settings.php` | belum | 11 | [marketplace-partner-settings.php](../../public/api/marketplace-partner-settings.php) |
 | PUBLIC-5e13ce4104 | public / `api/marketplace-price.php` | sebagian | 11 | [marketplace-price.php](../../public/api/marketplace-price.php) |
 | PUBLIC-33f67ec74a | public / `api/marketplace-shipping-document.php` | belum | 9 | [marketplace-shipping-document.php](../../public/api/marketplace-shipping-document.php) |
