@@ -16,6 +16,7 @@ use App\Pilots\Konveksi\KonveksiPilotReadService;
 use App\Pilots\Konveksi\KonveksiPurchaseWriteService;
 use App\Pilots\Konveksi\KonveksiSalesWriteService;
 use App\Pilots\Konveksi\KonveksiSyncAndHppService;
+use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,12 +24,16 @@ use Illuminate\Support\Facades\Auth;
 
 final class LegacyRpcController
 {
+    /** Methods any Konveksi user may call; every other method requires an administrator. */
+    private const READ_METHODS = ['loadSemuaData', 'getRiwayatBackupJagoLaba', 'getGeminiApiKeyStatusServerRpc'];
+
     public function __construct(
         private readonly LegacyAuthenticationService $authentication,
         private readonly LegacySessionStore $legacySession,
         private readonly CsrfTokenValidator $csrf,
         private readonly CompanyContext $company,
         private readonly WorkspaceContext $workspace,
+        private readonly RolePolicy $policy,
         private readonly KonveksiPilotReadService $konveksi,
         private readonly KonveksiSalesWriteService $salesWrite,
         private readonly KonveksiHutangService $hutang,
@@ -59,6 +64,10 @@ final class LegacyRpcController
 
         if (! $this->csrf->valid($request)) {
             return $this->error('Token CSRF tidak valid.', 'CSRF_INVALID', 403);
+        }
+
+        if ($denied = $this->authorizeKonveksi($method)) {
+            return $denied;
         }
 
         if ($method === 'loadSemuaData') {
@@ -473,6 +482,27 @@ final class LegacyRpcController
         }
 
         return $response;
+    }
+
+    /**
+     * Konveksi RPC needs the active Konveksi workspace; anything that is not a read needs an administrator
+     * (the same rule as the legacy RpcService). Login is handled before this point.
+     */
+    private function authorizeKonveksi(string $method): ?JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+
+        if (! $this->workspace->can($user, WorkspaceContext::KONVEKSI)) {
+            return $this->error('Workspace tidak diizinkan.', 'WORKSPACE_FORBIDDEN', 403);
+        }
+        if ($this->workspace->active($user) !== WorkspaceContext::KONVEKSI) {
+            return $this->error('Workspace belum dipilih.', 'WORKSPACE_NOT_ACTIVE', 403);
+        }
+        if (! in_array($method, self::READ_METHODS, true) && ! $this->policy->allows($user, 'settings.manage')) {
+            return $this->error('Perubahan Konveksi memerlukan izin administrator.', 'ROLE_FORBIDDEN', 403);
+        }
+
+        return null;
     }
 
     private function error(string $message, string $code, int $status): JsonResponse
