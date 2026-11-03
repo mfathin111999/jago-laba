@@ -42,8 +42,11 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [ ] A6 RPC Konveksi sisa (dipecah setelah audit menemukan masalah yang lebih besar):
   - [x] A6a Satu resolver koneksi Konveksi (`KonveksiConnection`) untuk read dan semua service tulis — sebelumnya tulisan Konveksi memakai koneksi default, bukan database Konveksi terpisah
   - [x] A6b Backup nyata menggantikan backup palsu (`backup_log` "Berhasil" tanpa file) — snapshot JSON gzip semua tabel terpetakan, mysqldump opsional (password via env, bukan argumen), manifest checksum, salinan eksternal, kegagalan dicatat "Gagal" tanpa file parsial
+  - [x] A6d Otorisasi RPC Konveksi: workspace Konveksi harus aktif dan semua selain 3 method baca butuh administrator (sebelumnya hanya cek login+CSRF; role Pembaca bisa menulis)
+  - [x] A6e Dokumen yang diunggah benar-benar ditulis ke disk privat dan dicatat (sebelumnya bytes dibuang tapi respons "tersimpan")
   - [ ] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
 - [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`
+- [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** — 4 stub/lubang ditemukan secara kebetulan (store-deletion, auto-sync, backup, dokumen) + 1 lubang otorisasi RPC. Periksa sisanya satu per satu: worker `bin/workers/*` (4), `MarketplaceSyncCommand`, `Konveksi{Hutang,Inventory,SyncAndHpp,Sales,Purchase}Service`, `Gemini`/template, `MarketplaceFulfillmentWriteService`, `MarketplaceSettlementAndClaimService`. Kriteria: tulis nyata, cek akses, tes yang membuktikan
 - [ ] A8 Suite penuh + commit
 
 ### Fase B — UI Marketplace (36 view → ±8 halaman)
