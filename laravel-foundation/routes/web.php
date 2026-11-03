@@ -4,16 +4,20 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FoundationController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\KonveksiPilotController;
+use App\Http\Controllers\LegacyMarketplaceAjaxController;
 use App\Http\Controllers\LegacyPilotPageController;
 use App\Http\Controllers\LegacyRpcController;
 use App\Http\Controllers\MarketplaceAnalyticsController;
 use App\Http\Controllers\MarketplaceCatalogController;
 use App\Http\Controllers\MarketplaceExpenseController;
 use App\Http\Controllers\MarketplaceExpenseDeleteController;
+use App\Http\Controllers\MarketplaceExpensesReadController;
+use App\Http\Controllers\MarketplaceFulfillmentController;
 use App\Http\Controllers\MarketplaceHppWriteController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
+use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
@@ -28,7 +32,7 @@ Route::get('/login', FoundationController::class)->name('login');
 Route::get('/api/health.php', HealthController::class)->name('legacy.health');
 
 Route::middleware(['auth', 'company.context'])->group(function (): void {
-    Route::get('/marketplace/expenses', \App\Http\Controllers\MarketplaceExpensesReadController::class)
+    Route::get('/marketplace/expenses', MarketplaceExpensesReadController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.expenses.read');
     Route::get('/marketplace/catalog', MarketplaceCatalogController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.catalog');
@@ -137,12 +141,15 @@ Route::middleware('legacy.session')->group(function (): void {
     // Login remains available under the old RPC contract. Other methods stay
     // reserved until their business adapter is migrated.
     Route::post('/api/rpc.php', LegacyRpcController::class)->name('legacy.rpc');
-    Route::post('/api/marketplace-ajax.php', \App\Http\Controllers\LegacyMarketplaceAjaxController::class)
+    Route::post('/api/marketplace-ajax.php', LegacyMarketplaceAjaxController::class)
         ->middleware(['legacy.marketplace.ajax', 'auth', 'company.context', 'workspace.context:marketplace', 'browser.csrf'])
         ->name('legacy.marketplace.ajax');
-    Route::post('/api/marketplace-fulfillment.php', [\App\Http\Controllers\MarketplaceFulfillmentController::class, 'handle'])
+    Route::post('/api/marketplace-fulfillment.php', [MarketplaceFulfillmentController::class, 'handle'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:shipping.fulfill', 'browser.csrf'])
         ->name('legacy.marketplace.fulfillment');
+    Route::post('/api/marketplace-store-deletion.php', MarketplaceStoreDeletionController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:store.delete', 'browser.csrf'])
+        ->name('legacy.marketplace.store-deletion');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

@@ -98,4 +98,8 @@ return [
         'marketplace_token_encryption_key_configured' => trim((string) env('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY', '')) !== '',
         'marketplace_token_encryption_key_file' => env('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY_FILE'),
     ],
+    'store_deletion' => [
+        // Durable deletion-intent ledger; keep it outside the web root and outside the database.
+        'ledger_dir' => env('JL_DELETION_LEDGER_DIR') ?: null,
+    ],
 ];

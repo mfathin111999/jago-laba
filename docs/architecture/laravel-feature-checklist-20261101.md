@@ -45,11 +45,11 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | API_ACTION-3e641b870f | api-action / `marketplace-oauth.php:sync` | pilot | 11 | [marketplace-oauth.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-oauth.php) |
 | API_ACTION-cd6f30ea1a | api-action / `marketplace-price.php:prepare` | belum | 11 | [marketplace-price.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-price.php) |
 | API_ACTION-d011ed1189 | api-action / `marketplace-price.php:save` | belum | 11 | [marketplace-price.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-price.php) |
-| API_ACTION-3560d1bdfc | api-action / `marketplace-store-deletion.php:list` | belum | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
-| API_ACTION-a6b59d4f36 | api-action / `marketplace-store-deletion.php:preview` | belum | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
-| API_ACTION-50fa30ef8b | api-action / `marketplace-store-deletion.php:request` | belum | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
-| API_ACTION-ffa603975d | api-action / `marketplace-store-deletion.php:resume` | belum | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
-| API_ACTION-f21e6a4e1d | api-action / `marketplace-store-deletion.php:status` | belum | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
+| API_ACTION-3560d1bdfc | api-action / `marketplace-store-deletion.php:list` | pilot | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
+| API_ACTION-a6b59d4f36 | api-action / `marketplace-store-deletion.php:preview` | pilot | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
+| API_ACTION-50fa30ef8b | api-action / `marketplace-store-deletion.php:request` | pilot | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
+| API_ACTION-ffa603975d | api-action / `marketplace-store-deletion.php:resume` | pilot | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
+| API_ACTION-f21e6a4e1d | api-action / `marketplace-store-deletion.php:status` | pilot | 6 | [marketplace-store-deletion.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-store-deletion.php) |
 | API_ACTION-ef08b529eb | api-action / `marketplace-sync.php:background` | belum | 11 | [marketplace-sync.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-sync.php) |
 | API_ACTION-f5f653b335 | api-action / `marketplace-sync.php:catalog` | belum | 11 | [marketplace-sync.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-sync.php) |
 | API_ACTION-8ccb0248ec | api-action / `marketplace-sync.php:catalog_status` | belum | 11 | [marketplace-sync.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-sync.php) |
@@ -140,7 +140,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-5e13ce4104 | public / `api/marketplace-price.php` | belum | 11 | [marketplace-price.php](../../public/api/marketplace-price.php) |
 | PUBLIC-33f67ec74a | public / `api/marketplace-shipping-document.php` | belum | 9 | [marketplace-shipping-document.php](../../public/api/marketplace-shipping-document.php) |
 | PUBLIC-ca5edc6128 | public / `api/marketplace-stock.php` | belum | 6 | [marketplace-stock.php](../../public/api/marketplace-stock.php) |
-| PUBLIC-f63c9c9083 | public / `api/marketplace-store-deletion.php` | belum | 6 | [marketplace-store-deletion.php](../../public/api/marketplace-store-deletion.php) |
+| PUBLIC-f63c9c9083 | public / `api/marketplace-store-deletion.php` | pilot | 6 | [marketplace-store-deletion.php](../../public/api/marketplace-store-deletion.php) |
 | PUBLIC-953e70a9bc | public / `api/marketplace-sync.php` | belum | 11 | [marketplace-sync.php](../../public/api/marketplace-sync.php) |
 | PUBLIC-e93e166229 | public / `api/marketplace-webhook.php` | stub-legacy-keputusan-pemilik | 11 | [marketplace-webhook.php](../../public/api/marketplace-webhook.php) |
 | PUBLIC-7a9d640107 | public / `api/marketplace-withdrawals.php` | belum | 9 | [marketplace-withdrawals.php](../../public/api/marketplace-withdrawals.php) |

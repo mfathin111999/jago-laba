@@ -2,58 +2,58 @@
 
 namespace App\Console\Commands;
 
+use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Console\Command;
-use Illuminate\Database\DatabaseManager;
+use Throwable;
 
 final class MarketplaceStoreDeletionCommand extends Command
 {
     protected $signature = 'marketplace:store-deletion
-        {--store= : Store ID to purge}
-        {--install : Install deletion schema and triggers}';
+        {--store= : Store ID to erase}
+        {--pending : Process every queued, running or failed deletion}
+        {--install : Install deletion tables and write barriers}
+        {--max-batches=200 : Upper bound of batches per store per run}';
 
-    protected $description = 'Process queued marketplace store deletion or install deletion schema barriers';
+    protected $description = 'Erase marketplace stores that have a recorded deletion request, or install the deletion barrier';
 
-    public function handle(DatabaseManager $database): int
+    public function handle(MarketplaceStoreDeletionService $service): int
     {
-        $connection = $database->connection();
-
         if ($this->option('install')) {
-            $this->info('Installing deletion barrier schema...');
-            if (! \Illuminate\Support\Facades\Schema::hasTable('marketplace_store_deletions')) {
-                \Illuminate\Support\Facades\Schema::create('marketplace_store_deletions', function ($table): void {
-                    $table->bigIncrements('id');
-                    $table->string('store_id', 50)->unique();
-                    $table->string('state', 30)->default('queued');
-                    $table->dateTime('requested_at');
-                    $table->dateTime('completed_at')->nullable();
-                    $table->timestamps();
-                });
-            }
+            $service->install();
             $this->info('Deletion schema ready.');
 
             return self::SUCCESS;
         }
 
-        $storeId = (string) $this->option('store');
-        if ($storeId === '') {
-            $this->error('Option --store=STORE_ID is required.');
+        if (! $service->ready()) {
+            $this->error('Deletion schema is missing. Run with --install first.');
 
-            return self::INVALID;
+            return self::FAILURE;
         }
 
-        $this->line("Processing store deletion for {$storeId}...");
-        $now = now();
-        $connection->table('marketplace_stores')
-            ->where('id', $storeId)
-            ->update([
-                'status' => 'Dihapus',
-                'authorization_status' => 'deleted',
-                'archived_at' => $now,
-                'updated_at' => $now,
-            ]);
+        $storeIds = $this->option('pending')
+            ? $service->unfinishedStoreIds()
+            : array_filter([(string) $this->option('store')]);
+        if ($storeIds === []) {
+            $this->option('pending') ? $this->line('No pending deletions.') : $this->error('Option --store=STORE_ID or --pending is required.');
 
-        $this->info("Store {$storeId} successfully purged.");
+            return $this->option('pending') ? self::SUCCESS : self::INVALID;
+        }
 
-        return self::SUCCESS;
+        $failed = 0;
+        foreach ($storeIds as $storeId) {
+            try {
+                $done = false;
+                for ($i = 0, $max = max(1, (int) $this->option('max-batches')); $i < $max && ! $done; $i++) {
+                    $done = $service->step($storeId);
+                }
+                $this->line($storeId.': '.($done ? 'completed' : 'in progress'));
+            } catch (Throwable $exception) {
+                $failed++;
+                $this->error($storeId.': failed ('.$exception->getMessage().')');
+            }
+        }
+
+        return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }
 }

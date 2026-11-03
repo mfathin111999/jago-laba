@@ -29,7 +29,8 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 
 ### Fase A — Sisa backend (tanpa UI)
 - [x] A1 AJAX `sync_marketing_ads`, `test_api_connection` (sandbox/stub) — kontrak legacy dipertahankan (success:false, tanpa panggilan provider) + validasi toko/peran
-- [ ] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada
+- [x] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada — service dan command nyata menggantikan stub; hanya owner (store.delete); install lewat `--install`, bukan dari request web. Sisa: pasang `guardAuthorization` di alur OAuth (A2b)
+- [ ] A2b Pasang `MarketplaceStoreDeletionService::guardAuthorization` di callback/select OAuth agar toko yang sedang dihapus tidak bisa dihubungkan ulang
 - [ ] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status)
 - [ ] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save)
 - [ ] A5 Endpoint baca publik: orders, order-finance, stock, dashboard, analytics, integration-status, branding, browser-pulse, partner-settings, auto-sync

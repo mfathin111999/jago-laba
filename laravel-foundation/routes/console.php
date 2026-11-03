@@ -15,3 +15,7 @@ Schedule::command('marketplace:sync --mode=cron')
 Schedule::command('marketplace:auto-sync')
     ->hourly()
     ->withoutOverlapping(1);
+
+Schedule::command('marketplace:store-deletion --pending')
+    ->everyMinute()
+    ->withoutOverlapping(10);
