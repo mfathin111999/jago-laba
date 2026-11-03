@@ -102,4 +102,11 @@ return [
         // Durable deletion-intent ledger; keep it outside the web root and outside the database.
         'ledger_dir' => env('JL_DELETION_LEDGER_DIR') ?: null,
     ],
+    'backup' => [
+        // Backups hold business data: keep them outside the web root.
+        'local_directory' => env('JL_BACKUP_DIR') ?: null,
+        'external_directory' => env('JL_BACKUP_MIRROR_DIR') ?: null,
+        // Absolute path to mysqldump; without it only the JSON snapshot is produced.
+        'mysqldump' => env('JL_MYSQLDUMP') ?: null,
+    ],
 ];

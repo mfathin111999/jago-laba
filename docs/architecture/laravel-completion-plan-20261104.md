@@ -41,7 +41,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A5d Menyentuh provider/rahasia → kontrak saja, tanpa panggilan provider: `marketplace-order-finance`, `marketplace-partner-settings` (butuh keputusan pemilik, sama seperti `save_api_credentials`) — order-finance menjawab dari data lokal (synced:false); partner-settings tidak menerima rahasia dari web (503) → keputusan pemilik
 - [ ] A6 RPC Konveksi sisa (dipecah setelah audit menemukan masalah yang lebih besar):
   - [x] A6a Satu resolver koneksi Konveksi (`KonveksiConnection`) untuk read dan semua service tulis — sebelumnya tulisan Konveksi memakai koneksi default, bukan database Konveksi terpisah
-  - [ ] A6b Backup nyata menggantikan backup palsu (`backup_log` "Berhasil" tanpa file)
+  - [x] A6b Backup nyata menggantikan backup palsu (`backup_log` "Berhasil" tanpa file) — snapshot JSON gzip semua tabel terpetakan, mysqldump opsional (password via env, bukan argumen), manifest checksum, salinan eksternal, kegagalan dicatat "Gagal" tanpa file parsial
   - [ ] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
 - [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`
 - [ ] A8 Suite penuh + commit
