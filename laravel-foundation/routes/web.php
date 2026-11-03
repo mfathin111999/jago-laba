@@ -19,6 +19,7 @@ use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
+use App\Http\Controllers\MarketplaceSyncApiController;
 use App\Http\Controllers\MarketplaceSyncController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
 use App\Http\Controllers\SandboxMarketplaceOAuthController;
@@ -150,6 +151,9 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::post('/api/marketplace-store-deletion.php', MarketplaceStoreDeletionController::class)
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:store.delete', 'browser.csrf'])
         ->name('legacy.marketplace.store-deletion');
+    Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:integration.manage'])
+        ->name('legacy.marketplace.sync');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');
