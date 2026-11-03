@@ -15,7 +15,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | AJAX-360e8d33f8 | ajax / `get_saved_simulations` | pilot | 6 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-e28d5c10ee | ajax / `get_store_detail` | pilot | 6 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-ec5f44daaf | ajax / `import_product_ad_report` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
-| AJAX-252f9b5c61 | ajax / `import_settlement_csv` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
+| AJAX-252f9b5c61 | ajax / `import_settlement_csv` | stub-legacy-keputusan-pemilik | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-f22c23b739 | ajax / `restore_store` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-a7a90bb8a1 | ajax / `run_safety_buffer_sync` | stub-legacy-keputusan-pemilik | 11 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-91ab361772 | ajax / `save_api_credentials` | stub-legacy-keputusan-pemilik | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
@@ -33,8 +33,8 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | AJAX-35c4bcebc3 | ajax / `update_sku_hpp` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-a9d9cf7df9 | ajax / `update_stock_allocation` | stub-legacy-keputusan-pemilik | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
 | AJAX-11081f6674 | ajax / `update_store` | pilot | 7 | [marketplace-ajax.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-ajax.php) |
-| API_ACTION-879969e23f | api-action / `marketplace-fulfillment.php:confirm` | pilot | 11 | [marketplace-fulfillment.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-fulfillment.php) |
-| API_ACTION-94c8804a2c | api-action / `marketplace-fulfillment.php:options` | pilot | 11 | [marketplace-fulfillment.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-fulfillment.php) |
+| API_ACTION-879969e23f | api-action / `marketplace-fulfillment.php:confirm` | sebagian | 11 | [marketplace-fulfillment.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-fulfillment.php) |
+| API_ACTION-94c8804a2c | api-action / `marketplace-fulfillment.php:options` | sebagian | 11 | [marketplace-fulfillment.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-fulfillment.php) |
 | API_ACTION-9cd01d40e1 | api-action / `marketplace-oauth.php:callback` | pilot | 11 | [marketplace-oauth.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-oauth.php) |
 | API_ACTION-fd54c3b45a | api-action / `marketplace-oauth.php:disconnect` | pilot | 11 | [marketplace-oauth.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-oauth.php) |
 | API_ACTION-bcc6bae6d3 | api-action / `marketplace-oauth.php:pending` | pilot | 11 | [marketplace-oauth.php](../../app/Modules/Marketplace/Controllers/Api/marketplace-oauth.php) |
@@ -131,7 +131,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-2121cf0a8c | public / `api/marketplace-branding.php` | pilot | 6 | [marketplace-branding.php](../../public/api/marketplace-branding.php) |
 | PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | pilot | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
 | PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | sebagian | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
-| PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | pilot | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
+| PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | sebagian | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
 | PUBLIC-5a046b374d | public / `api/marketplace-integration-status.php` | pilot | 6 | [marketplace-integration-status.php](../../public/api/marketplace-integration-status.php) |
 | PUBLIC-a23813a6be | public / `api/marketplace-oauth.php` | pilot | 11 | [marketplace-oauth.php](../../public/api/marketplace-oauth.php) |
 | PUBLIC-5abed94f63 | public / `api/marketplace-order-finance.php` | sebagian | 6 | [marketplace-order-finance.php](../../public/api/marketplace-order-finance.php) |

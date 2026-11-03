@@ -83,7 +83,7 @@ final class MarketplaceSettlementAndClaimController
             return response()->json($res);
         } catch (DomainException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
-        } catch (InvalidArgumentException $e) {
+        } catch (InvalidArgumentException|LogicException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
     }

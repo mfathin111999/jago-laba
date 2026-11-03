@@ -4,9 +4,9 @@ namespace App\Pilots\Marketplace;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use DateTimeImmutable;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use LogicException;
 
@@ -69,7 +69,7 @@ final class MarketplaceSettlementAndClaimService
                 $today = now('Asia/Jakarta')->format('Y-m-d');
                 $now = now();
 
-                if (\Illuminate\Support\Facades\Schema::hasTable('marketplace_journal_entries')) {
+                if (Schema::hasTable('marketplace_journal_entries')) {
                     $connection->table('marketplace_journal_entries')->insert([
                         [
                             'journal_no' => $jno,
@@ -238,90 +238,8 @@ final class MarketplaceSettlementAndClaimService
             throw new DomainException('Toko tidak ditemukan dalam perusahaan aktif.', 403);
         }
 
-        $content = file_get_contents($tmpPath);
-        if (! $content) {
-            throw new InvalidArgumentException('File tidak dapat dibaca.');
-        }
-
-        $lines = preg_split('/\r\n|\r|\n/', trim($content));
-        if (count($lines) < 2) {
-            throw new InvalidArgumentException('File settlement kosong atau format tidak sesuai.');
-        }
-
-        $batchId = 'BATCH-CSV-'.date('YmdHis');
-        $importedOrders = 0;
-        $totalNetPayout = 0.0;
-        $totalPlatformFees = 0.0;
-
-        return $connection->transaction(function () use (
-            $connection, $lines, $storeId, $batchId, $origName, $user
-        ): array {
-            $importedOrders = 0;
-            $totalNetPayout = 0.0;
-            $totalPlatformFees = 0.0;
-
-            for ($rowIdx = 1; $rowIdx < count($lines); $rowIdx++) {
-                $row = str_getcsv($lines[$rowIdx]);
-                if (count($row) < 2) {
-                    continue;
-                }
-
-                $orderId = trim((string) ($row[0] ?? ('IMP-'.date('Ymd').'-'.$rowIdx)));
-                $net = (float) str_replace(['Rp', '.', ' ', ','], ['', '', '', '.'], (string) ($row[1] ?? '0'));
-                $gross = $net > 0 ? $net * 1.15 : 100000.0;
-                $adminFee = round($gross * 0.11, 2);
-                $serviceFee = round($gross * 0.04, 2);
-
-                $exists = $connection->table('marketplace_orders')->where('id', $orderId)->first();
-                if ($exists) {
-                    $connection->table('marketplace_orders')->where('id', $orderId)->update([
-                        'order_status' => 'Selesai',
-                        'completion_date' => now(),
-                        'net_settlement_amount' => $net,
-                        'escrow_status' => 'Sudah Dicairkan',
-                        'payout_batch_id' => $batchId,
-                    ]);
-                } else {
-                    $connection->table('marketplace_orders')->insert([
-                        'id' => $orderId,
-                        'store_id' => $storeId,
-                        'order_date' => now(),
-                        'completion_date' => now(),
-                        'buyer_username' => 'Buyer CSV '.$rowIdx,
-                        'order_status' => 'Selesai',
-                        'gross_sales' => $gross,
-                        'net_settlement_amount' => $net,
-                        'total_cogs_hpp' => round($gross * 0.45, 2),
-                        'escrow_status' => 'Sudah Dicairkan',
-                        'payout_batch_id' => $batchId,
-                        'created_at' => now(),
-                    ]);
-                }
-
-                $importedOrders++;
-                $totalNetPayout += $net;
-                $totalPlatformFees += ($adminFee + $serviceFee);
-            }
-
-            $this->audit->record(
-                $user,
-                'Marketplace',
-                'IMPORT_SETTLEMENT_CSV',
-                $batchId,
-                $storeId,
-                null,
-                ['batch_id' => $batchId, 'imported_orders' => $importedOrders, 'total_net' => $totalNetPayout],
-                "Impor settlement CSV {$origName} ({$importedOrders} pesanan)",
-            );
-
-            return [
-                'success' => true,
-                'batch_id' => $batchId,
-                'imported_orders' => $importedOrders,
-                'total_net_payout' => $totalNetPayout,
-                'total_fees' => $totalPlatformFees,
-                'message' => "Berhasil mengimpor {$importedOrders} transaksi settlement senilai Rp ".number_format($totalNetPayout, 0, ',', '.').' ke sistem Jago Laba.',
-            ];
-        });
+        // Disabled on purpose, as in the legacy service: the old import guessed gross sales, HPP and fees and
+        // updated orders by id alone. It may return only with a reviewed payout/account reconciliation design.
+        throw new LogicException('Impor settlement menunggu rekening dan rekonsiliasi Marketplace terpisah. Tidak ada data yang diubah.');
     }
 }
