@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
 use App\Authorization\CompanyContext;
+use App\Authorization\StoreContext;
 use App\Authorization\WorkspaceContext;
 use App\Exceptions\MarketplaceOAuthException;
 use App\Http\Responses\LegacyResponse;
 use App\Pilots\Marketplace\MarketplaceOAuthService;
+use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
+use App\Pilots\Marketplace\MarketplaceSyncStatusService;
+use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +27,10 @@ final class MarketplaceOAuthController
         private readonly CompanyContext $company,
         private readonly WorkspaceContext $workspace,
         private readonly CsrfTokenValidator $csrf,
+        private readonly RolePolicy $policy,
+        private readonly StoreContext $stores,
+        private readonly MarketplaceSyncDispatchService $dispatcher,
+        private readonly MarketplaceSyncStatusService $syncStatus,
     ) {}
 
     public function __invoke(Request $request): JsonResponse|RedirectResponse
@@ -55,6 +63,17 @@ final class MarketplaceOAuthController
             return $this->error('Token CSRF tidak valid.', 'CSRF_INVALID', 403, $request);
         }
 
+        // Connecting, refreshing and disconnecting stores are administrator actions (same as adding a store);
+        // queueing a sync needs the sync permission. Reading the configuration status is open to every user.
+        $required = match ($action) {
+            'start', 'callback', 'pending', 'select', 'refresh', 'disconnect' => 'integration.manage',
+            'sync' => 'sync.trigger',
+            default => null,
+        };
+        if ($required !== null && ! $this->policy->allows($user, $required)) {
+            return $this->error('Aksi tidak diizinkan.', 'ROLE_FORBIDDEN', 403, $request);
+        }
+
         try {
             $result = match ($action) {
                 'status' => ['success' => true, 'data' => $this->oauth->configurationStatus()],
@@ -64,7 +83,7 @@ final class MarketplaceOAuthController
                 'select' => ['success' => true, 'data' => $this->oauth->selectPending($user, $companyKey, (string) $request->input('pending_id'), (string) $request->input('external_store_id'))],
                 'refresh' => ['success' => true, 'data' => $this->oauth->refresh($user, $companyKey, (string) $request->input('store_id'))],
                 'disconnect' => ['success' => true, 'data' => $this->oauth->disconnect($user, $companyKey, (string) $request->input('store_id'))],
-                'sync' => ['success' => true, 'message' => 'Sinkronisasi toko dijadwalkan.', 'data' => ['store_id' => (string) $request->input('store_id')]],
+                'sync' => $this->sync($request, $user, $companyKey),
                 default => throw new MarketplaceOAuthException('Aksi OAuth tidak dikenali.', 'OAUTH_ACTION_UNKNOWN'),
             };
 
@@ -91,6 +110,31 @@ final class MarketplaceOAuthController
 
             return $this->error('Koneksi toko belum dapat diproses.', 'CONNECTION_NOT_VERIFIED', 400, $request);
         }
+    }
+
+    /**
+     * Queues one sync run for a verified store of the user's company. A run that is still pending is reused.
+     *
+     * @return array<string, mixed>
+     */
+    private function sync(Request $request, LegacyUser $user, string $companyKey): array
+    {
+        $storeId = trim((string) $request->input('store_id'));
+        if ($storeId === '' || ! $this->stores->canAccess($user, $storeId)) {
+            throw new MarketplaceOAuthException('Store tidak diizinkan.', 'STORE_FORBIDDEN');
+        }
+
+        if (! $this->syncStatus->hasPendingJob($companyKey, $storeId)) {
+            $this->dispatcher->dispatchForStore($companyKey, $storeId, 'oauth');
+        }
+
+        $latest = $this->syncStatus->status($companyKey, $storeId)['jobs'][0] ?? null;
+
+        return [
+            'success' => true,
+            'message' => 'Sinkronisasi toko masuk antrean dan menunggu worker.',
+            'data' => ['store_id' => $storeId, 'job_id' => $latest['id'] ?? null, 'status' => $latest['status'] ?? 'queued'],
+        ];
     }
 
     /** @return array<string, mixed> */
@@ -182,6 +226,7 @@ final class MarketplaceOAuthController
     {
         return match ($code) {
             'AUTH_REQUIRED' => 401,
+            'STORE_FORBIDDEN', 'ROLE_FORBIDDEN' => 403,
             'PROVIDER_RATE_LIMITED' => 429,
             'PROVIDER_TIMEOUT' => 504,
             'OAUTH_STORAGE_UNAVAILABLE' => 503,
@@ -196,6 +241,7 @@ final class MarketplaceOAuthController
             'AUTH_REQUIRED' => 'Sesi login berakhir. Silakan login kembali.',
             'CSRF_INVALID' => 'Token CSRF tidak valid.',
             'COMPANY_FORBIDDEN' => 'Company tidak diizinkan.',
+            'STORE_FORBIDDEN' => 'Store tidak diizinkan.',
             'WORKSPACE_FORBIDDEN' => 'Workspace Marketplace tidak diizinkan.',
             'WORKSPACE_NOT_ACTIVE' => 'Workspace Marketplace belum aktif.',
             'INVALID_OAUTH_STATE', 'INVALID_OAUTH_PLATFORM' => 'Sesi otorisasi tidak valid atau sudah kedaluwarsa.',
