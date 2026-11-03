@@ -9,6 +9,7 @@ use App\Http\Controllers\LegacyPilotPageController;
 use App\Http\Controllers\LegacyRpcController;
 use App\Http\Controllers\MarketplaceAnalyticsController;
 use App\Http\Controllers\MarketplaceAutoSyncController;
+use App\Http\Controllers\MarketplaceBrandingController;
 use App\Http\Controllers\MarketplaceCatalogController;
 use App\Http\Controllers\MarketplaceExpenseController;
 use App\Http\Controllers\MarketplaceExpenseDeleteController;
@@ -173,6 +174,9 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::post('/api/marketplace-browser-pulse.php', [MarketplaceAutoSyncController::class, 'pulse'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
         ->name('legacy.marketplace.browser-pulse');
+    Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
+        ->name('legacy.marketplace.branding');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

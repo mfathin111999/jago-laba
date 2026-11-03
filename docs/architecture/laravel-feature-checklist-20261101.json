@@ -5400,7 +5400,7 @@
             "source": "public/api/marketplace-branding.php",
             "line": 1,
             "source_sha256": "40e73f775ae89127963606db3b0112c4bf5cb1b463e1abddd3b1565e44109e4c",
-            "status": "belum",
+            "status": "pilot",
             "target": "PROPOSED compatibility /api/marketplace-branding.php; activate only after parity",
             "step": 6,
             "owner": "pengembang-marketplace-platform",

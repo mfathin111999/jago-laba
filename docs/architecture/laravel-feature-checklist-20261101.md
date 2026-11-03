@@ -128,7 +128,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-90f26721c1 | public / `api/marketplace-ajax.php` | sebagian | 6 | [marketplace-ajax.php](../../public/api/marketplace-ajax.php) |
 | PUBLIC-19fb71eb79 | public / `api/marketplace-analytics.php` | belum | 6 | [marketplace-analytics.php](../../public/api/marketplace-analytics.php) |
 | PUBLIC-676e7578ef | public / `api/marketplace-auto-sync.php` | pilot | 11 | [marketplace-auto-sync.php](../../public/api/marketplace-auto-sync.php) |
-| PUBLIC-2121cf0a8c | public / `api/marketplace-branding.php` | belum | 6 | [marketplace-branding.php](../../public/api/marketplace-branding.php) |
+| PUBLIC-2121cf0a8c | public / `api/marketplace-branding.php` | pilot | 6 | [marketplace-branding.php](../../public/api/marketplace-branding.php) |
 | PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | pilot | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
 | PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | belum | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
 | PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | pilot | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
