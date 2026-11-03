@@ -21,6 +21,18 @@ final class MarketplaceLegacyReportController
         return redirect()->route('pilot.marketplace.orders', $request->except('format'));
     }
 
+    /** The legacy analytics URL names the store `store_filter`; Laravel reads `store`. */
+    public function analytics(Request $request): Response|RedirectResponse
+    {
+        $request->merge(['store' => $request->query('store_filter', $request->query('store'))]);
+
+        if (in_array($request->query('format'), ['csv', 'xlsx'], true)) {
+            return app()->call([app(MarketplaceAnalyticsController::class), '__invoke']);
+        }
+
+        return redirect()->route('pilot.marketplace.analytics', $request->except(['format', 'store_filter']));
+    }
+
     public function dashboard(Request $request): Response|RedirectResponse
     {
         if ($request->query('format') === 'csv') {

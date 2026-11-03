@@ -46,7 +46,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A6e Dokumen yang diunggah benar-benar ditulis ke disk privat dan dicatat (sebelumnya bytes dibuang tapi respons "tersimpan")
   - [x] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc` — snapshot dijadwalkan lewat marker + scheduler tiap menit (permintaan beruntun tidak menunda); retry backup penjualan; retry unggah faktur
 - [x] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php` — unduh dokumen (cek akar penyimpanan), diagnostik hanya Owner tanpa path/hash, resi: GET kedaluwarsa + POST kontrak tanpa provider, workspace.php sudah dilayani Foundation.vue
-- [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** (kriteria: menulis nyata, cek akses, tidak mengarang data, ada tes yang membuktikan)
+- [x] A9 **Audit kode "pilot" buatan agent sebelumnya** (kriteria: menulis nyata, cek akses, tidak mengarang data, ada tes yang membuktikan)
   - [x] Sudah diaudit dan diperbaiki: store-deletion, auto-sync, backup, dokumen, otorisasi RPC, fulfillment (mengarang kurir + status Terkirim), impor settlement (menebak angka, tanpa scope), gate operasi Konveksi (lock/idempotensi/versi)
   - [x] Sudah diaudit, sesuai legacy: klaim retur, impor laporan iklan
   - [x] Sales (post/void/correct) diaudit dan diport penuh: stok, mutasi, kas, total dihitung server, penomoran berurutan, kontrol koreksi
@@ -54,10 +54,11 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] Inventori (audit/migrasi id) sesuai legacy, ditambah tes; HPP (activateHpp, syncFromPurchases) diport penuh: versi per model, tolak material tanpa harga, riwayat lengkap, BOM tersimpan
   - [x] Marketplace diaudit: order manual + jurnal (jurnal bocor lintas perusahaan, order crash tanpa order_date), store write (sesuai legacy), settings (rahasia masuk audit log), job antrian (tidak mengklaim sync palsu)
   - [x] Gemini/template: OCR faktur karangan → kini jujur nonaktif; simpan key gagal diam-diam → kini error
-  - [ ] Belum diaudit baris-per-baris (sudah punya tes lama, perlu dibandingkan dengan legacy): `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService` + alur callback; `MarketplaceAnalyticsReadService`/`OrderReadService` (hasil baca, bukan tulis)
+  - [x] HPP Marketplace (sesuai legacy; ditambah kunci baris + tes hitung ulang), Expense (idempotensi per perusahaan, sudah baik), OAuth (tanpa cek peran + "sync" palsu → diperbaiki)
+  - [ ] Hasil baca (`OrderReadService`, `MarketplaceAnalyticsReadService`, `MarketplacePilotReadService`) belum dibandingkan dengan legacy untuk kesetaraan angka; tercakup di UAT Langkah 12
   - Catatan keamanan untuk Fase E: `webhook_global_secret` bawaan migrasi legacy adalah string tetap di repo; ganti sebelum webhook diaktifkan. Gemini API key disimpan teks biasa di `system_settings` (sama dengan legacy; enkripsi mengubah format dan memutus koeksistensi)
   - Catatan minor: parsing nominal klaim `str_replace('.', '')` mengubah `"1500.50"` jadi `150050` (sama dengan legacy, kontrak format Indonesia); status klaim tidak divalidasi di controller (enum MySQL menolak → 500, bukan 422)
-- [ ] A8 Suite penuh + commit
+- [x] A8 Fase A ditutup: 216 tes / 1.925 assertion hijau; endpoint publik tersisa hanya UI (lihat Fase B/C)
 
 ### Fase B — UI Marketplace (36 view → ±8 halaman)
 - [ ] B0 Komponen bersama: layout, sidebar global/toko, store picker, date range, tabel+paging, modal form, KPI card, ikon/logo platform
@@ -98,3 +99,18 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 ## Urutan eksekusi
 
 0 → A → B → C selesai tanpa menunggu siapa pun. D, E, F1 diminta ke pemilik/operator sekarang agar siap ketika B/C selesai. F2–F4 menyusul.
+
+## Prasyarat operator hasil Fase A (kumpulan satu tempat)
+
+Diisi di `.env` / konfigurasi server privat; tidak ada yang berisi nilai rahasia di repo.
+
+| Kebutuhan | Keterangan |
+|---|---|
+| `JL_BACKUP_DIR`, `JL_BACKUP_MIRROR_DIR`, `JL_MYSQLDUMP` | Folder backup (di luar web root), salinan eksternal opsional, path `mysqldump`. Tanpa `mysqldump` hanya snapshot JSON gzip yang dibuat |
+| `JL_DOCUMENT_STORAGE_ROOT` | Arahkan ke root `storage` legacy supaya dokumen lama tetap terbaca |
+| `JL_DELETION_LEDGER_DIR` | Catatan niat penghapusan toko, di luar database |
+| Tabel `konveksi_request_receipts` | Harus ada di database Konveksi (sudah dibuat legacy). Tanpa itu semua tulisan Konveksi ditolak (503), bukan dijalankan tanpa perlindungan |
+| `php artisan marketplace:store-deletion --install` | Sekali, untuk tabel dan trigger penghapusan toko (hanya MySQL). Tidak dibuat otomatis dari request web |
+| Cron `schedule:run` tiap menit + worker antrian database | Menjalankan: sync cron, auto-sync, penghapusan toko, snapshot terjadwal |
+| Klien Konveksi | Setiap tulisan wajib mengirim `X-Idempotency-Key`; sync tab mengirim `X-JL-Collection-Versions` dan `X-JL-Reset-Epoch` (UI lama sudah; UI Vue Fase C harus mengikuti) |
+| Belum terbukti di MySQL | Trigger penghapusan toko, `GET_LOCK` gate Konveksi, `mysqldump`, semua tes memakai SQLite → wajib dijalankan di staging (Fase D) |

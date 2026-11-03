@@ -5344,7 +5344,7 @@
             "source": "public/api/marketplace-analytics.php",
             "line": 1,
             "source_sha256": "1f6aee3ef650a917592329a4f3118ae4fa4188ec016bde2b384156e0a2a52a7b",
-            "status": "belum",
+            "status": "sebagian",
             "target": "PROPOSED compatibility /api/marketplace-analytics.php; activate only after parity",
             "step": 6,
             "owner": "pengembang-marketplace-platform",

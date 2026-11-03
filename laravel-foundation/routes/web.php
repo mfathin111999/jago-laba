@@ -192,6 +192,9 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
         ->name('legacy.marketplace.orders');
+    Route::get('/api/marketplace-analytics.php', [MarketplaceLegacyReportController::class, 'analytics'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
+        ->name('legacy.marketplace.analytics');
     Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:report.view'])
         ->name('legacy.marketplace.dashboard');

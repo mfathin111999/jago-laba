@@ -451,6 +451,25 @@ final class PilotReadOnlyTest extends TestCase
         $this->get('/api/marketplace-orders.php?store=store-foreign&format=csv')->assertForbidden();
     }
 
+    public function test_legacy_analytics_url_forwards_exports_and_redirects_the_page(): void
+    {
+        $this->loginAndSelect('marketplace');
+        $query = 'period=custom&date_start=2026-10-01&date_end=2026-10-31&date_basis=created&analytics_mode=all';
+
+        $legacy = $this->get('/api/marketplace-analytics.php?store_filter=store-a&'.$query.'&format=csv')->assertOk();
+        $modern = $this->get('/marketplace/analytics/export?store=store-a&'.$query.'&format=csv')->assertOk();
+        $this->assertStringContainsString('text/csv', (string) $legacy->headers->get('Content-Type'));
+        $this->assertSame($modern->streamedContent(), $legacy->streamedContent());
+
+        $redirect = $this->get('/api/marketplace-analytics.php?store_filter=store-a&'.$query);
+        $redirect->assertRedirect();
+        $this->assertStringContainsString('/pilot/marketplace/analytics?', (string) $redirect->headers->get('Location'));
+        $this->assertStringContainsString('store=store-a', (string) $redirect->headers->get('Location'));
+        $this->assertStringNotContainsString('store_filter', (string) $redirect->headers->get('Location'));
+
+        $this->get('/api/marketplace-analytics.php?store_filter=store-foreign&'.$query.'&format=csv')->assertForbidden();
+    }
+
     public function test_provider_boundary_endpoints_answer_from_local_data_and_never_accept_partner_secrets(): void
     {
         $this->loginAndSelect('marketplace');
