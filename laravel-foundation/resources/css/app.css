@@ -174,3 +174,5 @@ th.is-right, td.is-right { text-align: right; }
 
 .brand-preview { display: block; max-width: 160px; max-height: 80px; margin: .6rem 0; object-fit: contain; border: 1px solid #d8e2ee; border-radius: 8px; padding: .4rem; background: #fff; }
 .notice { border-left: 4px solid #1767aa; }
+
+table th.num, table td.num { text-align: right; white-space: nowrap; }

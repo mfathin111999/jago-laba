@@ -4,13 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceCatalogRequest;
 use App\Marketplace\CatalogReadService;
+use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Policies\RolePolicy;
 use Inertia\Inertia;
 
 final class MarketplaceCatalogController
 {
-    public function __invoke(MarketplaceCatalogRequest $request, CatalogReadService $catalog): mixed
+    public function __invoke(MarketplaceCatalogRequest $request, CatalogReadService $catalog, MarketplaceStoreReadService $stores, RolePolicy $policy): mixed
     {
         $filters = $request->validated();
+        $overview = $stores->overview((string) $request->attributes->get('company_key'));
+        $filters['store_id'] = (string) ($filters['store_id'] ?? $overview['stores'][0]['id'] ?? '');
+        abort_if($filters['store_id'] === '', 422, 'Pilih toko terlebih dahulu.');
         try {
             $data = $catalog->listing((string) $request->attributes->get('company_key'), $filters['store_id'], $filters);
         } catch (\DomainException $exception) {
@@ -34,6 +39,10 @@ final class MarketplaceCatalogController
             return response()->json($props)->header('Cache-Control', 'no-store, private');
         }
 
-        return Inertia::render('Marketplace/Catalog', $props);
+        return Inertia::render('Marketplace/Catalog', $props + [
+            'stores' => $overview['stores'],
+            'scope' => ['company_key' => (string) $request->attributes->get('company_key'), 'store_id' => $filters['store_id']],
+            'can_edit_hpp' => $policy->allows($request->user('web'), 'hpp.edit'),
+        ]);
     }
 }

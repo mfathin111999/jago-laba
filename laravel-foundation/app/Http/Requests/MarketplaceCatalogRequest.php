@@ -19,7 +19,7 @@ final class MarketplaceCatalogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_id' => ['required', 'string', 'max:120'],
+            'store_id' => ['nullable', 'string', 'max:120'],
             'search' => ['nullable', 'string', 'max:200'],
             'product_status' => ['nullable', 'string', 'max:50'],
             'date_start' => ['nullable', 'date_format:Y-m-d'],

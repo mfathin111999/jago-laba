@@ -63,7 +63,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 ### Fase B — UI Marketplace (36 view → ±8 halaman)
 - [x] B0 Fondasi UI: build frontend diperbaiki (sebelumnya gagal `vue-tsc`), `lib/format.ts` + `lib/api.ts` (8 tes Node), komponen bersama (`MarketplaceShell`, `DataTable`, `Modal`, `StatusBadge`, `FlashBanner`, `KpiCard`), navigasi nyata `lib/marketplaceNav.ts`
 - [x] B1 Dashboard toko + analytics toko + global analytics/charts
-- [ ] B2 Produk (global & toko) + HPP editor + stok
+- [~] B2 Produk & HPP: halaman katalog per toko (varian, harga, stok, HPP, terjual, CSV) + ubah HPP (tanggal berlaku, hitung ulang riwayat, semua varian). Belum: produk lintas-toko, daftar stok gudang + minimum stok (butuh endpoint baca baru)
 - [x] B3 Pengeluaran toko (daftar, filter, CSV, catat, hapus) + rincian pesanan/retur (modal di Pesanan). Ditunda: pengeluaran lintas-toko (global) dan pemasukan (income) — income menyatu dengan penarikan dana, dikerjakan di B6
 - [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
 - [x] B5 Halaman Integrasi: status koneksi, hubungkan/segarkan/putuskan, sinkron sekarang, kesehatan sumber data + coba ulang, antrean sinkron, identitas & logo. Callback OAuth kini kembali ke /marketplace/integrations. Ditunda: form pengaturan aplikasi (berisi rahasia partner; menunggu keputusan owner)

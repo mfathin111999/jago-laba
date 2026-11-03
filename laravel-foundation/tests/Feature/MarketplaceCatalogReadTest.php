@@ -62,6 +62,23 @@ final class MarketplaceCatalogReadTest extends TestCase
         $this->assertSame($before, DB::table('marketplace_catalog_variants')->get()->toJson());
     }
 
+    public function test_the_page_falls_back_to_the_first_store_and_flags_hpp_editing_by_role(): void
+    {
+        $headers = ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'text/html, application/xhtml+xml'];
+        if (is_file(public_path('build/manifest.json'))) {
+            $headers['X-Inertia-Version'] = hash_file('xxh128', public_path('build/manifest.json'));
+        }
+
+        $this->withHeaders($headers)->get('/marketplace/catalog')->assertOk()
+            ->assertJsonPath('component', 'Marketplace/Catalog')
+            ->assertJsonPath('props.scope.store_id', 'a')
+            ->assertJsonPath('props.can_edit_hpp', false)
+            ->assertJsonCount(1, 'props.stores');
+
+        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->withHeaders($headers)->get('/marketplace/catalog')->assertJsonPath('props.can_edit_hpp', true);
+    }
+
     public function test_catalog_rejects_foreign_store_and_inactive_workspace(): void
     {
         $this->getJson('/marketplace/catalog?store_id=b')->assertForbidden();
