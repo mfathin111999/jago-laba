@@ -132,7 +132,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | pilot | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
 | PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | sebagian | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
 | PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | pilot | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
-| PUBLIC-5a046b374d | public / `api/marketplace-integration-status.php` | belum | 6 | [marketplace-integration-status.php](../../public/api/marketplace-integration-status.php) |
+| PUBLIC-5a046b374d | public / `api/marketplace-integration-status.php` | pilot | 6 | [marketplace-integration-status.php](../../public/api/marketplace-integration-status.php) |
 | PUBLIC-a23813a6be | public / `api/marketplace-oauth.php` | pilot | 11 | [marketplace-oauth.php](../../public/api/marketplace-oauth.php) |
 | PUBLIC-5abed94f63 | public / `api/marketplace-order-finance.php` | sebagian | 6 | [marketplace-order-finance.php](../../public/api/marketplace-order-finance.php) |
 | PUBLIC-032437fc39 | public / `api/marketplace-orders.php` | sebagian | 6 | [marketplace-orders.php](../../public/api/marketplace-orders.php) |

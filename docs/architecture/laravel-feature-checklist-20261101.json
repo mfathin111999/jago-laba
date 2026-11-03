@@ -5512,7 +5512,7 @@
             "source": "public/api/marketplace-integration-status.php",
             "line": 1,
             "source_sha256": "8f80a77b882cd3866adab63dadebac88a28cf1a04ffff27eb28760d862e9471e",
-            "status": "belum",
+            "status": "pilot",
             "target": "PROPOSED compatibility /api/marketplace-integration-status.php; activate only after parity",
             "step": 6,
             "owner": "pengembang-marketplace-platform",

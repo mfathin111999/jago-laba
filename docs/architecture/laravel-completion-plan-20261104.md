@@ -33,10 +33,10 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [ ] A2b Pasang `MarketplaceStoreDeletionService::guardAuthorization` di callback/select OAuth agar toko yang sedang dihapus tidak bisa dihubungkan ulang
 - [x] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status) — start/background/step/status/preview memakai antrian DB yang ada; catalog/catalog_status masih sebagian (butuh konektor provider, mengembalikan pesan eksplisit)
 - [x] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save) — withdrawals confirm+template selesai (+perbaikan bug staging 10 baris); price hanya kontrak (503, tanpa panggilan provider) → menunggu Fase E
-- [ ] A5 Endpoint publik Marketplace (dipecah karena sifatnya berbeda):
+- [x] A5 Endpoint publik Marketplace (dipecah karena sifatnya berbeda):
   - [x] A5a `marketplace-stock` (minimum stok) + `marketplace-auto-sync` + `marketplace-browser-pulse` — termasuk menggantikan command auto-sync yang ternyata stub
   - [x] A5b `marketplace-branding` (logo) — validasi gambar (MIME+dimensi), CSP sandbox saat disajikan, hanya Owner/Admin yang menyimpan
-  - [ ] A5e `marketplace-integration-status` (GET kesehatan integrasi + retry lewat antrian) — bergantung pada port IntegrationRuntime/IntegrationPolicy/PartnerSettings, jadi dikerjakan terpisah
+  - [x] A5e `marketplace-integration-status` (GET kesehatan integrasi + retry lewat antrian) — bergantung pada port IntegrationRuntime/IntegrationPolicy/PartnerSettings, jadi dikerjakan terpisah — kesehatan integrasi + retry lewat antrian; pengecekan "konteks berubah" ditunda ke port binding OAuth (Fase E) agar tidak salah menandai reauthorize
   - [x] A5c Ekspor CSV: orders, dashboard (halaman HTML-nya masuk Fase B) — export saja; checklist PUBLIC orders/dashboard tetap "sebagian" sampai halamannya dibangun (B1/B3)
   - [x] A5d Menyentuh provider/rahasia → kontrak saja, tanpa panggilan provider: `marketplace-order-finance`, `marketplace-partner-settings` (butuh keputusan pemilik, sama seperti `save_api_credentials`) — order-finance menjawab dari data lokal (synced:false); partner-settings tidak menerima rahasia dari web (503) → keputusan pemilik
 - [ ] A6 RPC Konveksi sisa: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`

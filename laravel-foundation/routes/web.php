@@ -16,6 +16,7 @@ use App\Http\Controllers\MarketplaceExpenseDeleteController;
 use App\Http\Controllers\MarketplaceExpensesReadController;
 use App\Http\Controllers\MarketplaceFulfillmentController;
 use App\Http\Controllers\MarketplaceHppWriteController;
+use App\Http\Controllers\MarketplaceIntegrationStatusController;
 use App\Http\Controllers\MarketplaceLegacyReportController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
@@ -197,6 +198,9 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::post('/api/marketplace-partner-settings.php', [MarketplaceProviderBoundaryController::class, 'partnerSettings'])
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:integration.manage'])
         ->name('legacy.marketplace.partner-settings');
+    Route::match(['GET', 'POST'], '/api/marketplace-integration-status.php', MarketplaceIntegrationStatusController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
+        ->name('legacy.marketplace.integration-status');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');
