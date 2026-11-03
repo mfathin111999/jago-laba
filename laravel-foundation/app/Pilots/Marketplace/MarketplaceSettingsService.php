@@ -4,8 +4,8 @@ namespace App\Pilots\Marketplace;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use DomainException;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 final class MarketplaceSettingsService
@@ -50,7 +50,7 @@ final class MarketplaceSettingsService
 
         if (! empty($p['save_simulation'])) {
             $connection = $this->database->connection();
-            if (\Illuminate\Support\Facades\Schema::hasTable('marketplace_price_simulations')) {
+            if (Schema::hasTable('marketplace_price_simulations')) {
                 $connection->table('marketplace_price_simulations')->insert([
                     'product_name' => $productName,
                     'sku' => $sku,
@@ -93,7 +93,7 @@ final class MarketplaceSettingsService
     public function getSavedPriceSimulations(): array
     {
         $connection = $this->database->connection();
-        if (! \Illuminate\Support\Facades\Schema::hasTable('marketplace_price_simulations')) {
+        if (! Schema::hasTable('marketplace_price_simulations')) {
             return [];
         }
 
@@ -112,7 +112,7 @@ final class MarketplaceSettingsService
             ->where('s.id', $storeId)
             ->where('s.company_key', $companyKey);
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('marketplace_api_credentials')) {
+        if (Schema::hasTable('marketplace_api_credentials')) {
             $query->leftJoin('marketplace_api_credentials as c', 'c.store_id', '=', 's.id')
                 ->select([
                     's.*',
@@ -138,28 +138,44 @@ final class MarketplaceSettingsService
         return null;
     }
 
+    /**
+     * Updates the settings that already exist; unknown keys are ignored. The audit trail lists only the keys that
+     * really changed and masks the values of sensitive ones (secrets, tokens, keys).
+     *
+     * @param  array<string, mixed>  $settings
+     * @return array<string, mixed>
+     */
     public function saveAppSettings(LegacyUser $user, array $settings): array
     {
         $connection = $this->database->connection();
-        if (! \Illuminate\Support\Facades\Schema::hasTable('marketplace_app_settings')) {
+        if (! Schema::hasTable('marketplace_app_settings')) {
             return ['success' => true, 'updated_count' => 0, 'message' => 'Tabel pengaturan belum ada.'];
         }
 
-        $updatedCount = 0;
-        foreach ($settings as $key => $val) {
-            if ($key === 'action') {
-                continue;
-            }
-            $affected = $connection->table('marketplace_app_settings')
-                ->where('setting_key', $key)
-                ->update([
-                    'setting_value' => (string) $val,
-                    'updated_at' => now(),
-                ]);
-            if ($affected > 0) {
-                $updatedCount++;
+        $submitted = [];
+        foreach ($settings as $key => $value) {
+            if ($key !== 'action' && is_scalar($value)) {
+                $submitted[(string) $key] = (string) $value;
             }
         }
+
+        $before = [];
+        $after = [];
+        $updatedCount = 0;
+        $connection->transaction(function () use ($connection, $submitted, &$before, &$after, &$updatedCount): void {
+            $current = $connection->table('marketplace_app_settings')->whereIn('setting_key', array_keys($submitted))
+                ->lockForUpdate()->pluck('setting_value', 'setting_key')->all();
+
+            foreach ($submitted as $key => $value) {
+                if (! array_key_exists($key, $current) || (string) $current[$key] === $value) {
+                    continue;
+                }
+                $connection->table('marketplace_app_settings')->where('setting_key', $key)->update(['setting_value' => $value, 'updated_at' => now()]);
+                $before[$key] = $this->maskSensitive($key, (string) $current[$key]);
+                $after[$key] = $this->maskSensitive($key, $value);
+                $updatedCount++;
+            }
+        });
 
         $this->audit->record(
             $user,
@@ -167,8 +183,8 @@ final class MarketplaceSettingsService
             'SAVE_APP_SETTINGS',
             'SETTINGS',
             'GLOBAL',
-            null,
-            $settings,
+            $before,
+            $after,
             "Simpan pengaturan aplikasi ({$updatedCount} diperbarui)",
         );
 
@@ -177,5 +193,10 @@ final class MarketplaceSettingsService
             'updated_count' => $updatedCount,
             'message' => 'Pengaturan aplikasi marketplace berhasil disimpan dan disinkronkan.',
         ];
+    }
+
+    private function maskSensitive(string $key, string $value): string
+    {
+        return preg_match('/secret|token|password|passwd|api_?key|private|credential/i', $key) === 1 ? '***' : $value;
     }
 }
