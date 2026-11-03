@@ -18,6 +18,7 @@ use App\Http\Controllers\MarketplaceExpenseDeleteController;
 use App\Http\Controllers\MarketplaceExpensesReadController;
 use App\Http\Controllers\MarketplaceFulfillmentController;
 use App\Http\Controllers\MarketplaceHppWriteController;
+use App\Http\Controllers\MarketplaceIntegrationsPageController;
 use App\Http\Controllers\MarketplaceIntegrationStatusController;
 use App\Http\Controllers\MarketplaceLegacyReportController;
 use App\Http\Controllers\MarketplaceOAuthController;
@@ -49,6 +50,8 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.expenses.read');
     Route::get('/marketplace/catalog', MarketplaceCatalogController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.catalog');
+    Route::get('/marketplace/integrations', MarketplaceIntegrationsPageController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.integrations');
     Route::get('/marketplace/stores', MarketplaceStoresPageController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.stores');
     Route::get('/pilot/marketplace', MarketplacePilotController::class)

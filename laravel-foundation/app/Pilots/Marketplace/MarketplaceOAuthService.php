@@ -537,9 +537,9 @@ final class MarketplaceOAuthService
 
     private function safeReturnPath(?string $returnPath): string
     {
-        $returnPath = trim((string) ($returnPath ?: config('jago.oauth.return_path', 'marketplace.php?scope=global&tab=integrasi')));
+        $returnPath = trim((string) ($returnPath ?: config('jago.oauth.return_path', 'marketplace/integrations')));
         $parsed = parse_url($returnPath);
-        if (($parsed['scheme'] ?? '') !== '' || ($parsed['host'] ?? '') !== '' || ($parsed['path'] ?? 'marketplace.php') !== 'marketplace.php') {
+        if (($parsed['scheme'] ?? '') !== '' || ($parsed['host'] ?? '') !== '' || ! in_array($parsed['path'] ?? 'marketplace.php', ['marketplace.php', 'marketplace/integrations'], true)) {
             throw new MarketplaceOAuthException('Tujuan kembali tidak diizinkan.', 'RETURN_PATH_INVALID');
         }
 

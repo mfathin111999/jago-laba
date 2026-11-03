@@ -66,7 +66,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [ ] B2 Produk (global & toko) + HPP editor + stok
 - [x] B3 Pengeluaran toko (daftar, filter, CSV, catat, hapus) + rincian pesanan/retur (modal di Pesanan). Ditunda: pengeluaran lintas-toko (global) dan pemasukan (income) — income menyatu dengan penarikan dana, dikerjakan di B6
 - [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
-- [ ] B5 Integrasi + OAuth + settings tabs + branding
+- [x] B5 Halaman Integrasi: status koneksi, hubungkan/segarkan/putuskan, sinkron sekarang, kesehatan sumber data + coba ulang, antrean sinkron, identitas & logo. Callback OAuth kini kembali ke /marketplace/integrations. Ditunda: form pengaturan aplikasi (berisi rahasia partner; menunggu keputusan owner)
 - [ ] B6 Marketing/iklan + withdrawals
 - [ ] B7 Sync, auto-sync controls, background sync, price editor
 - [ ] B8 Suite + smoke visual desktop/mobile + commit

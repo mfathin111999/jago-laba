@@ -184,7 +184,7 @@ final class MarketplaceOAuthController
     /** @param array<string, mixed> $data */
     private function redirectCallback(array $data, ?MarketplaceOAuthException $exception): RedirectResponse
     {
-        $returnPath = $this->safeRedirectPath((string) ($data['return_path'] ?? config('jago.oauth.return_path', 'marketplace.php?scope=global&tab=integrasi')));
+        $returnPath = $this->safeRedirectPath((string) ($data['return_path'] ?? config('jago.oauth.return_path', 'marketplace/integrations')));
         $query = [
             'oauth_status' => $exception === null ? (($data['status'] ?? 'success') === 'choose' ? 'choose' : 'success') : 'error',
         ];
@@ -204,8 +204,8 @@ final class MarketplaceOAuthController
     private function safeRedirectPath(string $path): string
     {
         $parsed = parse_url($path);
-        if (($parsed['scheme'] ?? '') !== '' || ($parsed['host'] ?? '') !== '' || ($parsed['path'] ?? 'marketplace.php') !== 'marketplace.php') {
-            return (string) config('jago.oauth.return_path', 'marketplace.php?scope=global&tab=integrasi');
+        if (($parsed['scheme'] ?? '') !== '' || ($parsed['host'] ?? '') !== '' || ! in_array($parsed['path'] ?? 'marketplace.php', ['marketplace.php', 'marketplace/integrations'], true)) {
+            return (string) config('jago.oauth.return_path', 'marketplace/integrations');
         }
 
         return ltrim($path, '/');

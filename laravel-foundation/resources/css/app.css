@@ -171,3 +171,6 @@ th.is-right, td.is-right { text-align: right; }
 .cell-note { margin-top: .25rem; font-size: .74rem; white-space: normal; }
 .warn-text { color: #965a00; }
 .page-controls { margin-top: 1rem; justify-content: space-between; }
+
+.brand-preview { display: block; max-width: 160px; max-height: 80px; margin: .6rem 0; object-fit: contain; border: 1px solid #d8e2ee; border-radius: 8px; padding: .4rem; background: #fff; }
+.notice { border-left: 4px solid #1767aa; }

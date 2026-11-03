@@ -16,6 +16,7 @@ export const MARKETPLACE_NAV: NavItem[] = [
     { key: 'analytics', label: 'Analitik & laporan', path: '/pilot/marketplace/analytics', needsStore: false },
     { key: 'catalog', label: 'Produk & HPP', path: '/marketplace/catalog', needsStore: true },
     { key: 'expenses', label: 'Pengeluaran', path: '/marketplace/expenses', needsStore: true },
+    { key: 'integrations', label: 'Integrasi', path: '/marketplace/integrations', needsStore: false },
     { key: 'stores', label: 'Toko', path: '/marketplace/stores', needsStore: false },
 ];
 

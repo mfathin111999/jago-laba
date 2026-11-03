@@ -13,6 +13,10 @@ final class LegacyPilotPageController
     {
         $tab = strtolower(trim((string) $request->query('tab', 'dashboard')));
 
+        if ($tab === 'integrasi') {
+            return redirect()->route('marketplace.integrations', $this->query($request, ['store', 'store_id', 'oauth_status', 'oauth_message', 'oauth_code', 'pending'], false), 303);
+        }
+
         if ($tab !== 'dashboard') {
             return LegacyResponse::unavailable('page');
         }
@@ -37,7 +41,7 @@ final class LegacyPilotPageController
      * @param  list<string>  $allowed
      * @return array<string, string>
      */
-    private function query(Request $request, array $allowed): array
+    private function query(Request $request, array $allowed, bool $forceDashboard = true): array
     {
         $query = [];
         foreach ($allowed as $key) {
@@ -47,7 +51,9 @@ final class LegacyPilotPageController
             }
         }
 
-        $query['tab'] = 'dashboard';
+        if ($forceDashboard) {
+            $query['tab'] = 'dashboard';
+        }
 
         return $query;
     }

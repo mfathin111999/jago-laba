@@ -78,7 +78,7 @@ return [
         'mode' => env('JL_MARKETPLACE_OAUTH_MODE', 'sandbox'),
         'platforms' => ['Shopee', 'TikTok Shop', 'Tokopedia', 'Lazada', 'Blibli'],
         'state_ttl_seconds' => max(60, (int) env('JL_MARKETPLACE_OAUTH_STATE_TTL', 600)),
-        'return_path' => 'marketplace.php?scope=global&tab=integrasi',
+        'return_path' => 'marketplace/integrations',
         'retry' => [
             'max_attempts' => max(1, (int) env('JL_MARKETPLACE_OAUTH_RETRY_ATTEMPTS', 2)),
         ],
