@@ -46,7 +46,11 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A6e Dokumen yang diunggah benar-benar ditulis ke disk privat dan dicatat (sebelumnya bytes dibuang tapi respons "tersimpan")
   - [x] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc` — snapshot dijadwalkan lewat marker + scheduler tiap menit (permintaan beruntun tidak menunda); retry backup penjualan; retry unggah faktur
 - [x] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php` — unduh dokumen (cek akar penyimpanan), diagnostik hanya Owner tanpa path/hash, resi: GET kedaluwarsa + POST kontrak tanpa provider, workspace.php sudah dilayani Foundation.vue
-- [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** — 4 stub/lubang ditemukan secara kebetulan (store-deletion, auto-sync, backup, dokumen) + 1 lubang otorisasi RPC. Periksa sisanya satu per satu: worker `bin/workers/*` (4), `MarketplaceSyncCommand`, `Konveksi{Hutang,Inventory,SyncAndHpp,Sales,Purchase}Service`, `Gemini`/template, `MarketplaceFulfillmentWriteService`, `MarketplaceSettlementAndClaimService`. Kriteria: tulis nyata, cek akses, tes yang membuktikan
+- [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** (kriteria: menulis nyata, cek akses, tidak mengarang data, ada tes yang membuktikan)
+  - [x] Sudah diaudit dan diperbaiki: store-deletion, auto-sync, backup, dokumen, otorisasi RPC, fulfillment (mengarang kurir + status Terkirim), impor settlement (menebak angka, tanpa scope), gate operasi Konveksi (lock/idempotensi/versi)
+  - [x] Sudah diaudit, sesuai legacy: klaim retur, impor laporan iklan
+  - [ ] Belum diaudit: `KonveksiSalesWriteService` (post/correct/void: stok & HPP), `KonveksiPurchaseWriteService`, `KonveksiInventoryService`, `KonveksiSyncAndHppService` (activateHpp, syncFromPurchases), template/Gemini di `KonveksiDocumentAndAiService`, `MarketplaceOrderWriteService`, `MarketplaceStoreWriteService`, `MarketplaceSettingsService`, `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService`, `MarketplaceSyncCommand`/job queue, `bin/workers/*`
+  - Catatan minor: parsing nominal klaim `str_replace('.', '')` mengubah `"1500.50"` jadi `150050` (sama dengan legacy, kontrak format Indonesia); status klaim tidak divalidasi di controller (enum MySQL menolak → 500, bukan 422)
 - [ ] A8 Suite penuh + commit
 
 ### Fase B — UI Marketplace (36 view → ±8 halaman)
