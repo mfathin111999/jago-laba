@@ -161,13 +161,13 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | RPC-118b260558 | rpc / `extractPurchaseInvoiceServerRpc` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-fe6f5b879a | rpc / `getGeminiApiKeyStatusServerRpc` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-f7e67c403e | rpc / `getRiwayatBackupJagoLaba` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
-| RPC-de36fcff58 | rpc / `jadwalkanSnapshotRinganJagoLaba` | belum | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
+| RPC-de36fcff58 | rpc / `jadwalkanSnapshotRinganJagoLaba` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-a957ea40a5 | rpc / `loadSemuaData` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-08fda26938 | rpc / `migrateInventoryIdStokItemServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-fa39029a35 | rpc / `postPenjualanProduksiServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-a0cb35f85f | rpc / `prosesLoginBackend` | pilot | 5 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
-| RPC-4e42ab21d5 | rpc / `retryBackupPenjualanProduksiServer` | belum | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
-| RPC-9908f66958 | rpc / `retryUploadPurchaseDocumentServerRpc` | belum | 9 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
+| RPC-4e42ab21d5 | rpc / `retryBackupPenjualanProduksiServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
+| RPC-9908f66958 | rpc / `retryUploadPurchaseDocumentServerRpc` | pilot | 9 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-bcd3067cec | rpc / `saveDocumentFileServer` | pilot | 9 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-e2fd68d9ec | rpc / `saveDocumentTemplate` | pilot | 9 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-7707b9d32b | rpc / `saveDraftPenjualanProduksiServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |

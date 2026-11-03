@@ -12,7 +12,33 @@ final class KonveksiPurchaseWriteService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiDocumentAndAiService $documents,
     ) {}
+
+    /**
+     * Re-stores the purchase invoice file that an earlier upload failed to save.
+     *
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>
+     */
+    public function retryDocument(LegacyUser $user, string $companyKey, array $p): array
+    {
+        $file = $p['file_invoice'] ?? null;
+        if (! is_array($file) || empty($file['base64'])) {
+            throw new InvalidArgumentException('File faktur tidak tersedia.');
+        }
+
+        $transactionId = (string) ($p['id_transaksi'] ?? '');
+
+        return $this->documents->saveBase64Document(
+            $user,
+            $companyKey,
+            (string) $file['base64'],
+            (string) ($file['fileName'] ?? 'Faktur_'.$transactionId.'.jpg'),
+            'Faktur_Pembelian',
+            $transactionId,
+        );
+    }
 
     public function saveMaterial(LegacyUser $user, string $companyKey, array $p): array
     {

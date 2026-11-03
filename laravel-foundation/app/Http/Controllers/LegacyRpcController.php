@@ -110,6 +110,18 @@ final class LegacyRpcController
             return $this->backupNow($request, $args);
         }
 
+        if ($method === 'jadwalkanSnapshotRinganJagoLaba') {
+            return $this->scheduleSnapshot();
+        }
+
+        if ($method === 'retryBackupPenjualanProduksiServer') {
+            return $this->retrySaleBackup($args);
+        }
+
+        if ($method === 'retryUploadPurchaseDocumentServerRpc') {
+            return $this->retryPurchaseDocument($args);
+        }
+
         if ($method === 'getRiwayatBackupJagoLaba') {
             return $this->backupHistory($request);
         }
@@ -291,6 +303,33 @@ final class LegacyRpcController
         $user = Auth::guard('web')->user();
         $mode = (string) ($args[0] ?? 'MANUAL');
         $res = $this->backup->create($user, $mode ?: 'MANUAL');
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    private function scheduleSnapshot(): JsonResponse
+    {
+        $res = $this->backup->scheduleSmart(Auth::guard('web')->user());
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    /** @param array<int, mixed> $args */
+    private function retrySaleBackup(array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->salesWrite->retryBackup($user, (string) $this->company->key($user), (array) $data);
+
+        return response()->json(['ok' => true, 'result' => $res]);
+    }
+
+    /** @param array<int, mixed> $args */
+    private function retryPurchaseDocument(array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+        $res = $this->purchase->retryDocument($user, (string) $this->company->key($user), (array) $data);
 
         return response()->json(['ok' => true, 'result' => $res]);
     }

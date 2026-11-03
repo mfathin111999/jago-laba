@@ -39,12 +39,12 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A5e `marketplace-integration-status` (GET kesehatan integrasi + retry lewat antrian) — bergantung pada port IntegrationRuntime/IntegrationPolicy/PartnerSettings, jadi dikerjakan terpisah — kesehatan integrasi + retry lewat antrian; pengecekan "konteks berubah" ditunda ke port binding OAuth (Fase E) agar tidak salah menandai reauthorize
   - [x] A5c Ekspor CSV: orders, dashboard (halaman HTML-nya masuk Fase B) — export saja; checklist PUBLIC orders/dashboard tetap "sebagian" sampai halamannya dibangun (B1/B3)
   - [x] A5d Menyentuh provider/rahasia → kontrak saja, tanpa panggilan provider: `marketplace-order-finance`, `marketplace-partner-settings` (butuh keputusan pemilik, sama seperti `save_api_credentials`) — order-finance menjawab dari data lokal (synced:false); partner-settings tidak menerima rahasia dari web (503) → keputusan pemilik
-- [ ] A6 RPC Konveksi sisa (dipecah setelah audit menemukan masalah yang lebih besar):
+- [x] A6 RPC Konveksi sisa (dipecah setelah audit menemukan masalah yang lebih besar):
   - [x] A6a Satu resolver koneksi Konveksi (`KonveksiConnection`) untuk read dan semua service tulis — sebelumnya tulisan Konveksi memakai koneksi default, bukan database Konveksi terpisah
   - [x] A6b Backup nyata menggantikan backup palsu (`backup_log` "Berhasil" tanpa file) — snapshot JSON gzip semua tabel terpetakan, mysqldump opsional (password via env, bukan argumen), manifest checksum, salinan eksternal, kegagalan dicatat "Gagal" tanpa file parsial
   - [x] A6d Otorisasi RPC Konveksi: workspace Konveksi harus aktif dan semua selain 3 method baca butuh administrator (sebelumnya hanya cek login+CSRF; role Pembaca bisa menulis)
   - [x] A6e Dokumen yang diunggah benar-benar ditulis ke disk privat dan dicatat (sebelumnya bytes dibuang tapi respons "tersimpan")
-  - [ ] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
+  - [x] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc` — snapshot dijadwalkan lewat marker + scheduler tiap menit (permintaan beruntun tidak menunda); retry backup penjualan; retry unggah faktur
 - [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`
 - [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** — 4 stub/lubang ditemukan secara kebetulan (store-deletion, auto-sync, backup, dokumen) + 1 lubang otorisasi RPC. Periksa sisanya satu per satu: worker `bin/workers/*` (4), `MarketplaceSyncCommand`, `Konveksi{Hutang,Inventory,SyncAndHpp,Sales,Purchase}Service`, `Gemini`/template, `MarketplaceFulfillmentWriteService`, `MarketplaceSettlementAndClaimService`. Kriteria: tulis nyata, cek akses, tes yang membuktikan
 - [ ] A8 Suite penuh + commit

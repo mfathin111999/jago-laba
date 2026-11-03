@@ -21,6 +21,8 @@ final class KonveksiBackupService
 
     private const MIN_DUMP_BYTES = 100;
 
+    private const PENDING_MIN_AGE_SECONDS = 60;
+
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
@@ -103,6 +105,46 @@ final class KonveksiBackupService
 
             throw new RuntimeException('Backup gagal. Periksa izin folder backup dan ruang disk, lalu coba lagi.', 0, $exception);
         }
+    }
+
+    /**
+     * Requests a snapshot. Repeated requests collapse into one that the scheduler runs once the marker is old enough.
+     *
+     * @return array<string, mixed>
+     */
+    public function scheduleSmart(LegacyUser $user): array
+    {
+        $marker = $this->markerPath();
+        $this->ensureDirectory(dirname($marker));
+
+        // Keep the first request time so a steady stream of requests cannot postpone the snapshot forever.
+        if (! is_file($marker)) {
+            $this->put($marker, json_encode(['requested_at' => now()->toIso8601String(), 'requested_by' => $user->getUsername() ?: 'system'], JSON_THROW_ON_ERROR));
+        }
+
+        return ['status' => 'scheduled', 'mode' => 'MYSQL_LOCAL', 'message' => 'Smart snapshot dijadwalkan. Data transaksi sudah tersimpan di MySQL.'];
+    }
+
+    /**
+     * Runs the requested snapshot once it is at least a minute old. Returns null when nothing is due.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function processPending(): ?array
+    {
+        $marker = $this->markerPath();
+        if (! is_file($marker) || time() - (int) filemtime($marker) < self::PENDING_MIN_AGE_SECONDS) {
+            return null;
+        }
+
+        @unlink($marker);
+
+        return $this->create(new LegacyUser(['id' => 'SYSTEM', 'username' => 'system', 'role_id' => 'SYSTEM']), 'SMART');
+    }
+
+    private function markerPath(): string
+    {
+        return storage_path('app/private/pending_snapshot.json');
     }
 
     /**

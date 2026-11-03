@@ -13,7 +13,7 @@ final class KonveksiRpcAuthorizationTest extends TestCase
     private const READ_METHODS = ['loadSemuaData', 'getRiwayatBackupJagoLaba', 'getGeminiApiKeyStatusServerRpc'];
 
     private const WRITE_METHODS = [
-        'backupSekarangJagoLaba', 'buatBackupManualSekarang', 'saveGeminiApiKeyServerRpc', 'postPenjualanProduksiServer',
+        'backupSekarangJagoLaba', 'buatBackupManualSekarang', 'jadwalkanSnapshotRinganJagoLaba', 'retryBackupPenjualanProduksiServer', 'retryUploadPurchaseDocumentServerRpc', 'saveGeminiApiKeyServerRpc', 'postPenjualanProduksiServer',
         'voidPenjualanProduksiServer', 'bayarHutangKonveksi', 'saveDocumentFileServer', 'syncTab', 'migrateInventoryIdStokItemServer',
     ];
 

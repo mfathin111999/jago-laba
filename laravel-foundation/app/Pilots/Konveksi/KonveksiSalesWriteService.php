@@ -16,6 +16,45 @@ final class KonveksiSalesWriteService
         private readonly AuditLogger $audit,
     ) {}
 
+    /**
+     * Marks a sale's backup as pending again so the next backup run picks it up.
+     *
+     * @param  array<string, mixed>  $p
+     * @return array<string, mixed>
+     */
+    public function retryBackup(LegacyUser $user, string $companyKey, array $p): array
+    {
+        $id = trim((string) ($p['id_penjualan'] ?? ''));
+        if ($id === '') {
+            throw new InvalidArgumentException('ID penjualan tidak valid.');
+        }
+
+        $connection = $this->konveksi->connection();
+        $table = (string) $connection->table('system_table_map')->where('api_key', 'penjualan')->value('table_name');
+        if ($table === '') {
+            throw new RuntimeException('Tabel penjualan belum dipetakan.');
+        }
+
+        return $connection->transaction(function () use ($connection, $table, $id, $user): array {
+            foreach ($connection->table($table)->lockForUpdate()->get() as $row) {
+                $sale = json_decode((string) $row->_data_json, true);
+                if (! is_array($sale) || (string) ($sale['id_penjualan'] ?? '') !== $id) {
+                    continue;
+                }
+
+                $updated = array_merge($sale, ['backup_status' => 'PENDING', 'backup_at' => now()->toIso8601String()]);
+                $connection->table($table)->where('_row_id', $row->_row_id)->update([
+                    '_data_json' => json_encode($updated, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ]);
+                $this->audit->record($user, 'Konveksi', 'RETRY_SALE_BACKUP', $id, (string) ($sale['no_penjualan'] ?? ''), $sale, $updated, 'Backup transaksi penjualan dijadwalkan ulang');
+
+                return ['status' => 'success', 'message' => 'Status backup transaksi dijadwalkan ulang.', 'data' => $updated];
+            }
+
+            throw new DomainException('Penjualan tidak ditemukan.', 404);
+        });
+    }
+
     public function saveDraft(LegacyUser $user, string $companyKey, array $data): array
     {
         $id = trim((string) ($data['id_penjualan'] ?? ''));
