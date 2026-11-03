@@ -174,7 +174,11 @@ final class SharedEndpointsTest extends TestCase
     {
         $this->actAs('ROLE-OWNER_SUPER_ADMIN');
 
-        $response = $this->withHeaders(['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'text/html, application/xhtml+xml'])->get('/workspace.php')->assertOk();
+        $headers = ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'text/html, application/xhtml+xml'];
+        if (is_file(public_path('build/manifest.json'))) {
+            $headers['X-Inertia-Version'] = hash_file('xxh128', public_path('build/manifest.json'));
+        }
+        $response = $this->withHeaders($headers)->get('/workspace.php')->assertOk();
         $response->assertJsonPath('component', 'Foundation')
             ->assertJsonPath('props.authenticated', true)
             ->assertJsonPath('props.workspaces', ['konveksi', 'marketplace']);
