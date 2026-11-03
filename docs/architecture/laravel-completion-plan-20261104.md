@@ -52,7 +52,10 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] Sales (post/void/correct) diaudit dan diport penuh: stok, mutasi, kas, total dihitung server, penomoran berurutan, kontrol koreksi
   - [x] Pembelian (saveInvoice) diport penuh: stok, mutasi, harga terakhir, kas, hutang supplier, anti timpa/duplikat
   - [x] Inventori (audit/migrasi id) sesuai legacy, ditambah tes; HPP (activateHpp, syncFromPurchases) diport penuh: versi per model, tolak material tanpa harga, riwayat lengkap, BOM tersimpan
-  - [ ] Belum diaudit: template/Gemini di `KonveksiDocumentAndAiService`, `MarketplaceOrderWriteService`, `MarketplaceStoreWriteService`, `MarketplaceSettingsService`, `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService`, `MarketplaceSyncCommand`/job queue, `bin/workers/*`
+  - [x] Marketplace diaudit: order manual + jurnal (jurnal bocor lintas perusahaan, order crash tanpa order_date), store write (sesuai legacy), settings (rahasia masuk audit log), job antrian (tidak mengklaim sync palsu)
+  - [x] Gemini/template: OCR faktur karangan → kini jujur nonaktif; simpan key gagal diam-diam → kini error
+  - [ ] Belum diaudit baris-per-baris (sudah punya tes lama, perlu dibandingkan dengan legacy): `MarketplaceHppService`, `MarketplaceExpenseWriteService`, `MarketplaceOAuthService` + alur callback; `MarketplaceAnalyticsReadService`/`OrderReadService` (hasil baca, bukan tulis)
+  - Catatan keamanan untuk Fase E: `webhook_global_secret` bawaan migrasi legacy adalah string tetap di repo; ganti sebelum webhook diaktifkan. Gemini API key disimpan teks biasa di `system_settings` (sama dengan legacy; enkripsi mengubah format dan memutus koeksistensi)
   - Catatan minor: parsing nominal klaim `str_replace('.', '')` mengubah `"1500.50"` jadi `150050` (sama dengan legacy, kontrak format Indonesia); status klaim tidak divalidasi di controller (enum MySQL menolak → 500, bukan 422)
 - [ ] A8 Suite penuh + commit
 
