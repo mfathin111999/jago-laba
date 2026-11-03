@@ -33,7 +33,7 @@ final class MarketplaceWithdrawalPreviewController
                 'company_key' => $companyKey,
                 'actor' => $this->preview->actorKey($user),
                 'store_id' => $request->storeId(),
-                'rows' => $result['rows'],
+                'rows' => $result['staged_rows'],
                 'hash' => $result['hash'],
                 'key' => $result['key'],
                 'expires_at' => $result['expires_at'],

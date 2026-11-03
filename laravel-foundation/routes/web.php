@@ -17,10 +17,12 @@ use App\Http\Controllers\MarketplaceHppWriteController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
+use App\Http\Controllers\MarketplacePriceController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncApiController;
 use App\Http\Controllers\MarketplaceSyncController;
+use App\Http\Controllers\MarketplaceWithdrawalLegacyController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
 use App\Http\Controllers\SandboxMarketplaceOAuthController;
 use App\Http\Controllers\StoreSelectionController;
@@ -154,6 +156,12 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:integration.manage'])
         ->name('legacy.marketplace.sync');
+    Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:withdrawal.manage'])
+        ->name('legacy.marketplace.withdrawals');
+    Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:price.manage'])
+        ->name('legacy.marketplace.price');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

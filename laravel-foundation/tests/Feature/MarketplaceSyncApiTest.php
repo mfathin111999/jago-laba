@@ -158,4 +158,28 @@ final class MarketplaceSyncApiTest extends TestCase
         }
         $this->assertSame(0, DB::table('marketplace_sync_jobs')->count());
     }
+
+    public function test_price_endpoint_validates_the_request_and_never_reaches_a_provider(): void
+    {
+        $this->loginAs('ROLE-OWNER_SUPER_ADMIN');
+
+        foreach (['prepare', 'save'] as $action) {
+            $this->syncRequestTo('/api/marketplace-price.php', ['action' => $action, 'store_id' => 'a', 'product_id' => 'P1'])
+                ->assertStatus(503)
+                ->assertJsonPath('error_code', 'PROVIDER_CONNECTOR_INACTIVE');
+        }
+
+        $this->syncRequestTo('/api/marketplace-price.php', ['action' => 'bogus', 'store_id' => 'a'])->assertStatus(400);
+        $this->syncRequestTo('/api/marketplace-price.php', ['action' => 'save', 'store_id' => 'b'])->assertForbidden();
+        $this->withHeader('X-CSRF-TOKEN', 'wrong')->postJson('/api/marketplace-price.php', ['action' => 'save', 'store_id' => 'a'])->assertStatus(419);
+
+        $this->loginAs('ROLE-PEMBACA');
+        $this->syncRequestTo('/api/marketplace-price.php', ['action' => 'prepare', 'store_id' => 'a'])->assertForbidden();
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function syncRequestTo(string $url, array $payload): TestResponse
+    {
+        return $this->withHeader('X-CSRF-TOKEN', 'tok')->postJson($url, $payload);
+    }
 }

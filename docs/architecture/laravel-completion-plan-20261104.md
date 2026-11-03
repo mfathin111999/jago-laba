@@ -32,7 +32,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada — service dan command nyata menggantikan stub; hanya owner (store.delete); install lewat `--install`, bukan dari request web. Sisa: pasang `guardAuthorization` di alur OAuth (A2b)
 - [ ] A2b Pasang `MarketplaceStoreDeletionService::guardAuthorization` di callback/select OAuth agar toko yang sedang dihapus tidak bisa dihubungkan ulang
 - [x] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status) — start/background/step/status/preview memakai antrian DB yang ada; catalog/catalog_status masih sebagian (butuh konektor provider, mengembalikan pesan eksplisit)
-- [ ] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save)
+- [x] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save) — withdrawals confirm+template selesai (+perbaikan bug staging 10 baris); price hanya kontrak (503, tanpa panggilan provider) → menunggu Fase E
 - [ ] A5 Endpoint baca publik: orders, order-finance, stock, dashboard, analytics, integration-status, branding, browser-pulse, partner-settings, auto-sync
 - [ ] A6 RPC Konveksi sisa: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc`
 - [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`

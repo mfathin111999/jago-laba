@@ -26,7 +26,9 @@ final class MarketplaceWithdrawalPreviewService
     public function __construct(private readonly DatabaseManager $database) {}
 
     /**
-     * @return array{key: string, count: int, rows: list<array<string, mixed>>, meta: array<string, mixed>, hash: string, expires_at: int}
+     * Returns a 10-row display sample in 'rows' and every parsed row in 'staged_rows' (kept server-side for confirmation).
+     *
+     * @return array{key: string, count: int, rows: list<array<string, mixed>>, staged_rows: list<array<string, mixed>>, meta: array<string, mixed>, hash: string, expires_at: int}
      */
     public function preview(LegacyUser $user, string $companyKey, string $storeId, UploadedFile $file): array
     {
@@ -88,6 +90,7 @@ final class MarketplaceWithdrawalPreviewService
             'key' => bin2hex(random_bytes(24)),
             'count' => count($rows),
             'rows' => array_slice($rows, 0, 10),
+            'staged_rows' => $rows,
             'meta' => $meta,
             'hash' => $hash,
             'expires_at' => $expiresAt,
