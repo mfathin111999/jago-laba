@@ -45,18 +45,35 @@ final class KonveksiDocumentAndAiService
 
         $fid = 'DOC-'.bin2hex(random_bytes(16));
         $connection = $this->konveksi->connection();
+        if (! $connection->getSchemaBuilder()->hasTable('document_files')) {
+            throw new RuntimeException('Registri dokumen belum tersedia; dokumen tidak disimpan.');
+        }
 
-        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('document_files')) {
+        $relativePath = "private/konveksi/documents/{$type}/".date('Y/m')."/{$fid}.{$allowed[$detected]}";
+        $path = $this->documentPath($relativePath);
+        $directory = dirname($path);
+        if (! is_dir($directory) && ! @mkdir($directory, 0700, true) && ! is_dir($directory)) {
+            throw new RuntimeException('Penyimpanan dokumen tidak dapat disiapkan.');
+        }
+        if (file_put_contents($path, $bin, LOCK_EX) !== strlen($bin)) {
+            @unlink($path);
+            throw new RuntimeException('Dokumen belum tersimpan lengkap.');
+        }
+
+        try {
             $connection->table('document_files')->insert([
                 'file_id' => $fid,
                 'document_type' => $type,
                 'reference_id' => $referenceId,
                 'file_name' => $safe,
-                'relative_path' => "private/konveksi/documents/{$type}/".date('Y/m')."/{$fid}.{$allowed[$detected]}",
+                'relative_path' => $relativePath,
                 'mime_type' => $detected,
                 'size_bytes' => strlen($bin),
                 'created_at' => now(),
             ]);
+        } catch (\Throwable $exception) {
+            @unlink($path);
+            throw $exception;
         }
 
         $url = 'api/konveksi-document.php?id='.rawurlencode($fid);
@@ -86,6 +103,14 @@ final class KonveksiDocumentAndAiService
             'created_at' => now()->toIso8601String(),
             'message' => 'Dokumen tersimpan privat di Jago Laba.',
         ];
+    }
+
+    /** Absolute path of a stored document. The root is private server storage, never the web root. */
+    public function documentPath(string $relativePath): string
+    {
+        $root = rtrim((string) (config('jago.documents.root') ?: storage_path('app')), '/\\');
+
+        return $root.'/'.ltrim($relativePath, '/');
     }
 
     public function saveTemplate(LegacyUser $user, string $companyKey, array $p): array

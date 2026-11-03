@@ -109,4 +109,8 @@ return [
         // Absolute path to mysqldump; without it only the JSON snapshot is produced.
         'mysqldump' => env('JL_MYSQLDUMP') ?: null,
     ],
+    'documents' => [
+        // Private storage root for uploaded documents; point it at the legacy storage root to keep existing files reachable.
+        'root' => env('JL_DOCUMENT_STORAGE_ROOT') ?: null,
+    ],
 ];
