@@ -2,65 +2,41 @@
 
 namespace App\Console\Commands;
 
+use App\Pilots\Marketplace\MarketplaceAutoSyncService;
 use Illuminate\Console\Command;
-use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 final class MarketplaceAutoSyncCommand extends Command
 {
     protected $signature = 'marketplace:auto-sync
         {--company= : Optional company key}
-        {--store= : Optional store ID}';
+        {--store= : Optional store ID}
+        {--limit=20 : Maximum schedules to enqueue per run}';
 
-    protected $description = 'Trigger automatic scheduled marketplace sync for eligible stores';
+    protected $description = 'Enqueue a sync run for every due automatic sync schedule';
 
-    public function handle(DatabaseManager $database): int
+    public function handle(MarketplaceAutoSyncService $service): int
     {
-        $connection = $database->connection();
-        $this->info('Starting Marketplace Auto-Sync tick...');
-
-        if (! \Illuminate\Support\Facades\Schema::hasTable('marketplace_auto_sync')) {
+        if (! Schema::hasTable('marketplace_auto_sync')) {
             $this->warn('Table marketplace_auto_sync not found. Skipping auto-sync.');
 
             return self::SUCCESS;
         }
 
-        $query = $connection->table('marketplace_auto_sync')
-            ->where('enabled', 1)
-            ->where('next_run_at', '<=', now());
+        try {
+            $enqueued = $service->tick(
+                $this->option('company') ?: null,
+                $this->option('store') ?: null,
+                max(1, (int) $this->option('limit')),
+            );
+        } catch (Throwable $exception) {
+            $this->error('Auto-sync failed: '.$exception->getMessage());
 
-        $company = $this->option('company');
-        if ($company) {
-            $query->where('company_key', $company);
-        }
-        $store = $this->option('store');
-        if ($store) {
-            $query->where('store_id', $store);
-        }
-
-        $records = $query->limit(20)->get();
-        if ($records->isEmpty()) {
-            $this->line('No auto-sync schedules due at this time.');
-
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
-        foreach ($records as $rec) {
-            try {
-                $this->line("Triggering auto-sync for store {$rec->store_id} ({$rec->mode})...");
-                $connection->table('marketplace_auto_sync')
-                    ->where('id', $rec->id)
-                    ->update([
-                        'last_run_at' => now(),
-                        'next_run_at' => now()->addMinutes(60),
-                        'updated_at' => now(),
-                    ]);
-            } catch (Throwable $e) {
-                $this->error("Failed to sync {$rec->store_id}: {$e->getMessage()}");
-            }
-        }
-
-        $this->info('Marketplace Auto-Sync completed.');
+        $this->line($enqueued === 0 ? 'No auto-sync schedules due at this time.' : "Enqueued {$enqueued} auto-sync run(s).");
 
         return self::SUCCESS;
     }

@@ -127,9 +127,9 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-931452c5fe | public / `api/logout.php` | pilot | 5 | [logout.php](../../public/api/logout.php) |
 | PUBLIC-90f26721c1 | public / `api/marketplace-ajax.php` | sebagian | 6 | [marketplace-ajax.php](../../public/api/marketplace-ajax.php) |
 | PUBLIC-19fb71eb79 | public / `api/marketplace-analytics.php` | belum | 6 | [marketplace-analytics.php](../../public/api/marketplace-analytics.php) |
-| PUBLIC-676e7578ef | public / `api/marketplace-auto-sync.php` | belum | 11 | [marketplace-auto-sync.php](../../public/api/marketplace-auto-sync.php) |
+| PUBLIC-676e7578ef | public / `api/marketplace-auto-sync.php` | pilot | 11 | [marketplace-auto-sync.php](../../public/api/marketplace-auto-sync.php) |
 | PUBLIC-2121cf0a8c | public / `api/marketplace-branding.php` | belum | 6 | [marketplace-branding.php](../../public/api/marketplace-branding.php) |
-| PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | belum | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
+| PUBLIC-41fb328c41 | public / `api/marketplace-browser-pulse.php` | pilot | 6 | [marketplace-browser-pulse.php](../../public/api/marketplace-browser-pulse.php) |
 | PUBLIC-9db69c35d8 | public / `api/marketplace-dashboard.php` | belum | 6 | [marketplace-dashboard.php](../../public/api/marketplace-dashboard.php) |
 | PUBLIC-05ec8d3881 | public / `api/marketplace-fulfillment.php` | pilot | 11 | [marketplace-fulfillment.php](../../public/api/marketplace-fulfillment.php) |
 | PUBLIC-5a046b374d | public / `api/marketplace-integration-status.php` | belum | 6 | [marketplace-integration-status.php](../../public/api/marketplace-integration-status.php) |
@@ -139,7 +139,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-3599a1df42 | public / `api/marketplace-partner-settings.php` | belum | 11 | [marketplace-partner-settings.php](../../public/api/marketplace-partner-settings.php) |
 | PUBLIC-5e13ce4104 | public / `api/marketplace-price.php` | sebagian | 11 | [marketplace-price.php](../../public/api/marketplace-price.php) |
 | PUBLIC-33f67ec74a | public / `api/marketplace-shipping-document.php` | belum | 9 | [marketplace-shipping-document.php](../../public/api/marketplace-shipping-document.php) |
-| PUBLIC-ca5edc6128 | public / `api/marketplace-stock.php` | belum | 6 | [marketplace-stock.php](../../public/api/marketplace-stock.php) |
+| PUBLIC-ca5edc6128 | public / `api/marketplace-stock.php` | pilot | 6 | [marketplace-stock.php](../../public/api/marketplace-stock.php) |
 | PUBLIC-f63c9c9083 | public / `api/marketplace-store-deletion.php` | pilot | 6 | [marketplace-store-deletion.php](../../public/api/marketplace-store-deletion.php) |
 | PUBLIC-953e70a9bc | public / `api/marketplace-sync.php` | pilot | 11 | [marketplace-sync.php](../../public/api/marketplace-sync.php) |
 | PUBLIC-e93e166229 | public / `api/marketplace-webhook.php` | stub-legacy-keputusan-pemilik | 11 | [marketplace-webhook.php](../../public/api/marketplace-webhook.php) |

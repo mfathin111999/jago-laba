@@ -8,6 +8,7 @@ use App\Http\Controllers\LegacyMarketplaceAjaxController;
 use App\Http\Controllers\LegacyPilotPageController;
 use App\Http\Controllers\LegacyRpcController;
 use App\Http\Controllers\MarketplaceAnalyticsController;
+use App\Http\Controllers\MarketplaceAutoSyncController;
 use App\Http\Controllers\MarketplaceCatalogController;
 use App\Http\Controllers\MarketplaceExpenseController;
 use App\Http\Controllers\MarketplaceExpenseDeleteController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
 use App\Http\Controllers\MarketplacePriceController;
+use App\Http\Controllers\MarketplaceStockMinimumController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncApiController;
@@ -162,6 +164,15 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:price.manage'])
         ->name('legacy.marketplace.price');
+    Route::post('/api/marketplace-stock.php', MarketplaceStockMinimumController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:settings.manage'])
+        ->name('legacy.marketplace.stock');
+    Route::match(['GET', 'POST'], '/api/marketplace-auto-sync.php', [MarketplaceAutoSyncController::class, 'states'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
+        ->name('legacy.marketplace.auto-sync');
+    Route::post('/api/marketplace-browser-pulse.php', [MarketplaceAutoSyncController::class, 'pulse'])
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
+        ->name('legacy.marketplace.browser-pulse');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');
