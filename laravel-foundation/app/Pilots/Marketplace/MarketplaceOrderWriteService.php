@@ -8,10 +8,11 @@ use DomainException;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 use LogicException;
-use RuntimeException;
 
 final class MarketplaceOrderWriteService
 {
+    private const MANUAL_STATUSES = ['Pending', 'Terkirim', 'Selesai', 'Dibatalkan', 'Retur'];
+
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly AuditLogger $audit,
@@ -39,10 +40,21 @@ final class MarketplaceOrderWriteService
             throw new DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
         }
 
-        $orderDate = $d['order_date'] ?: now('Asia/Jakarta')->format('Y-m-d H:i:s');
-        $completionDate = ! empty($d['completion_date']) ? $d['completion_date'] : $orderDate;
-        $buyer = trim((string) ($d['buyer_username'] ?: 'Customer Direct'));
-        $status = trim((string) ($d['order_status'] ?: 'Selesai'));
+        $orderDate = trim((string) ($d['order_date'] ?? '')) ?: now('Asia/Jakarta')->format('Y-m-d H:i:s');
+        $completionDate = ! empty($d['completion_date']) ? (string) $d['completion_date'] : $orderDate;
+        $buyer = trim((string) ($d['buyer_username'] ?? '')) ?: 'Customer Direct';
+        $status = trim((string) ($d['order_status'] ?? '')) ?: 'Selesai';
+        if (! in_array($status, self::MANUAL_STATUSES, true)) {
+            throw new InvalidArgumentException('Status pesanan manual tidak valid.');
+        }
+        foreach (['gross_sales', 'platform_admin_fee', 'service_fee', 'payment_fee', 'total_cogs_hpp'] as $field) {
+            if (isset($d[$field]) && $d[$field] !== '' && (! is_numeric($d[$field]) || ! is_finite((float) $d[$field]) || (float) $d[$field] < 0)) {
+                throw new InvalidArgumentException('Nominal pesanan tidak valid.');
+            }
+        }
+        if (isset($d['shipping_adjustment']) && $d['shipping_adjustment'] !== '' && (! is_numeric($d['shipping_adjustment']) || ! is_finite((float) $d['shipping_adjustment']))) {
+            throw new InvalidArgumentException('Nominal pesanan tidak valid.');
+        }
         $gross = (float) ($d['gross_sales'] ?? 0);
         $adminFee = (float) ($d['platform_admin_fee'] ?? 0);
         $serviceFee = (float) ($d['service_fee'] ?? 0);
@@ -56,6 +68,10 @@ final class MarketplaceOrderWriteService
         $itemName = trim((string) ($d['item_name'] ?? 'Produk Konveksi'));
         $qty = max(1, (int) ($d['qty'] ?? 1));
         $variantId = $d['product_variant_id'] ?? null;
+
+        if ($connection->table('marketplace_orders')->where('id', $orderId)->exists()) {
+            throw new InvalidArgumentException("Nomor pesanan {$orderId} sudah digunakan.");
+        }
 
         $connection->transaction(function () use (
             $connection, $orderId, $storeId, $orderDate, $completionDate, $buyer, $status,
@@ -138,8 +154,7 @@ final class MarketplaceOrderWriteService
         }
 
         $status = trim((string) ($data['order_status'] ?? $order->order_status));
-        $allowedStatuses = ['Pending', 'Terkirim', 'Selesai', 'Dibatalkan', 'Retur'];
-        if (! in_array($status, $allowedStatuses, true)) {
+        if (! in_array($status, self::MANUAL_STATUSES, true)) {
             throw new InvalidArgumentException('Status pesanan manual tidak valid.');
         }
 
@@ -227,11 +242,12 @@ final class MarketplaceOrderWriteService
     public function getJournalEntries(string $companyKey, string $storeId, ?string $dateFrom = null, ?string $dateTo = null, ?string $refType = null): array
     {
         $connection = $this->database->connection();
-        $query = $connection->table('marketplace_journal_entries');
-
-        if ($storeId !== 'ALL' && $storeId !== '') {
-            $query->where('store_id', $storeId);
+        $inCompany = $storeId !== '' && $connection->table('marketplace_stores')->where('id', $storeId)->where('company_key', $companyKey)->exists();
+        if (! $inCompany) {
+            throw new DomainException('Toko tidak ditemukan dalam perusahaan aktif.', 403);
         }
+
+        $query = $connection->table('marketplace_journal_entries')->where('store_id', $storeId);
         if ($dateFrom) {
             $query->where('entry_date', '>=', $dateFrom);
         }
