@@ -6,7 +6,6 @@ use App\Auth\LegacyUser;
 use App\Exceptions\KonveksiRequestRejected;
 use Illuminate\Http\Request;
 use JsonException;
-use RuntimeException;
 
 /**
  * Wraps every Konveksi write so it is serialised, idempotent and safe against stale screens
@@ -43,7 +42,7 @@ final class KonveksiOperationGate
         $this->reader->assertCompany($companyKey);
         $connection = $this->konveksi->connection();
         if (! $connection->getSchemaBuilder()->hasTable('konveksi_request_receipts')) {
-            throw new RuntimeException('Skema idempotensi Konveksi belum dipasang oleh administrator server.');
+            throw new KonveksiRequestRejected('Skema idempotensi Konveksi belum dipasang oleh administrator server.', 'IDEMPOTENCY_SCHEMA_MISSING', 503);
         }
 
         $lock = 'jl-konveksi-write-'.sha1($connection->getDatabaseName());

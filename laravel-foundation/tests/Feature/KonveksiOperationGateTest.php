@@ -43,7 +43,7 @@ final class KonveksiOperationGateTest extends TestCase
             $table->string('api_key');
             $table->string('table_name');
         });
-        foreach (['hutang_konveksi', 'riwayat_bayar_hutang_konveksi', 'keuangan', 'produk'] as $key) {
+        foreach (['hutang_konveksi', 'riwayat_bayar_hutang_konveksi', 'keuangan', 'produk', 'penjualan', 'penjualan_item', 'master_stok', 'mutasi_stok', 'penjualan_koreksi'] as $key) {
             $name = 'jl_data_'.$key;
             Schema::create($name, function (Blueprint $table): void {
                 $table->bigIncrements('_row_id');
@@ -176,7 +176,7 @@ final class KonveksiOperationGateTest extends TestCase
 
         $response = $this->rpc('createHutangKonveksiManual', [$this->debt()], $this->key());
 
-        $this->assertGreaterThanOrEqual(500, $response->getStatusCode());
+        $response->assertStatus(503)->assertJsonPath('error.code', 'IDEMPOTENCY_SCHEMA_MISSING');
         $this->assertSame(0, DB::table('jl_data_hutang_konveksi')->count(), 'never run a write unprotected');
     }
 
@@ -185,5 +185,32 @@ final class KonveksiOperationGateTest extends TestCase
         $this->rpc('loadSemuaData', [])->assertOk();
         $this->rpc('getGeminiApiKeyStatusServerRpc', [])->assertOk();
         $this->rpc('getRiwayatBackupJagoLaba', [])->assertOk();
+    }
+
+    public function test_business_errors_reach_the_screen_with_the_legacy_status_codes(): void
+    {
+        $this->rpc('bayarHutangKonveksi', [['nominal_bayar' => 1000, 'id_rekening' => 'KAS-1']], $this->key('b1'))
+            ->assertStatus(400)->assertJsonPath('ok', false)->assertJsonPath('error.message', 'Pegawai belum dipilih.');
+
+        $this->rpc('retryBackupPenjualanProduksiServer', [[]], $this->key('b2'))
+            ->assertStatus(422)->assertJsonPath('error.message', 'ID penjualan tidak valid.');
+
+        $this->rpc('voidPenjualanProduksiServer', [['id_penjualan' => 'TIDAK-ADA']], $this->key('b3'))
+            ->assertStatus(403)->assertJsonPath('error.message', 'Penjualan tidak ditemukan.');
+
+        $this->assertNotEmpty($this->rpc('retryBackupPenjualanProduksiServer', [[]], $this->key('b4'))->json('error.request_id'));
+        $this->assertSame(0, DB::table('konveksi_request_receipts')->count(), 'refused operations leave no receipt');
+    }
+
+    public function test_database_failures_are_masked_but_traceable(): void
+    {
+        Schema::drop('jl_data_hutang_konveksi');
+
+        $response = $this->rpc('createHutangKonveksiManual', [$this->debt()], $this->key('d1'))->assertStatus(500);
+
+        $this->assertStringContainsString('ID permintaan', (string) $response->json('error.message'));
+        $this->assertStringNotContainsString('SQLSTATE', $response->getContent());
+        $this->assertStringNotContainsString('jl_data_hutang_konveksi', $response->getContent());
+        $this->assertNotEmpty($response->json('error.request_id'));
     }
 }

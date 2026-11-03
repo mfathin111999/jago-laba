@@ -20,9 +20,16 @@ use App\Pilots\Konveksi\KonveksiSalesWriteService;
 use App\Pilots\Konveksi\KonveksiSyncAndHppService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
+use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use LogicException;
+use PDOException;
+use RuntimeException;
+use Throwable;
 
 final class LegacyRpcController
 {
@@ -83,11 +90,15 @@ final class LegacyRpcController
             return $denied;
         }
 
-        if (in_array($method, self::GATED_METHODS, true)) {
-            return $this->runGated($request, $method, $args);
-        }
+        try {
+            if (in_array($method, self::GATED_METHODS, true)) {
+                return $this->runGated($request, $method, $args);
+            }
 
-        return $this->dispatch($request, $method, $args);
+            return $this->dispatch($request, $method, $args);
+        } catch (Throwable $exception) {
+            return $this->failure($exception);
+        }
     }
 
     /** @param array<int, mixed> $args */
@@ -598,9 +609,34 @@ final class LegacyRpcController
         return null;
     }
 
-    private function error(string $message, string $code, int $status): JsonResponse
+    /**
+     * Turns an exception into the legacy RPC error contract so the screen can show the reason:
+     * conflict 409, refused 403, invalid input 422, business rule 400. Database failures are masked
+     * and reported with a request id that can be found in the log.
+     */
+    private function failure(Throwable $exception): JsonResponse
     {
+        if ($exception instanceof DomainException) {
+            return $exception->getCode() === 409
+                ? $this->error($exception->getMessage(), 'CONFLICT', 409)
+                : $this->error($exception->getMessage(), 'OPERATION_REFUSED', 403);
+        }
+        if ($exception instanceof InvalidArgumentException) {
+            return $this->error($exception->getMessage(), 'INVALID_INPUT', 422);
+        }
+        if (($exception instanceof RuntimeException || $exception instanceof LogicException) && ! $exception instanceof PDOException) {
+            return $this->error($exception->getMessage(), 'OPERATION_FAILED', 400);
+        }
+
         $requestId = bin2hex(random_bytes(8));
+        Log::error('Konveksi RPC failed.', ['request_id' => $requestId, 'exception' => $exception::class, 'message' => $exception->getMessage()]);
+
+        return $this->error('Penyimpanan belum berhasil. Hubungi administrator dengan ID permintaan '.$requestId, 'STORAGE_FAILURE', 500, $requestId);
+    }
+
+    private function error(string $message, string $code, int $status, ?string $requestId = null): JsonResponse
+    {
+        $requestId ??= bin2hex(random_bytes(8));
 
         return response()->json([
             'ok' => false,
