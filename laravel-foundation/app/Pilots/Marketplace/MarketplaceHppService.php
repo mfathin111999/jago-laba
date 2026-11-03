@@ -7,8 +7,8 @@ use App\Auth\LegacyUser;
 use DateTimeImmutable;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
-use RuntimeException;
 
 final class MarketplaceHppService
 {
@@ -224,8 +224,11 @@ final class MarketplaceHppService
                 ]);
             }
 
+            // Serialise concurrent HPP edits of the same store while its orders are recalculated.
+            $connection->table('marketplace_stores')->where('id', $storeId)->lockForUpdate()->first();
             $orders = $connection->table('marketplace_orders')
                 ->where('store_id', $storeId)
+                ->lockForUpdate()
                 ->get();
 
             $affected = 0;
@@ -327,14 +330,14 @@ final class MarketplaceHppService
                 $affected++;
             }
 
-            if ($effectiveFrom <= $today && \Illuminate\Support\Facades\Schema::hasTable('marketplace_product_ads')) {
+            if ($effectiveFrom <= $today && Schema::hasTable('marketplace_product_ads')) {
                 $connection->table('marketplace_product_ads')
                     ->where('store_id', $storeId)
                     ->where('sku', $sku)
                     ->update(['unit_cogs_hpp' => (float) $amount]);
             }
 
-            if (\Illuminate\Support\Facades\Schema::hasTable('marketplace_hpp_changes')) {
+            if (Schema::hasTable('marketplace_hpp_changes')) {
                 $connection->table('marketplace_hpp_changes')->insert([
                     'store_id' => $storeId,
                     'sku' => $sku,
