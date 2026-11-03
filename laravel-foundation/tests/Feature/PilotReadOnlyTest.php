@@ -477,6 +477,31 @@ final class PilotReadOnlyTest extends TestCase
         $this->withHeaders(['X-CSRF-TOKEN' => 'wrong'])->postJson('/api/marketplace-partner-settings.php', ['platform' => 'Shopee'])->assertStatus(419);
     }
 
+    public function test_shipping_document_endpoint_validates_the_request_and_never_fetches_a_label(): void
+    {
+        $this->loginAndSelect('marketplace');
+        $headers = ['X-CSRF-TOKEN' => csrf_token()];
+        $post = fn (array $payload) => $this->withHeaders($headers)->postJson('/api/marketplace-shipping-document.php', $payload);
+
+        $post(['store_id' => 'store-a', 'order_id' => 'FINAL'])->assertForbidden()
+            ->assertJsonPath('message', 'Konektor PDF resi Shopee belum tersedia. Gunakan Seller Center Shopee.');
+
+        DB::table('marketplace_stores')->where('id', 'store-a')->update(['platform' => 'TikTok Shop']);
+        $post(['store_id' => 'store-a', 'order_id' => 'FINAL'])->assertStatus(503)
+            ->assertJsonPath('error_code', 'PROVIDER_CONNECTOR_INACTIVE');
+        $post(['store_id' => 'store-a', 'order_id' => 'NOPE'])->assertForbidden()
+            ->assertJsonPath('message', 'Pesanan tidak ditemukan di toko aktif.');
+        $post(['store_id' => 'store-a', 'order_id' => '../etc'])->assertStatus(400)
+            ->assertJsonPath('message', 'Identitas pesanan tidak valid.');
+        $post(['store_id' => 'store-foreign', 'order_id' => 'FINAL'])->assertForbidden();
+        $this->withHeaders(['X-CSRF-TOKEN' => 'wrong'])->postJson('/api/marketplace-shipping-document.php', ['store_id' => 'store-a', 'order_id' => 'FINAL'])->assertStatus(419);
+
+        $this->getJson('/api/marketplace-shipping-document.php?id='.str_repeat('a', 48))->assertForbidden()
+            ->assertJsonPath('message', 'Dokumen kedaluwarsa atau tidak tersedia. Klik Cetak Resi untuk mengambil ulang.');
+        $this->getJson('/api/marketplace-shipping-document.php?id=bad')->assertForbidden()
+            ->assertJsonPath('message', 'Dokumen tidak tersedia.');
+    }
+
     public function test_marketplace_order_detail_and_return_filter_are_scoped_read_only(): void
     {
         Schema::create('marketplace_order_items', function (Blueprint $table): void {

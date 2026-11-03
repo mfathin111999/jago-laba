@@ -146,7 +146,7 @@ final class KonveksiPilotReadService
         }
     }
 
-    private function assertCompany(string $companyKey): void
+    public function assertCompany(string $companyKey): void
     {
         $expected = (string) config('jago.company_key', 'LOCAL-COMPANY');
         if ((bool) config('jago.konveksi_database_isolated', false)) {

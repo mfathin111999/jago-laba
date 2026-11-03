@@ -45,7 +45,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
   - [x] A6d Otorisasi RPC Konveksi: workspace Konveksi harus aktif dan semua selain 3 method baca butuh administrator (sebelumnya hanya cek login+CSRF; role Pembaca bisa menulis)
   - [x] A6e Dokumen yang diunggah benar-benar ditulis ke disk privat dan dicatat (sebelumnya bytes dibuang tapi respons "tersimpan")
   - [x] A6c RPC: `jadwalkanSnapshotRinganJagoLaba`, `retryBackupPenjualanProduksiServer`, `retryUploadPurchaseDocumentServerRpc` — snapshot dijadwalkan lewat marker + scheduler tiap menit (permintaan beruntun tidak menunda); retry backup penjualan; retry unggah faktur
-- [ ] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php`
+- [x] A7 Dokumen: `konveksi-document`, `marketplace-shipping-document`, diagnostics/auth-diagnostic, `workspace.php` — unduh dokumen (cek akar penyimpanan), diagnostik hanya Owner tanpa path/hash, resi: GET kedaluwarsa + POST kontrak tanpa provider, workspace.php sudah dilayani Foundation.vue
 - [ ] A9 **Audit kode "pilot" buatan agent sebelumnya** — 4 stub/lubang ditemukan secara kebetulan (store-deletion, auto-sync, backup, dokumen) + 1 lubang otorisasi RPC. Periksa sisanya satu per satu: worker `bin/workers/*` (4), `MarketplaceSyncCommand`, `Konveksi{Hutang,Inventory,SyncAndHpp,Sales,Purchase}Service`, `Gemini`/template, `MarketplaceFulfillmentWriteService`, `MarketplaceSettlementAndClaimService`. Kriteria: tulis nyata, cek akses, tes yang membuktikan
 - [ ] A8 Suite penuh + commit
 

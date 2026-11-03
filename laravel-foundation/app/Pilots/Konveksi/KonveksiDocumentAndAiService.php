@@ -105,6 +105,40 @@ final class KonveksiDocumentAndAiService
         ];
     }
 
+    /**
+     * Finds a registered document and its file, only if the file really lives inside the private Konveksi
+     * document directory. Returns null when it is unknown or the file is missing or outside that directory.
+     *
+     * @return array{file: object, path: string}|null
+     */
+    public function locate(string $fileId): ?array
+    {
+        if (preg_match('/^DOC-[a-f0-9]{32}$/', $fileId) !== 1) {
+            throw new InvalidArgumentException('Dokumen tidak valid.');
+        }
+
+        $connection = $this->konveksi->connection();
+        if (! $connection->getSchemaBuilder()->hasTable('document_files')) {
+            return null;
+        }
+        $file = $connection->table('document_files')->where('file_id', $fileId)->first();
+        if ($file === null) {
+            return null;
+        }
+
+        $root = realpath($this->documentPath('private/konveksi'));
+        $path = realpath($this->documentPath((string) $file->relative_path));
+        if ($root === false || $path === false || ! is_file($path)) {
+            return null;
+        }
+        $normalise = static fn (string $value): string => strtolower(str_replace('\\', '/', $value));
+        if (! str_starts_with($normalise($path), $normalise($root).'/')) {
+            return null;
+        }
+
+        return ['file' => $file, 'path' => $path];
+    }
+
     /** Absolute path of a stored document. The root is private server storage, never the web root. */
     public function documentPath(string $relativePath): string
     {

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DiagnosticsController;
 use App\Http\Controllers\FoundationController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\KonveksiDocumentController;
 use App\Http\Controllers\KonveksiPilotController;
 use App\Http\Controllers\LegacyMarketplaceAjaxController;
 use App\Http\Controllers\LegacyPilotPageController;
@@ -23,6 +25,7 @@ use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
 use App\Http\Controllers\MarketplacePriceController;
 use App\Http\Controllers\MarketplaceProviderBoundaryController;
+use App\Http\Controllers\MarketplaceShippingDocumentController;
 use App\Http\Controllers\MarketplaceStockMinimumController;
 use App\Http\Controllers\MarketplaceStoreDeletionController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
@@ -201,6 +204,18 @@ Route::middleware('legacy.session')->group(function (): void {
     Route::match(['GET', 'POST'], '/api/marketplace-integration-status.php', MarketplaceIntegrationStatusController::class)
         ->middleware(['auth', 'company.context', 'workspace.context:marketplace'])
         ->name('legacy.marketplace.integration-status');
+    Route::get('/api/konveksi-document.php', KonveksiDocumentController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:konveksi'])
+        ->name('legacy.konveksi.document');
+    Route::match(['GET', 'POST'], '/api/marketplace-shipping-document.php', MarketplaceShippingDocumentController::class)
+        ->middleware(['auth', 'company.context', 'workspace.context:marketplace', 'role.action:shipping.fulfill'])
+        ->name('legacy.marketplace.shipping-document');
+    Route::get('/api/diagnostics.php', [DiagnosticsController::class, 'health'])
+        ->middleware(['auth', 'role.action:store.delete'])
+        ->name('legacy.diagnostics');
+    Route::get('/api/auth-diagnostic.php', [DiagnosticsController::class, 'auth'])
+        ->middleware(['auth', 'role.action:store.delete'])
+        ->name('legacy.auth-diagnostic');
     Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])
         ->middleware('auth')
         ->name('legacy.workspace.select');

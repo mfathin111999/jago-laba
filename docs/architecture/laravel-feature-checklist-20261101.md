@@ -120,10 +120,10 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | MARKETPLACE_VIEW-7590d5415f | marketplace-view / `marketplace_store_stock.php` | belum | 6 | [marketplace_store_stock.php](../../app/Modules/Marketplace/Views/marketplace_store_stock.php) |
 | MARKETPLACE_VIEW-f926538d4a | marketplace-view / `marketplace_sync.php` | belum | 11 | [marketplace_sync.php](../../app/Modules/Marketplace/Views/marketplace_sync.php) |
 | MARKETPLACE_VIEW-b4792a2fd0 | marketplace-view / `marketplace_withdrawals.php` | belum | 9 | [marketplace_withdrawals.php](../../app/Modules/Marketplace/Views/marketplace_withdrawals.php) |
-| PUBLIC-009cda4a09 | public / `api/auth-diagnostic.php` | belum | 6 | [auth-diagnostic.php](../../public/api/auth-diagnostic.php) |
-| PUBLIC-1fcfbf6f74 | public / `api/diagnostics.php` | belum | 6 | [diagnostics.php](../../public/api/diagnostics.php) |
+| PUBLIC-009cda4a09 | public / `api/auth-diagnostic.php` | pilot | 6 | [auth-diagnostic.php](../../public/api/auth-diagnostic.php) |
+| PUBLIC-1fcfbf6f74 | public / `api/diagnostics.php` | pilot | 6 | [diagnostics.php](../../public/api/diagnostics.php) |
 | PUBLIC-1af34d6f7c | public / `api/health.php` | pilot | 6 | [health.php](../../public/api/health.php) |
-| PUBLIC-bdbfecc89c | public / `api/konveksi-document.php` | belum | 9 | [konveksi-document.php](../../public/api/konveksi-document.php) |
+| PUBLIC-bdbfecc89c | public / `api/konveksi-document.php` | pilot | 9 | [konveksi-document.php](../../public/api/konveksi-document.php) |
 | PUBLIC-931452c5fe | public / `api/logout.php` | pilot | 5 | [logout.php](../../public/api/logout.php) |
 | PUBLIC-90f26721c1 | public / `api/marketplace-ajax.php` | sebagian | 6 | [marketplace-ajax.php](../../public/api/marketplace-ajax.php) |
 | PUBLIC-19fb71eb79 | public / `api/marketplace-analytics.php` | belum | 6 | [marketplace-analytics.php](../../public/api/marketplace-analytics.php) |
@@ -138,7 +138,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-032437fc39 | public / `api/marketplace-orders.php` | sebagian | 6 | [marketplace-orders.php](../../public/api/marketplace-orders.php) |
 | PUBLIC-3599a1df42 | public / `api/marketplace-partner-settings.php` | stub-legacy-keputusan-pemilik | 11 | [marketplace-partner-settings.php](../../public/api/marketplace-partner-settings.php) |
 | PUBLIC-5e13ce4104 | public / `api/marketplace-price.php` | sebagian | 11 | [marketplace-price.php](../../public/api/marketplace-price.php) |
-| PUBLIC-33f67ec74a | public / `api/marketplace-shipping-document.php` | belum | 9 | [marketplace-shipping-document.php](../../public/api/marketplace-shipping-document.php) |
+| PUBLIC-33f67ec74a | public / `api/marketplace-shipping-document.php` | sebagian | 9 | [marketplace-shipping-document.php](../../public/api/marketplace-shipping-document.php) |
 | PUBLIC-ca5edc6128 | public / `api/marketplace-stock.php` | pilot | 6 | [marketplace-stock.php](../../public/api/marketplace-stock.php) |
 | PUBLIC-f63c9c9083 | public / `api/marketplace-store-deletion.php` | pilot | 6 | [marketplace-store-deletion.php](../../public/api/marketplace-store-deletion.php) |
 | PUBLIC-953e70a9bc | public / `api/marketplace-sync.php` | pilot | 11 | [marketplace-sync.php](../../public/api/marketplace-sync.php) |
@@ -150,7 +150,7 @@ Inventaris source, bukan bukti seluruh fitur lulus. Satu ID menjadi satu task al
 | PUBLIC-d3f45cb742 | public / `install.php` | utilitas-operasional-review-pemilik | 6 | [install.php](../../public/install.php) |
 | PUBLIC-4cca7cbede | public / `marketplace.php` | sebagian | 6 | [marketplace.php](../../public/marketplace.php) |
 | PUBLIC-7b7235f8c0 | public / `repair_owner.php` | utilitas-operasional-review-pemilik | 6 | [repair_owner.php](../../public/repair_owner.php) |
-| PUBLIC-376298b277 | public / `workspace.php` | belum | 5 | [workspace.php](../../public/workspace.php) |
+| PUBLIC-376298b277 | public / `workspace.php` | pilot | 5 | [workspace.php](../../public/workspace.php) |
 | RPC-b04d822364 | rpc / `activateHppProductionServerRpc` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-da9d853ee3 | rpc / `auditInventoryConsistencyServer` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
 | RPC-3bc3484837 | rpc / `backupSekarangJagoLaba` | pilot | 8 | [RpcService.php](../../app/Modules/Konveksi/Controllers/RpcService.php) |
