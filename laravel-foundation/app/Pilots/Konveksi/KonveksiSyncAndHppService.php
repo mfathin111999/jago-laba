@@ -4,14 +4,13 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 use RuntimeException;
 
 final class KonveksiSyncAndHppService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -22,7 +21,7 @@ final class KonveksiSyncAndHppService
             throw new InvalidArgumentException('Payload syncTab tidak valid.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $mapping = $connection->table('system_table_map')->where('api_key', $tab)->first();
         if (! $mapping) {
             throw new RuntimeException("Tabel untuk tab {$tab} belum dipetakan.");
@@ -64,7 +63,7 @@ final class KonveksiSyncAndHppService
             throw new InvalidArgumentException('Payload syncMultiTabs tidak valid.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $synced = [];
 
         $connection->transaction(function () use ($connection, $map, &$synced): void {
@@ -149,7 +148,7 @@ final class KonveksiSyncAndHppService
             throw new RuntimeException('Total HPP harus lebih dari 0.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
         $tableHist = (string) $connection->table('system_table_map')->where('api_key', 'hpp_history')->value('table_name');
         $now = now()->toIso8601String();
@@ -173,7 +172,7 @@ final class KonveksiSyncAndHppService
                     }
                 }
 
-                if ($tableHist && \Illuminate\Support\Facades\Schema::hasTable($tableHist)) {
+                if ($tableHist && $this->konveksi->connection()->getSchemaBuilder()->hasTable($tableHist)) {
                     $hist = [
                         'id' => 'HIST-'.date('YmdHis').'-'.strtoupper(substr(bin2hex(random_bytes(3)), 0, 6)),
                         'model_key' => $model,
@@ -213,7 +212,7 @@ final class KonveksiSyncAndHppService
 
     public function syncFromPurchases(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tablePemb = (string) $connection->table('system_table_map')->where('api_key', 'pembelian')->value('table_name');
         $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
 

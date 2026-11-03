@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Auth\LegacyUserProvider;
+use App\Pilots\Konveksi\KonveksiConnection;
 use App\Policies\RolePolicy;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(KonveksiConnection::class);
     }
 
     /**

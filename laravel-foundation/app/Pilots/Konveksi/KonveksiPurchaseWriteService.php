@@ -4,21 +4,19 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use DomainException;
-use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 use RuntimeException;
 
 final class KonveksiPurchaseWriteService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
     public function saveMaterial(LegacyUser $user, string $companyKey, array $p): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableBahan = (string) $connection->table('system_table_map')->where('api_key', 'bahan')->value('table_name');
         $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
         $tableMut = (string) $connection->table('system_table_map')->where('api_key', 'mutasi_stok')->value('table_name');
@@ -182,7 +180,7 @@ final class KonveksiPurchaseWriteService
 
     public function saveInvoice(LegacyUser $user, string $companyKey, array $p): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tablePemb = (string) $connection->table('system_table_map')->where('api_key', 'pembelian')->value('table_name');
         $tableBahan = (string) $connection->table('system_table_map')->where('api_key', 'bahan')->value('table_name');
         $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
@@ -206,7 +204,7 @@ final class KonveksiPurchaseWriteService
         $invoice = trim((string) ($p['no_faktur_supplier'] ?? ($p['no_faktur'] ?? '')));
 
         return $connection->transaction(function () use (
-            $connection, $tablePemb, $tableBahan, $tableHpp, $tableItems,
+            $connection, $tablePemb, $tableItems,
             $id, $invoice, $items, $p, $now, $user
         ): array {
             $existingRows = $connection->table($tablePemb)->get();

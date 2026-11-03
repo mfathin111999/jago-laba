@@ -4,13 +4,12 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
 final class KonveksiHutangService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -25,7 +24,7 @@ final class KonveksiHutangService
             throw new RuntimeException('Nominal hutang upah harus lebih dari Rp 0.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableMapping = $connection->table('system_table_map')->where('api_key', 'hutang_konveksi')->first();
         if (! $tableMapping) {
             throw new RuntimeException('Tabel hutang konveksi belum dipetakan.');
@@ -100,7 +99,7 @@ final class KonveksiHutangService
             throw new RuntimeException('Rekening kas sumber wajib dipilih.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableHutang = (string) $connection->table('system_table_map')->where('api_key', 'hutang_konveksi')->value('table_name');
         $tableHist = (string) $connection->table('system_table_map')->where('api_key', 'riwayat_bayar_hutang_konveksi')->value('table_name');
         $tableKeu = (string) $connection->table('system_table_map')->where('api_key', 'keuangan')->value('table_name');

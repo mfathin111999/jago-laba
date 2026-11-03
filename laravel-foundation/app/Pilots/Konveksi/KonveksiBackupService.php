@@ -4,12 +4,11 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use Illuminate\Database\DatabaseManager;
 
 final class KonveksiBackupService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -18,7 +17,7 @@ final class KonveksiBackupService
         $mode = strtoupper($mode);
         $id = 'BKP-'.$mode.'-'.date('Ymd-His');
         $now = now()->toIso8601String();
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
 
         $manifest = [
             'backup_id' => $id,
@@ -29,7 +28,7 @@ final class KonveksiBackupService
             'total_rows' => 0,
         ];
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('backup_log')) {
+        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('backup_log')) {
             $connection->table('backup_log')->insert([
                 'backup_id' => $id,
                 'mode' => $mode,
@@ -71,8 +70,8 @@ final class KonveksiBackupService
 
     public function history(): array
     {
-        $connection = $this->database->connection();
-        if (! \Illuminate\Support\Facades\Schema::hasTable('backup_log')) {
+        $connection = $this->konveksi->connection();
+        if (! $this->konveksi->connection()->getSchemaBuilder()->hasTable('backup_log')) {
             return [];
         }
 

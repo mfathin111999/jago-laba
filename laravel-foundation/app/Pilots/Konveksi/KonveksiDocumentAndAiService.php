@@ -5,15 +5,13 @@ namespace App\Pilots\Konveksi;
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use finfo;
-use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 use RuntimeException;
-use Throwable;
 
 final class KonveksiDocumentAndAiService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -46,9 +44,9 @@ final class KonveksiDocumentAndAiService
         }
 
         $fid = 'DOC-'.bin2hex(random_bytes(16));
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
 
-        if (\Illuminate\Support\Facades\Schema::hasTable('document_files')) {
+        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('document_files')) {
             $connection->table('document_files')->insert([
                 'file_id' => $fid,
                 'document_type' => $type,
@@ -93,7 +91,7 @@ final class KonveksiDocumentAndAiService
     public function saveTemplate(LegacyUser $user, string $companyKey, array $p): array
     {
         $id = (string) ($p['id'] ?? ($p['id_template'] ?? 'TPL-DEFAULT'));
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $mapping = $connection->table('system_table_map')->where('api_key', 'template_dokumen')->first();
 
         if (! $mapping) {
@@ -141,9 +139,9 @@ final class KonveksiDocumentAndAiService
 
     public function geminiStatus(): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $v = '';
-        if (\Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('system_settings')) {
             $v = (string) ($connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->value('setting_value') ?? '');
         }
 
@@ -165,8 +163,8 @@ final class KonveksiDocumentAndAiService
             throw new RuntimeException('API key kosong.');
         }
 
-        $connection = $this->database->connection();
-        if (\Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+        $connection = $this->konveksi->connection();
+        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('system_settings')) {
             $existing = $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->first();
             if ($existing) {
                 $connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->update([
@@ -199,9 +197,9 @@ final class KonveksiDocumentAndAiService
 
     public function extractInvoice(array $p): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $key = '';
-        if (\Illuminate\Support\Facades\Schema::hasTable('system_settings')) {
+        if ($this->konveksi->connection()->getSchemaBuilder()->hasTable('system_settings')) {
             $key = (string) ($connection->table('system_settings')->where('setting_key', 'GEMINI_API_KEY')->value('setting_value') ?? '');
         }
 

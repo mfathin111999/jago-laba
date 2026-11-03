@@ -5,14 +5,13 @@ namespace App\Pilots\Konveksi;
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use DomainException;
-use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
 use RuntimeException;
 
 final class KonveksiSalesWriteService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly KonveksiPilotReadService $readService,
         private readonly AuditLogger $audit,
     ) {}
@@ -24,7 +23,7 @@ final class KonveksiSalesWriteService
             $id = 'SALE-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableMapping = $connection->table('system_table_map')->where('api_key', 'penjualan')->first();
         $itemMapping = $connection->table('system_table_map')->where('api_key', 'penjualan_item')->first();
 
@@ -141,7 +140,7 @@ final class KonveksiSalesWriteService
             $id = 'SALE-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableMapping = $connection->table('system_table_map')->where('api_key', 'penjualan')->first();
         $itemMapping = $connection->table('system_table_map')->where('api_key', 'penjualan_item')->first();
 
@@ -247,7 +246,7 @@ final class KonveksiSalesWriteService
             throw new InvalidArgumentException('ID penjualan tidak valid.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableMapping = $connection->table('system_table_map')->where('api_key', 'penjualan')->first();
         $corrMapping = $connection->table('system_table_map')->where('api_key', 'penjualan_koreksi')->first();
 
@@ -308,7 +307,7 @@ final class KonveksiSalesWriteService
                 'created_at' => $now,
             ];
 
-            if ($corrTable && \Illuminate\Support\Facades\Schema::hasTable($corrTable)) {
+            if ($corrTable && $this->konveksi->connection()->getSchemaBuilder()->hasTable($corrTable)) {
                 $connection->table($corrTable)->insert([
                     '_row_order' => 0,
                     '_data_json' => json_encode($corrRow, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -344,7 +343,7 @@ final class KonveksiSalesWriteService
             throw new InvalidArgumentException('ID penjualan tidak valid.');
         }
 
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableMapping = $connection->table('system_table_map')->where('api_key', 'penjualan')->first();
         if (! $tableMapping) {
             throw new RuntimeException('Tabel penjualan belum dipetakan.');

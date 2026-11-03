@@ -4,18 +4,17 @@ namespace App\Pilots\Konveksi;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use Illuminate\Database\DatabaseManager;
 
 final class KonveksiInventoryService
 {
     public function __construct(
-        private readonly DatabaseManager $database,
+        private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
     ) {}
 
     public function audit(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
         $tableMaster = (string) $connection->table('system_table_map')->where('api_key', 'master_stok')->value('table_name');
         $tableMut = (string) $connection->table('system_table_map')->where('api_key', 'mutasi_stok')->value('table_name');
@@ -115,7 +114,7 @@ final class KonveksiInventoryService
 
     public function migrateIds(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->database->connection();
+        $connection = $this->konveksi->connection();
         $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
         $tableMaster = (string) $connection->table('system_table_map')->where('api_key', 'master_stok')->value('table_name');
 
