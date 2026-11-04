@@ -19,6 +19,7 @@ export const MARKETPLACE_NAV: NavItem[] = [
     { key: 'marketing', label: 'Iklan', path: '/marketplace/marketing', needsStore: true },
     { key: 'income', label: 'Pemasukan dan penarikan', path: '/marketplace/income', needsStore: false },
     { key: 'expenses', label: 'Pengeluaran', path: '/marketplace/expenses', needsStore: true },
+    { key: 'sync', label: 'Sinkronisasi', path: '/marketplace/sync', needsStore: true },
     { key: 'integrations', label: 'Integrasi', path: '/marketplace/integrations', needsStore: false },
     { key: 'stores', label: 'Toko', path: '/marketplace/stores', needsStore: false },
 ];

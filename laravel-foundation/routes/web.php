@@ -36,6 +36,7 @@ use App\Http\Controllers\MarketplaceStoresPageController;
 use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncApiController;
 use App\Http\Controllers\MarketplaceSyncController;
+use App\Http\Controllers\MarketplaceSyncPageController;
 use App\Http\Controllers\MarketplaceWithdrawalLegacyController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
 use App\Http\Controllers\SandboxMarketplaceOAuthController;
@@ -61,6 +62,8 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.marketing.template');
     Route::get('/marketplace/marketing', MarketplaceMarketingPageController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.marketing');
+    Route::get('/marketplace/sync', MarketplaceSyncPageController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.sync');
     Route::get('/marketplace/integrations', MarketplaceIntegrationsPageController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.integrations');
     Route::get('/marketplace/stores', MarketplaceStoresPageController::class)

@@ -68,7 +68,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
 - [x] B5 Halaman Integrasi: status koneksi, hubungkan/segarkan/putuskan, sinkron sekarang, kesehatan sumber data + coba ulang, antrean sinkron, identitas & logo. Callback OAuth kini kembali ke /marketplace/integrations. Ditunda: form pengaturan aplikasi (berisi rahasia partner; menunggu keputusan owner)
 - [x] B6 Pemasukan per pesanan (final/estimasi/belum tersedia), riwayat penarikan + impor XLSX/CSV (pratinjau lalu konfirmasi), halaman Iklan dari laporan CSV (filter, KPI, penanda bocor, impor, template). Sinkronisasi iklan provider tetap nonaktif; "pusat iklan" lama berisi data demo dan sengaja tidak dipindahkan. Perbaikan: KpiCard kini mendukung teks apa adanya (ROAS, total stok tidak lagi salah tampil sebagai Rupiah)
-- [ ] B7 Sync, auto-sync controls, background sync, price editor
+- [x] B7 Halaman Sinkronisasi (/marketplace/sync): ringkasan cakupan, sinkron manual + status antrean live (polling 5 dtk), jadwal otomatis per mode (admin), editor harga ditampilkan sebagai nonaktif dengan alasan. Playwright terpasang untuk smoke visual (B8). Catatan: worker masih sandbox (pemindaian lokal), belum mengambil data provider
 - [ ] B8 Suite + smoke visual desktop/mobile + commit
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)

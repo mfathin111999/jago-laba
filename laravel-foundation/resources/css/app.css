@@ -181,3 +181,7 @@ table th.num, table td.num { text-align: right; white-space: nowrap; }
 .tab-bar button { border: 1px solid #c9d7e6; background: #fff; color: #34516e; border-radius: 8px; padding: .5rem .9rem; font-weight: 700; cursor: pointer; }
 .tab-bar button.active { background: #1767aa; border-color: #1767aa; color: #fff; }
 .inline-field { max-width: 14rem; margin-bottom: .6rem; }
+
+.switch-list { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: 0; }
+.switch-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid #e3ebf4; }
+.switch-list li:last-child { border-bottom: 0; }
