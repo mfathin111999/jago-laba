@@ -59,6 +59,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Legacy ran in WIB (PHP Asia/Jakarta and MySQL +07:00); keeping the session on +07:00 keeps NOW() and stored times consistent.
+            'timezone' => env('DB_TIMEZONE', '+07:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
@@ -79,6 +81,8 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // Legacy ran in WIB (PHP Asia/Jakarta and MySQL +07:00); keeping the session on +07:00 keeps NOW() and stored times consistent.
+            'timezone' => env('DB_TIMEZONE', '+07:00'),
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
