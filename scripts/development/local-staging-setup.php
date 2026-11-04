@@ -75,6 +75,11 @@ if ($pending !== []) {
     echo 'WARNING: '.count($pending).' migration(s) never succeeded: '.implode(', ', array_map('basename', $pending))."\n";
 }
 
+// The Konveksi write gate refuses to run without its receipts table; production gets it from the legacy installer.
+KonveksiModule::boot();
+KonveksiOperationGate::install($pdo);
+echo "konveksi write-gate schema ready\n";
+
 SchemaManager::ensureOwner($pdo, 'owner', 'Owner Staging', $ownerPassword);
 echo "owner login ready (username: owner)\n";
 echo 'tables: '.(int) $pdo->query('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()')->fetchColumn()."\n";

@@ -73,7 +73,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)
 - [x] C0 Keputusan strategi (4 Nov 2026, disetujui pemilik): hibrida. UI Konveksi lama (satu aplikasi Vue 3 ±14.000 baris, logika bisnis di browser) disajikan lewat Laravel: rute /konveksi (bukan /index.php: front controller membacanya sebagai "/"; yang lama dialihkan) merakit view yang sama dengan index.php lama; login, CSRF, workspace, dan seluruh 27 metode RPC dari Laravel. Aset di public/assets/konveksi. Smoke Playwright (`npm run test:visual:konveksi`): klien boot, mengirim token CSRF Laravel, 19 menu sidebar dibuka tanpa galat
-- [ ] C1 Verifikasi fungsional per menu dengan database nyata (digabung ke UAT F2): HPP, SPK, penjualan, hutang, keuangan, backup
+- [~] C1 Verifikasi fungsional dengan database nyata: tulis penjualan/void/hutang/backup + gerbang idempotensi + versi koleksi terbukti di staging (26/26, `tests/e2e/konveksi-write-e2e.mjs`). Belum: pembelian/faktur, SPK potong-jahit, HPP produksi, master bahan (jalur lewat UI lama), dan angka dari data asli (UAT F2)
 - [ ] C2 (opsional, pasca-cutover) Tulis ulang menu terpilih ke Vue/Inertia bila diperlukan
 
 ### Fase D — Hosting & operasi (butuh operator, paralel)

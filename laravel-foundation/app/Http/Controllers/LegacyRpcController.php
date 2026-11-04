@@ -336,7 +336,7 @@ final class LegacyRpcController
     {
         $user = Auth::guard('web')->user();
         $mode = (string) ($args[0] ?? 'MANUAL');
-        $res = $this->backup->create($user, $mode ?: 'MANUAL');
+        $res = $this->publicBackup($this->backup->create($user, $mode ?: 'MANUAL'));
 
         return response()->json(['ok' => true, 'result' => $res]);
     }
@@ -399,9 +399,40 @@ final class LegacyRpcController
         return response()->json(['ok' => true, 'result' => $res]);
     }
 
+    /**
+     * Backup rows keep full server paths in the database for operators; the browser only gets file names, so a
+     * signed-in user never learns the server's directory layout. The screen's download link falls back to '#'.
+     *
+     * @param  array<string, mixed>  $backup
+     * @return array<string, mixed>
+     */
+    private function publicBackup(array $backup): array
+    {
+        foreach (['sql_file', 'snapshot_file', 'manifest_file'] as $field) {
+            if (isset($backup[$field]) && is_string($backup[$field]) && $backup[$field] !== '') {
+                $backup[$field] = $this->fileName($backup[$field]);
+            }
+        }
+        if (array_key_exists('external_files', $backup)) {
+            $external = (array) $backup['external_files'];
+            $backup['external_files'] = isset($external['error']) ? ['error' => 'Salinan eksternal gagal.'] : array_map(fn (mixed $path): string => $this->fileName((string) $path), $external);
+        }
+        if (array_key_exists('url', $backup)) {
+            $backup['url'] = '#';
+        }
+
+        return $backup;
+    }
+
+    /** The last path segment of either a Windows or a POSIX path. */
+    private function fileName(string $path): string
+    {
+        return basename(strtr($path, [chr(92) => '/']));
+    }
+
     private function backupHistory(Request $request): JsonResponse
     {
-        $res = $this->backup->history();
+        $res = array_map(fn (array $row): array => $this->publicBackup($row), $this->backup->history());
 
         return response()->json(['ok' => true, 'result' => $res]);
     }

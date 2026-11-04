@@ -54,8 +54,37 @@ E2E_WORKER="php artisan queue:work --queue=marketplace,default --stop-when-empty
 
 Hasil terakhir: 85 dari 85 pemeriksaan lolos.
 
+### Uji tulis Konveksi (`tests/e2e/konveksi-write-e2e.mjs`)
+
+```bash
+node tests/e2e/konveksi-write-e2e.mjs
+```
+
+Memakai pustaka API klien lama (`window.jlApi`) di browser yang sudah login, jadi setiap panggilan membawa token CSRF,
+kunci idempotensi, versi koleksi, dan reset epoch yang asli, melewati gerbang tulis di MySQL sungguhan. Data yang dipakai
+adalah snapshot Konveksi yang diimpor (31 baris stok, 17 produk, 3 rekening). Hasil: 26 dari 26 lolos.
+
+| Alur | Yang dibuktikan |
+|---|---|
+| Jual produk | stok turun sebesar qty, satu penjualan + satu mutasi stok + satu kas masuk senilai tagihan; laba dihitung server dari HPP tersimpan |
+| Kirim ulang dengan kunci yang sama | hanya terposting sekali |
+| Jual melebihi stok | ditolak dengan pesan terbaca, tidak ada perubahan |
+| Tulis tanpa kunci | ditolak 422 |
+| Batalkan penjualan (void) | stok kembali ke semula, penjualan bertanda VOID |
+| Versi koleksi basi | syncTab ditolak 409, buku kas tidak berubah |
+| Hutang pegawai | dibuat, dibayar sebagian (kas keluar senilai bayar), bayar melebihi saldo ditolak |
+| Backup | snapshot nyata dibuat; balasan hanya berisi nama berkas |
+
+Skema gerbang tulis (`konveksi_request_receipts`) dipasang oleh skrip setup lewat installer legacy. Tanpa tabel itu semua
+tulisan Konveksi sengaja ditolak.
+
 ## Temuan saat menyiapkan staging
 
+0. Balasan backup membocorkan path absolut server (`C:
+mpp\...`) ke browser lewat `snapshot_file`, `manifest_file`, `url`,
+   dan salinan eksternal. Kini hanya nama berkas yang dikirim; path lengkap tetap di tabel `backup_log` untuk operator.
+   Baris baru di `loadSemuaData` tidak selalu berada di ujung daftar (urutan baris tabel bukan urutan tambah); uji
+   mencocokkan berdasarkan ID, dan klien lama memang bekerja seperti itu.
 1. `SchemaManager::repairIdempotencySchema` selalu mencoba menambah indeks unik yang sudah ada (membandingkan kunci array
    1..n dengan 0..n-1) sehingga instalasi pada database kosong gagal. Diperbaiki.
 2. Migrasi Marketplace saling bergantung secara implisit: lima di antaranya baru berhasil pada putaran kedua. Skrip setup

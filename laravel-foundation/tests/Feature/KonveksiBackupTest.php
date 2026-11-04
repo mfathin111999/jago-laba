@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
+use App\Http\Controllers\LegacyRpcController;
 use App\Pilots\Konveksi\KonveksiBackupService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -83,6 +84,27 @@ final class KonveksiBackupTest extends TestCase
     private function user(): LegacyUser
     {
         return new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']);
+    }
+
+    public function test_the_browser_never_receives_server_paths_for_backups(): void
+    {
+        $controller = app(LegacyRpcController::class);
+        $method = new \ReflectionMethod($controller, 'publicBackup');
+
+        $clean = $method->invoke($controller, [
+            'backup_id' => 'BKP-1', 'sql_file' => null, 'snapshot_file' => 'C:\xampp\private\backups/MANUAL/2026/11/jago_laba_1.json.gz',
+            'manifest_file' => '/var/www/private/backups/jago_laba_1.manifest.json', 'url' => 'file:///C:/xampp/private/backups',
+            'external_files' => ['D:/mirror/MANUAL/jago_laba_1.json.gz'],
+        ]);
+
+        $this->assertSame(['jago_laba_1.json.gz'], [basename($clean['snapshot_file'])]);
+        $this->assertSame('jago_laba_1.json.gz', $clean['snapshot_file']);
+        $this->assertSame('jago_laba_1.manifest.json', $clean['manifest_file']);
+        $this->assertNull($clean['sql_file']);
+        $this->assertSame('#', $clean['url']);
+        $this->assertSame(['jago_laba_1.json.gz'], $clean['external_files']);
+        $this->assertStringNotContainsString('xampp', json_encode($clean));
+        $this->assertSame(['error' => 'Salinan eksternal gagal.'], $method->invoke($controller, ['external_files' => ['error' => 'copy(D:/secret/path) failed']])['external_files']);
     }
 
     public function test_backup_writes_a_readable_snapshot_manifest_and_truthful_log(): void
