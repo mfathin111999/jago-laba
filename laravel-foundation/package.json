@@ -5,7 +5,8 @@
     "scripts": {
         "build": "vue-tsc --noEmit && vite build",
         "dev": "vite",
-        "test:visual": "node tests/visual/smoke.mjs"
+        "test:visual": "node tests/visual/smoke.mjs",
+        "test:visual:konveksi": "node tests/visual/konveksi-smoke.mjs"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^3.9.1",

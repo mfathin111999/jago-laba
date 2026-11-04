@@ -974,13 +974,12 @@ final class PilotReadOnlyTest extends TestCase
         $this->assertLessThan(2.0, $laravelElapsed, 'Laravel/Inertia Konveksi fixture read took unexpectedly long.');
     }
 
-    public function test_legacy_konveksi_dashboard_url_forwards_without_writing(): void
+    public function test_legacy_konveksi_url_now_serves_the_client_and_the_read_only_pilot_stays_available(): void
     {
         $this->loginAndSelect('konveksi');
 
-        $this->get('/index.php?tab=dashboard')
-            ->assertStatus(303)
-            ->assertRedirect('/pilot/konveksi?tab=dashboard');
+        $this->get('/index.php?tab=dashboard')->assertOk()->assertSee('Jago Laba · Manajemen Konveksi', false);
+        $this->inertiaGet('/pilot/konveksi?tab=dashboard')->assertOk()->assertJsonPath('component', 'Pilot/Konveksi');
     }
 
     public function test_legacy_konveksi_read_rpc_uses_the_new_adapter_shape(): void

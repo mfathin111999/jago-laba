@@ -72,17 +72,14 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B8 Smoke visual: `npm run test:visual` (laravel-foundation/tests/visual) membuka 11 halaman Marketplace di desktop 1366px dan mobile 390px dengan build asli + fixture props; gagal bila ada galat konsol, overflow horizontal, halaman kosong, atau teks "undefined/NaN". Menemukan dan memperbaiki overflow mobile di 6 halaman; logo perusahaan kini tampil di sidebar (shared prop). Checklist: 113 pilot, 31 sebagian, 26 belum (sisa Konveksi + utilitas)
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)
-- [ ] C0 Layout Konveksi + komponen bersama (pakai komponen B0)
-- [ ] C1 Dashboard + master (produk, bahan, bahan_hpp, supplier, pegawai, rekening)
-- [ ] C2 Stok + pembelian (bahan, vendor) + distribusi
-- [ ] C3 Produksi: potong, jahit, hpp_produksi, penjualan_produksi
-- [ ] C4 Keuangan: keuangan, kasbon, piutang, hutang, hutang_konveksi
-- [ ] C5 Pengaturan: profil, pengguna, hak_akses, backup
-- [ ] C6 Suite + commit
+- [x] C0 Keputusan strategi (4 Nov 2026, disetujui pemilik): hibrida. UI Konveksi lama (satu aplikasi Vue 3 ±14.000 baris, logika bisnis di browser) disajikan lewat Laravel: rute /index.php merakit view yang sama dengan index.php lama; login, CSRF, workspace, dan seluruh 27 metode RPC dari Laravel. Aset di public/assets/konveksi. Smoke Playwright (`npm run test:visual:konveksi`): klien boot, mengirim token CSRF Laravel, 19 menu sidebar dibuka tanpa galat
+- [ ] C1 Verifikasi fungsional per menu dengan database nyata (digabung ke UAT F2): HPP, SPK, penjualan, hutang, keuangan, backup
+- [ ] C2 (opsional, pasca-cutover) Tulis ulang menu terpilih ke Vue/Inertia bila diperlukan
 
 ### Fase D — Hosting & operasi (butuh operator, paralel)
 - [ ] D1 Staging HTTPS + trusted proxy + secure cookie (langkah 5)
 - [ ] D2 Cron scheduler + queue worker di host, bukti run/stop/restart (langkah 10)
+- [ ] D4 Klien Konveksi lama memuat Tailwind, Vue, dan font ikon dari CDN publik: untuk produksi, unduh dan sajikan lokal (atau terima ketergantungan CDN secara sadar)
 - [ ] D3 Izin file privat & checksum dokumen (langkah 9)
 
 ### Fase E — Provider

@@ -113,4 +113,10 @@ return [
         // Private storage root for uploaded documents; point it at the legacy storage root to keep existing files reachable.
         'root' => env('JL_DOCUMENT_STORAGE_ROOT') ?: null,
     ],
+    'konveksi' => [
+        // The legacy Konveksi single-page client (HTML views) is served by Laravel; see KonveksiLegacyAppController.
+        'views_path' => env('JL_KONVEKSI_VIEWS_PATH') ?: dirname(__DIR__, 2).'/app/Modules/Konveksi/Views',
+        // Cache-busting token for assets/konveksi/js/jl-api.js.
+        'client_version' => '20261029',
+    ],
 ];

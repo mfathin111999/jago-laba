@@ -5,6 +5,7 @@ use App\Http\Controllers\DiagnosticsController;
 use App\Http\Controllers\FoundationController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\KonveksiDocumentController;
+use App\Http\Controllers\KonveksiLegacyAppController;
 use App\Http\Controllers\KonveksiPilotController;
 use App\Http\Controllers\LegacyMarketplaceAjaxController;
 use App\Http\Controllers\LegacyPilotPageController;
@@ -168,7 +169,7 @@ Route::prefix('auth')->group(function (): void {
 // The two dashboard entry points now forward only their read-only pilot tab.
 Route::middleware('legacy.session')->group(function (): void {
     Route::middleware(['auth', 'company.context', 'workspace.context:konveksi'])
-        ->get('/index.php', [LegacyPilotPageController::class, 'konveksi'])
+        ->get('/index.php', KonveksiLegacyAppController::class)
         ->name('legacy.konveksi.page');
     Route::middleware(['auth', 'company.context', 'workspace.context:marketplace'])
         ->get('/marketplace.php', [LegacyPilotPageController::class, 'marketplace'])
