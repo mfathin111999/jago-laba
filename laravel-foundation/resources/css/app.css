@@ -176,3 +176,8 @@ th.is-right, td.is-right { text-align: right; }
 .notice { border-left: 4px solid #1767aa; }
 
 table th.num, table td.num { text-align: right; white-space: nowrap; }
+
+.tab-bar { display: flex; gap: .4rem; flex-wrap: wrap; }
+.tab-bar button { border: 1px solid #c9d7e6; background: #fff; color: #34516e; border-radius: 8px; padding: .5rem .9rem; font-weight: 700; cursor: pointer; }
+.tab-bar button.active { background: #1767aa; border-color: #1767aa; color: #fff; }
+.inline-field { max-width: 14rem; margin-bottom: .6rem; }

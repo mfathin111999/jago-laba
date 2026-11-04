@@ -18,9 +18,11 @@ use App\Http\Controllers\MarketplaceExpenseDeleteController;
 use App\Http\Controllers\MarketplaceExpensesReadController;
 use App\Http\Controllers\MarketplaceFulfillmentController;
 use App\Http\Controllers\MarketplaceHppWriteController;
+use App\Http\Controllers\MarketplaceIncomePageController;
 use App\Http\Controllers\MarketplaceIntegrationsPageController;
 use App\Http\Controllers\MarketplaceIntegrationStatusController;
 use App\Http\Controllers\MarketplaceLegacyReportController;
+use App\Http\Controllers\MarketplaceMarketingPageController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
 use App\Http\Controllers\MarketplacePilotController;
@@ -53,6 +55,12 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.catalog');
     Route::get('/marketplace/stock', MarketplaceStockPageController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.stock');
+    Route::get('/marketplace/income', MarketplaceIncomePageController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.income');
+    Route::get('/marketplace/marketing/template', [MarketplaceMarketingPageController::class, 'template'])
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.marketing.template');
+    Route::get('/marketplace/marketing', MarketplaceMarketingPageController::class)
+        ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.marketing');
     Route::get('/marketplace/integrations', MarketplaceIntegrationsPageController::class)
         ->middleware(['workspace.context:marketplace', 'role.action:report.view'])->name('marketplace.integrations');
     Route::get('/marketplace/stores', MarketplaceStoresPageController::class)

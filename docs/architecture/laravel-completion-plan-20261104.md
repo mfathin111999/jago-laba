@@ -67,7 +67,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B3 Pengeluaran toko (daftar, filter, CSV, catat, hapus) + rincian pesanan/retur (modal di Pesanan). Ditunda: pengeluaran lintas-toko (global) dan pemasukan (income) — income menyatu dengan penarikan dana, dikerjakan di B6
 - [x] B4 Toko: halaman `/marketplace/stores` — aktif/arsip, tambah/ubah, nonaktifkan, arsip/pulihkan, hapus permanen (owner; pratinjau + konfirmasi nama + pemantauan status)
 - [x] B5 Halaman Integrasi: status koneksi, hubungkan/segarkan/putuskan, sinkron sekarang, kesehatan sumber data + coba ulang, antrean sinkron, identitas & logo. Callback OAuth kini kembali ke /marketplace/integrations. Ditunda: form pengaturan aplikasi (berisi rahasia partner; menunggu keputusan owner)
-- [ ] B6 Marketing/iklan + withdrawals
+- [x] B6 Pemasukan per pesanan (final/estimasi/belum tersedia), riwayat penarikan + impor XLSX/CSV (pratinjau lalu konfirmasi), halaman Iklan dari laporan CSV (filter, KPI, penanda bocor, impor, template). Sinkronisasi iklan provider tetap nonaktif; "pusat iklan" lama berisi data demo dan sengaja tidak dipindahkan. Perbaikan: KpiCard kini mendukung teks apa adanya (ROAS, total stok tidak lagi salah tampil sebagai Rupiah)
 - [ ] B7 Sync, auto-sync controls, background sync, price editor
 - [ ] B8 Suite + smoke visual desktop/mobile + commit
 

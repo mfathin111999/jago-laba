@@ -65,7 +65,7 @@ function total(variants: Row[], key: string): string {
 }
 
 const summary = computed(() => props.stock.summary ?? {});
-const knownStock = computed(() => (summary.value.unknown ? `Belum lengkap · ${summary.value.unknown} SKU belum diketahui` : formatValue(summary.value.known_stock, 'decimal')));
+const knownStock = computed(() => `Belum lengkap · ${summary.value.unknown} SKU belum diketahui`);
 
 // ----- minimum editor -----
 const editor = reactive({ open: false, row: null as Row | null });
@@ -152,7 +152,7 @@ async function saveMinimum(): Promise<void> {
 
         <section class="kpi-grid" aria-label="Ringkasan stok">
             <KpiCard label="Varian aktif dalam filter" :value="summary.sku" kind="count" />
-            <KpiCard label="Total kuantitas" :value="knownStock" />
+            <KpiCard label="Total kuantitas" :value="summary.known_stock" kind="decimal" :text="summary.unknown ? knownStock : undefined" />
             <KpiCard label="SKU menipis" :value="summary.low" kind="count" />
             <KpiCard label="SKU habis" :value="summary.out" kind="count" />
         </section>
