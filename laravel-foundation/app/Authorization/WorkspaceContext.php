@@ -7,6 +7,7 @@ use App\Policies\RolePolicy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Throwable;
 
@@ -34,9 +35,7 @@ final class WorkspaceContext
             : [self::KONVEKSI];
 
         try {
-            $rows = $this->database->connection()->table('workspace_user_access')
-                ->whereIn('user_key', $legacyUser->legacyKeyCandidates())
-                ->pluck('workspace')
+            $rows = $this->grantedWorkspaces($legacyUser)
                 ->map(static fn ($workspace): string => strtolower(trim((string) $workspace)))
                 ->filter(static fn (string $workspace): bool => in_array($workspace, [self::KONVEKSI, self::MARKETPLACE], true))
                 ->unique()
@@ -86,5 +85,28 @@ final class WorkspaceContext
     public static function normalize(string $workspace): string
     {
         return strtolower(trim($workspace));
+    }
+
+    /**
+     * Explicit grants. The table exists in two shapes: the reviewed legacy DDL (workspace_code + is_allowed, where a
+     * row may revoke) and the simpler (workspace) form. Both are honoured; anything else falls back to the defaults.
+     *
+     * @return Collection<int, mixed>
+     */
+    private function grantedWorkspaces(LegacyUser $user): Collection
+    {
+        $connection = $this->database->connection();
+        $query = $connection->table('workspace_user_access')->whereIn('user_key', $user->legacyKeyCandidates());
+        $schema = $connection->getSchemaBuilder();
+
+        if ($schema->hasColumn('workspace_user_access', 'workspace_code')) {
+            if ($schema->hasColumn('workspace_user_access', 'is_allowed')) {
+                $query->where('is_allowed', 1);
+            }
+
+            return $query->pluck('workspace_code');
+        }
+
+        return $query->pluck('workspace');
     }
 }

@@ -34,12 +34,22 @@ echo "core schema ready\n";
 $import = (new SnapshotImporter($pdo))->importFile($root.'/database/legacy/current_database_snapshot.json', true);
 echo 'konveksi snapshot imported: '.json_encode($import)."\n";
 
+// database/migrations/shared/*.sql are REVIEW-ONLY drafts ("do not run on operational data"); they are deliberately not applied.
 // Migrations depend on each other only implicitly, so repeat until a full pass makes no progress.
 $files = array_merge(
     glob($root.'/database/migrations/marketplace/migration_*.php') ?: [],
     glob($root.'/database/migrations/marketplace/migration_*.sql') ?: [],
-    glob($root.'/database/migrations/shared/migration_*.sql') ?: [],
 );
+// Files labelled REVIEW ONLY are drafts for owner approval; never apply them to a staging copy of operational data.
+$files = array_values(array_filter($files, static function (string $file): bool {
+    $skip = preg_match('/REVIEW ONLY/i', (string) file_get_contents($file, false, null, 0, 400)) === 1;
+    if ($skip) {
+        echo 'skipped (review only) '.basename($file)."
+";
+    }
+
+    return ! $skip;
+}));
 sort($files);
 $pending = $files;
 for ($pass = 1; $pass <= 6 && $pending !== []; $pass++) {
@@ -78,6 +88,16 @@ if ($pending !== []) {
 // The Konveksi write gate refuses to run without its receipts table; production gets it from the legacy installer.
 KonveksiModule::boot();
 KonveksiOperationGate::install($pdo);
+
+// Every Konveksi collection needs its table and a system_table_map entry (the legacy isolation installer does the same);
+// the snapshot importer maps HutangSupplier as hutang_supplier, but purchases use the collection hutangsupplier.
+foreach (KonveksiCollectionStore::COLLECTIONS as $key) {
+    $table = SnapshotImporter::tableName($key);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `$table` (_row_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,_record_key VARCHAR(190),_row_order INT NOT NULL DEFAULT 0,_data_json LONGTEXT NOT NULL,_created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,_updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,INDEX(_record_key),INDEX(_row_order)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->prepare('INSERT IGNORE INTO system_table_map(sheet_name,api_key,table_name,headers_json,source_row_count,imported_row_count,checksum) VALUES (?,?,?,?,0,0,?)')->execute([$key, $key, $table, '[]', hash('sha256', '[]')]);
+}
+echo "konveksi collection tables mapped
+";
 echo "konveksi write-gate schema ready\n";
 
 SchemaManager::ensureOwner($pdo, 'owner', 'Owner Staging', $ownerPassword);

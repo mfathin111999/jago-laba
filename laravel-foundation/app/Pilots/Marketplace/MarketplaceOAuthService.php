@@ -17,7 +17,10 @@ final class MarketplaceOAuthService
     /** @var array<string, MarketplaceOAuthProvider> */
     private array $providers = [];
 
-    public function __construct(private readonly DatabaseManager $database) {}
+    public function __construct(
+        private readonly DatabaseManager $database,
+        private readonly MarketplaceStoreDeletionService $deletion,
+    ) {}
 
     /** @return list<string> */
     public function platforms(): array
@@ -123,7 +126,7 @@ final class MarketplaceOAuthService
             ];
         }
 
-        $storeId = $this->persistConnection($companyKey, $platform, $tokens, $shops[0]);
+        $storeId = $this->persistConnection($companyKey, $platform, $tokens, $shops[0], null, (string) $stateRow->created_at);
 
         return [
             'status' => 'success',
@@ -178,7 +181,7 @@ final class MarketplaceOAuthService
                 'refresh_token_expires_at' => (string) $row->refresh_token_expires_at,
                 'granted_scopes' => $this->decodeScopes($row->granted_scopes),
             ];
-            $storeId = $this->persistConnection($companyKey, (string) $row->platform, $tokens, $selected, $connection);
+            $storeId = $this->persistConnection($companyKey, (string) $row->platform, $tokens, $selected, $connection, (string) $row->created_at);
 
             $connection->table('marketplace_oauth_pending')->where('id', $row->id)->update(['consumed_at' => now()]);
 
@@ -403,13 +406,20 @@ final class MarketplaceOAuthService
         return $row;
     }
 
-    private function persistConnection(string $companyKey, string $platform, array $tokens, array $shop, ?Connection $connection = null): string
+    private function persistConnection(string $companyKey, string $platform, array $tokens, array $shop, ?Connection $connection = null, ?string $authorizationStarted = null): string
     {
         $connection ??= $this->database->connection();
         $externalId = trim((string) ($shop['id'] ?? ''));
         $name = trim((string) ($shop['name'] ?? ''));
         if ($externalId === '' || $name === '') {
             throw new MarketplaceOAuthException('Identitas toko sandbox tidak lengkap.', 'SHOP_IDENTITY_MISSING');
+        }
+
+        // A store that is being (or was just) erased must not be reconnected by an authorization that began before the erasure.
+        try {
+            $this->deletion->guardAuthorization($companyKey, $platform, $externalId, $authorizationStarted);
+        } catch (\DomainException $exception) {
+            throw new MarketplaceOAuthException($exception->getMessage(), 'STORE_BEING_DELETED');
         }
 
         $store = $connection->table('marketplace_stores')

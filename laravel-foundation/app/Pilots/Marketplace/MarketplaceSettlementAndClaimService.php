@@ -12,6 +12,9 @@ use LogicException;
 
 final class MarketplaceSettlementAndClaimService
 {
+    /** The values of marketplace_return_claims.claim_status. */
+    private const CLAIM_STATUSES = ['MENUNGGU_FISIK', 'KLAIM_DIAJUKAN', 'DISETUJUI_GANTI_RUGI', 'DITOLAK', 'FISIK_DITERIMA'];
+
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly AuditLogger $audit,
@@ -26,6 +29,11 @@ final class MarketplaceSettlementAndClaimService
         float $reimbursementAmount = 0.0,
         ?string $notes = null
     ): array {
+        // The database enum would reject anything else with a 500; refuse it up front with a readable 422.
+        if (! in_array($status, self::CLAIM_STATUSES, true)) {
+            throw new InvalidArgumentException('Status klaim tidak dikenal.');
+        }
+
         $connection = $this->database->connection();
 
         return $connection->transaction(function () use (

@@ -219,6 +219,16 @@ final class KonveksiPurchasePostingTest extends TestCase
         $this->assertSame([], $this->all('keuangan'));
     }
 
+    public function test_the_supplier_debt_collection_is_found_under_the_name_the_snapshot_importer_gave_it(): void
+    {
+        DB::table('system_table_map')->where('api_key', 'hutangsupplier')->update(['api_key' => 'hutang_supplier']);
+
+        $result = $this->service()->saveInvoice($this->user(), 'A', $this->invoice());
+
+        $this->assertSame('success', $result['status']);
+        $this->assertCount(1, $this->all('hutangsupplier'), 'the unpaid part is booked as supplier debt even when the map says hutang_supplier');
+    }
+
     public function test_new_material_gets_a_price_record_and_an_opening_stock_movement(): void
     {
         $result = $this->service()->saveMaterial($this->user(), 'A', [

@@ -78,7 +78,24 @@ adalah snapshot Konveksi yang diimpor (31 baris stok, 17 produk, 3 rekening). Ha
 Skema gerbang tulis (`konveksi_request_receipts`) dipasang oleh skrip setup lewat installer legacy. Tanpa tabel itu semua
 tulisan Konveksi sengaja ditolak.
 
+### Uji operasi (`tests/e2e/staging-ops-e2e.mjs`)
+
+Hanya bermakna di MySQL: trigger penghapusan toko (`jl_erase_*`, pesan `STORE_PERMANENTLY_DELETING`), worker penghapusan, `mysqldump`, dan
+`schedule:run`. Jalankan di shell yang sudah `. scripts/development/staging-env.sh`:
+
+```bash
+PHP_BIN=php MYSQL_BIN=mysql MYSQLDUMP_BIN=mysqldump node tests/e2e/staging-ops-e2e.mjs
+```
+
+Hasil: 13 dari 13 lolos. Skrip membuat toko sementara dengan ID unik per jalan, karena catatan penghapusan sebuah toko
+memblokir ID itu selamanya.
+
 ## Temuan saat menyiapkan staging
+
+-1. Staging sempat salah karena skrip setup ikut menjalankan SQL berlabel **REVIEW ONLY**; tabel `_v2`/`_v3` yang terbentuk membuat
+   penghapusan toko menolak berjalan. Skrip kini melewati file berlabel itu dan staging dibangun ulang (89 tabel). Faktur pembelian
+   dengan sisa hutang juga gagal pada data hasil impor karena resolver koleksi tidak menyamakan `hutangsupplier` dengan
+   `hutang_supplier` seperti legacy; diperbaiki dan dites.
 
 0. Balasan backup membocorkan path absolut server (misalnya `C:/xampp/...`) ke browser lewat `snapshot_file`, `manifest_file`, `url`,
    dan salinan eksternal. Kini hanya nama berkas yang dikirim; path lengkap tetap di tabel `backup_log` untuk operator.

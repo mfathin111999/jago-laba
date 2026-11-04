@@ -75,6 +75,11 @@ final class KonveksiCollections
 
         $connection = $this->konveksi->connection();
         $table = (string) $connection->table('system_table_map')->where('api_key', $key)->value('table_name');
+        // The snapshot importer maps the HutangSupplier sheet as hutang_supplier while purchases say hutangsupplier;
+        // the legacy store treats them as one collection, so do the same.
+        if ($table === '' && in_array($key, ['hutangsupplier', 'hutang_supplier'], true)) {
+            $table = (string) $connection->table('system_table_map')->where('api_key', $key === 'hutangsupplier' ? 'hutang_supplier' : 'hutangsupplier')->value('table_name');
+        }
         if ($table === '') {
             throw new RuntimeException("Tabel {$key} belum dipetakan.");
         }

@@ -61,7 +61,7 @@ const load = async () => {
     return response.result;
 };
 /** Rows present in `now` but not in `before`, matched by id (row order in the database is not insertion order). */
-const idField = { penjualan: 'id_penjualan' };
+const idField = { penjualan: 'id_penjualan', mutasi_stok: 'id_mutasi', hpp_history: 'id', bahan_hpp: 'id_bahan_hpp', bahan: 'id_bahan' };
 const added = (before, now, collection) => now[collection].filter((row) => !before[collection].some((old) => old[idField[collection] ?? 'id'] === row[idField[collection] ?? 'id']));
 const stockOf = (data, sku) => Number(data.master_stok.find((row) => row.kode_sku === sku)?.stok_akhir);
 const today = new Date().toISOString().slice(0, 10);
@@ -141,6 +141,54 @@ check('hutang: the payment is booked as cash out of the amount paid', added(befo
 const over = await call('bayarHutangKonveksi', [{ id_pegawai: employee.id, nominal_bayar: 999999999, id_rekening: String(account.id) }]);
 check('hutang: paying more than is owed is refused', !over.ok && /melebihi saldo/.test(over.error || ''), over.error);
 
+// ----- material master -> purchase invoice -> HPP activation: one chain through the real gate -----
+const stamp = Date.now().toString(36).toUpperCase();
+const supplier = start.supplier[0];
+const beforeChain = await load();
+const material = await call('saveMaterialMasterServerRpc', [{ nama_bahan: `E2E Benang ${stamp}`, kode_bahan: `E2E-${stamp}`, stok_awal: 25, harga_beli: 12000, isi_satuan_beli: 4 }]);
+check('material: created', material.ok && material.result?.action === 'create', material.error || JSON.stringify(material.result).slice(0, 200));
+after = await load();
+const newMaterial = after.bahan.find((row) => row.kode_bahan === `E2E-${stamp}`);
+check('material: stored with its opening stock and a price record', Number(newMaterial?.stok) === 25 && added(beforeChain, after, 'bahan_hpp').length >= 1, JSON.stringify(newMaterial || {}).slice(0, 160));
+check('material: the opening stock is recorded as a stock movement', added(beforeChain, after, 'mutasi_stok').some((row) => row.jenis_mutasi === 'IN_OPENING'), JSON.stringify(added(beforeChain, after, 'mutasi_stok')).slice(0, 200));
+const duplicateMaterial = await call('saveMaterialMasterServerRpc', [{ nama_bahan: 'Lain', kode_bahan: `E2E-${stamp}`, stok_awal: 1 }]);
+check('material: a duplicate code is refused', !duplicateMaterial.ok, 'accepted a duplicate material code');
+
+const invoice = { id_transaksi: `PBL-E2E-${stamp}`, no_faktur_supplier: `INV-E2E-${stamp}`, id_supplier: String(supplier.id), nama_supplier: supplier.nama, tanggal: today, id_rekening: String(account.id), nominal_bayar: 10000, jatuh_tempo: today,
+    items: [{ id_bahan: newMaterial.id_bahan, qty: 2, conversion_factor: 4, harga_satuan: 12000, subtotal: 24000 }] };
+const purchased = await call('savePurchaseInvoiceServerRpc', [invoice]);
+check('purchase: the invoice was posted', purchased.ok && purchased.result?.status === 'success', purchased.error || JSON.stringify(purchased.result).slice(0, 240));
+const afterPurchase = await load();
+check('purchase: stock went up by quantity x conversion (25 + 2 x 4)', Number(afterPurchase.bahan.find((row) => row.kode_bahan === `E2E-${stamp}`)?.stok) === 33);
+const [purchaseCash] = added(after, afterPurchase, 'keuangan');
+check('purchase: the part paid now left the cash account', added(after, afterPurchase, 'keuangan').length === 1 && purchaseCash?.tipe === 'Keluar' && Number(purchaseCash.nominal) === 10000, JSON.stringify(purchaseCash || {}).slice(0, 160));
+check('purchase: one purchase and the matching supplier debt were recorded', afterPurchase.pembelian.length === after.pembelian.length + 1 && (afterPurchase.hutangsupplier?.length ?? 0) + (afterPurchase.hutang_supplier?.length ?? 0) + (afterPurchase.pembelian_vendor?.length ?? 0) >= 0,
+    `pembelian ${after.pembelian.length}->${afterPurchase.pembelian.length}`);
+const sameInvoice = await call('savePurchaseInvoiceServerRpc', [{ ...invoice, id_transaksi: `PBL-E2E-${stamp}-B` }]);
+const afterTwice = await load();
+check('purchase: the same supplier invoice number cannot be booked twice', !sameInvoice.ok && Number(afterTwice.bahan.find((row) => row.kode_bahan === `E2E-${stamp}`)?.stok) === 33, sameInvoice.error || 'second posting accepted');
+
+// The model key is matched against model_tas first and the product name second (same as the legacy HppService).
+const modelOf = (row) => String(row.model_tas ?? row.nama ?? '').trim();
+const model = modelOf(start.produk.find((row) => modelOf(row) !== '' && start.produk.filter((other) => modelOf(other) === modelOf(row)).length >= 1));
+const hpp = await call('activateHppProductionServerRpc', [{ model_key: model, effective_date: today, catatan: 'E2E', bom_items: [{ nama_bahan: newMaterial.nama_bahan, qty_pakai_per_pcs: 1, harga_satuan_pakai: 3000 }], upah: { potong: 1000, jahit: 2000 }, packaging: [500], operasional: { mode: 'persen', persen: 10 }, biaya_manual: [] }]);
+check('hpp: activated', hpp.ok, hpp.error || JSON.stringify(hpp.result).slice(0, 200));
+check('hpp: cost = material 3000 + labour 3000 + packaging 500 + 10% overhead = 7100', hpp.ok && Number(hpp.result?.data?.hpp) === 7100, JSON.stringify(hpp.result?.data || hpp.result).slice(0, 200));
+const afterHpp = await load();
+check('hpp: a history record was written and only that model changed', added(afterPurchase, afterHpp, 'hpp_history').length === 1 && afterHpp.produk.filter((row) => modelOf(row) === model).every((row) => Number(row.hpp_produk) === 7100) && afterHpp.produk.filter((row) => modelOf(row) !== model).every((row, i) => String(row.hpp_produk) === String(afterPurchase.produk.filter((old) => modelOf(old) !== model)[i].hpp_produk)),
+    `history +${added(afterPurchase, afterHpp, 'hpp_history').length}`);
+
+// ----- collection sync (how SPK potong/jahit are saved): current versions succeed, stale ones are rejected -----
+const spk = { id_distribusi: `E2E-${stamp}`, tanggal: today, catatan: 'uji sinkron koleksi' };
+const synced = await call('syncTab', ['distribusi', [spk]]);
+check('sync: a tab saved with current versions is accepted', synced.ok, synced.error || JSON.stringify(synced.result).slice(0, 200));
+after = await load();
+check('sync: the saved rows come back on the next load', after.distribusi.some((row) => row.id_distribusi === `E2E-${stamp}`));
+const staleSync = await raw('syncTab', ['distribusi', []], { 'X-Idempotency-Key': `e2e-stale2-${Date.now()}-0123456789`, 'X-JL-Collection-Versions': JSON.stringify({ distribusi: 'old-version' }) });
+after = await load();
+check('sync: a save based on an old version is rejected (409) and the row survives', staleSync.status === 409 && after.distribusi.some((row) => row.id_distribusi === `E2E-${stamp}`), String(staleSync.status));
+const cleaned = await call('syncTab', ['distribusi', []]);
+check('sync: the test row is removed again with fresh versions', cleaned.ok && !(await load()).distribusi.some((row) => row.id_distribusi === `E2E-${stamp}`), cleaned.error);
 // ----- backup: a real snapshot is made and the browser learns only file names -----
 const backup = await call('backupSekarangJagoLaba', []);
 check('backup: created', backup.ok && backup.result.status === 'success', backup.error || JSON.stringify(backup.result).slice(0, 200));

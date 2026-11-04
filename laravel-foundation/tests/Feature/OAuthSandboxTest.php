@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +139,31 @@ final class OAuthSandboxTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.status', 'disconnected');
+    }
+
+    public function test_a_store_that_is_being_deleted_cannot_be_reconnected_but_a_later_authorization_can(): void
+    {
+        $this->loginAndSelectMarketplace();
+        app(MarketplaceStoreDeletionService::class)->install();
+
+        $first = $this->sandboxCallback($this->startSandbox('Shopee', 'success'));
+        $first->assertOk();
+        $storeId = (string) $first->json('data.store_id');
+        $identity = (string) DB::table('marketplace_oauth_connections')->where('store_id', $storeId)->value('external_store_id');
+        $this->assertNotSame('', $identity);
+
+        $deletion = ['store_id' => $storeId, 'company_key' => (string) DB::table('marketplace_stores')->where('id', $storeId)->value('company_key'), 'platform' => 'Shopee',
+            'identity_hash' => hash('sha256', 'Shopee:'.$identity), 'actor' => 'owner', 'requested_at' => now()->format('Y-m-d H:i:s'), 'status' => 'pending',
+            'counts_json' => '{}', 'files_json' => '[]', 'updated_at' => now()];
+        $started = $this->startSandbox('Shopee', 'success');
+        DB::table('marketplace_store_deletions')->insert($deletion);
+        DB::table('marketplace_oauth_connections')->where('store_id', $storeId)->update(['status' => 'disconnected']);
+
+        $this->sandboxCallback($started)->assertStatus(409)->assertJsonPath('code', 'STORE_BEING_DELETED');
+        $this->assertSame('disconnected', DB::table('marketplace_oauth_connections')->where('store_id', $storeId)->value('status'), 'a blocked callback must not revive the connection');
+
+        DB::table('marketplace_store_deletions')->update(['status' => 'completed', 'requested_at' => now()->subHour()->format('Y-m-d H:i:s')]);
+        $this->sandboxCallback($this->startSandbox('Shopee', 'success'))->assertOk()->assertJsonPath('data.status', 'success');
     }
 
     public function test_sandbox_callback_persists_one_store_encrypts_tokens_and_replay_is_rejected(): void

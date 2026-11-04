@@ -227,6 +227,7 @@ final class MarketplaceOAuthController
         return match ($code) {
             'AUTH_REQUIRED' => 401,
             'STORE_FORBIDDEN', 'ROLE_FORBIDDEN' => 403,
+            'STORE_BEING_DELETED' => 409,
             'PROVIDER_RATE_LIMITED' => 429,
             'PROVIDER_TIMEOUT' => 504,
             'OAUTH_STORAGE_UNAVAILABLE' => 503,
@@ -251,6 +252,7 @@ final class MarketplaceOAuthController
             'PROVIDER_TIMEOUT' => 'Provider sandbox tidak merespons tepat waktu.',
             'PROVIDER_RATE_LIMITED' => 'Provider sandbox sedang membatasi permintaan.',
             'STORE_OWNED_BY_OTHER_COMPANY' => 'Toko sudah terhubung ke perusahaan lain.',
+            'STORE_BEING_DELETED' => 'Toko sedang atau sudah dihapus. Mulai otorisasi baru setelah penghapusan selesai.',
             'SHOP_IDENTITY_MISSING', 'SHOP_SELECTION_INVALID' => 'Identitas toko sandbox tidak dapat diverifikasi.',
             'REAUTHORIZE_REQUIRED' => 'Refresh token tidak tersedia; otorisasi ulang diperlukan.',
             'PLATFORM_UNSUPPORTED' => 'Platform Marketplace belum tersedia di registry sandbox.',

@@ -30,7 +30,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 ### Fase A — Sisa backend (tanpa UI)
 - [x] A1 AJAX `sync_marketing_ads`, `test_api_connection` (sandbox/stub) — kontrak legacy dipertahankan (success:false, tanpa panggilan provider) + validasi toko/peran
 - [x] A2 `marketplace-store-deletion` (list, preview, request, resume, status) — command worker sudah ada — service dan command nyata menggantikan stub; hanya owner (store.delete); install lewat `--install`, bukan dari request web. Sisa: pasang `guardAuthorization` di alur OAuth (A2b)
-- [ ] A2b Pasang `MarketplaceStoreDeletionService::guardAuthorization` di callback/select OAuth agar toko yang sedang dihapus tidak bisa dihubungkan ulang
+- [x] A2b `guardAuthorization` kini dipasang di callback dan pilih-toko OAuth (409 `STORE_BEING_DELETED`); toko yang sedang atau sudah dihapus tidak bisa dihubungkan ulang oleh otorisasi yang dimulai sebelum penghapusan
 - [x] A3 `marketplace-sync` (start, step, status, preview, background, catalog, catalog_status) — start/background/step/status/preview memakai antrian DB yang ada; catalog/catalog_status masih sebagian (butuh konektor provider, mengembalikan pesan eksplisit)
 - [x] A4 `marketplace-withdrawals` (preview sudah ada → confirm, template) + `marketplace-price` (prepare, save) — withdrawals confirm+template selesai (+perbaikan bug staging 10 baris); price hanya kontrak (503, tanpa panggilan provider) → menunggu Fase E
 - [x] A5 Endpoint publik Marketplace (dipecah karena sifatnya berbeda):
@@ -73,7 +73,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)
 - [x] C0 Keputusan strategi (4 Nov 2026, disetujui pemilik): hibrida. UI Konveksi lama (satu aplikasi Vue 3 ±14.000 baris, logika bisnis di browser) disajikan lewat Laravel: rute /konveksi (bukan /index.php: front controller membacanya sebagai "/"; yang lama dialihkan) merakit view yang sama dengan index.php lama; login, CSRF, workspace, dan seluruh 27 metode RPC dari Laravel. Aset di public/assets/konveksi. Smoke Playwright (`npm run test:visual:konveksi`): klien boot, mengirim token CSRF Laravel, 19 menu sidebar dibuka tanpa galat
-- [~] C1 Verifikasi fungsional dengan database nyata: tulis penjualan/void/hutang/backup + gerbang idempotensi + versi koleksi terbukti di staging (26/26, `tests/e2e/konveksi-write-e2e.mjs`). Belum: pembelian/faktur, SPK potong-jahit, HPP produksi, master bahan (jalur lewat UI lama), dan angka dari data asli (UAT F2)
+- [x] C1 Uji tulis Konveksi dengan MySQL nyata (`tests/e2e/konveksi-write-e2e.mjs`, 42/42): penjualan/void, kirim ulang kunci sama, jual melebihi stok, versi koleksi basi (409), hutang pegawai, master bahan, faktur pembelian, aktivasi HPP, sinkron koleksi, backup. Menemukan bug nyata: faktur dengan sisa hutang gagal karena kunci `hutangsupplier` vs `hutang_supplier` (diperbaiki). Belum: perhitungan dengan data asli (UAT F2)
 - [ ] C2 (opsional, pasca-cutover) Tulis ulang menu terpilih ke Vue/Inertia bila diperlukan
 
 ### Fase D — Hosting & operasi (butuh operator, paralel)
@@ -117,4 +117,5 @@ Diisi di `.env` / konfigurasi server privat; tidak ada yang berisi nilai rahasia
 | `php artisan marketplace:store-deletion --install` | Sekali, untuk tabel dan trigger penghapusan toko (hanya MySQL). Tidak dibuat otomatis dari request web |
 | Cron `schedule:run` tiap menit + worker antrian database | Menjalankan: sync cron, auto-sync, penghapusan toko, snapshot terjadwal |
 | Klien Konveksi | Setiap tulisan wajib mengirim `X-Idempotency-Key`; sync tab mengirim `X-JL-Collection-Versions` dan `X-JL-Reset-Epoch` (UI lama sudah; UI Vue Fase C harus mengikuti) |
-| Belum terbukti di MySQL | Trigger penghapusan toko, `GET_LOCK` gate Konveksi, `mysqldump`, semua tes memakai SQLite → wajib dijalankan di staging (Fase D) |
+| Terbukti di MySQL (staging lokal) | Trigger penghapusan toko + worker (`tests/e2e/staging-ops-e2e.mjs`, 13/13), gerbang tulis Konveksi, `mysqldump` (SQL berisi `CREATE TABLE`), `schedule:run`. Belum terbukti di host sebenarnya: cron berjalan terus, izin file, HTTPS (Fase D) |
+| Tabel ber-`store_id` yang tak dikenal | Penghapusan toko menolak jalan bila ada. Jangan jalankan SQL berlabel REVIEW ONLY di database operasional; jika sudah, bersihkan tabel `_v2`/`_v3` |
