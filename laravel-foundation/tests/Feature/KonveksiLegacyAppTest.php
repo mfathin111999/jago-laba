@@ -32,7 +32,7 @@ final class KonveksiLegacyAppTest extends TestCase
     {
         $this->login();
 
-        $response = $this->get('/index.php')->assertOk();
+        $response = $this->get('/konveksi')->assertOk();
         $html = $response->getContent();
 
         $this->assertStringContainsString('text/html', (string) $response->headers->get('Content-Type'));
@@ -50,7 +50,7 @@ final class KonveksiLegacyAppTest extends TestCase
     {
         $this->login();
 
-        $html = $this->get('/index.php')->getContent();
+        $html = $this->get('/konveksi')->getContent();
 
         $this->assertStringNotContainsString('Bu </script>Rina', $html);
         $this->assertStringContainsString(json_encode('Bu </script>Rina', JSON_HEX_TAG), $html);
@@ -77,9 +77,9 @@ final class KonveksiLegacyAppTest extends TestCase
 
     public function test_other_workspaces_and_guests_do_not_get_the_client(): void
     {
-        $this->get('/index.php')->assertRedirect();
+        $this->get('/konveksi')->assertRedirect();
 
         $this->login('marketplace');
-        $this->get('/index.php')->assertStatus(403);
+        $this->get('/konveksi')->assertStatus(403);
     }
 }

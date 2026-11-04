@@ -23,7 +23,7 @@ const rpcCalls = [];
 
 const server = createServer((request, response) => {
     const url = new URL(request.url, 'http://localhost');
-    if (url.pathname === '/index.php') {
+    if (url.pathname === '/konveksi') {
         response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         response.end(html);
 
@@ -71,7 +71,7 @@ for (const viewport of [{ name: 'desktop', width: 1366, height: 900 }, { name: '
     });
 
     try {
-        await page.goto(`${base}/index.php`, { waitUntil: 'networkidle', timeout: 60000 });
+        await page.goto(`${base}/konveksi`, { waitUntil: 'networkidle', timeout: 60000 });
     } catch (error) {
         fail(viewport.name, `page did not load (CDN reachable?): ${error.message.split('\n')[0]}`);
         await context.close();

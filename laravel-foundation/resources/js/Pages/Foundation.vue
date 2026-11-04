@@ -76,7 +76,7 @@ async function selectWorkspace(workspace: string) {
         });
         const payload = await readJson(response);
         if (!response.ok || payload.success !== true) throw new Error(payload.message || 'Workspace tidak dapat dipilih.');
-        window.location.href = workspace === 'marketplace' ? '/pilot/marketplace' : '/pilot/konveksi';
+        window.location.href = workspace === 'marketplace' ? '/pilot/marketplace' : '/konveksi';
     } catch (exception) {
         error.value = exception instanceof Error ? exception.message : 'Workspace tidak dapat dipilih.';
         selecting.value = null;

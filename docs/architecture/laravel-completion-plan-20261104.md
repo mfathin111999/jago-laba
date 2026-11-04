@@ -72,7 +72,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B8 Smoke visual: `npm run test:visual` (laravel-foundation/tests/visual) membuka 11 halaman Marketplace di desktop 1366px dan mobile 390px dengan build asli + fixture props; gagal bila ada galat konsol, overflow horizontal, halaman kosong, atau teks "undefined/NaN". Menemukan dan memperbaiki overflow mobile di 6 halaman; logo perusahaan kini tampil di sidebar (shared prop). Checklist: 113 pilot, 31 sebagian, 26 belum (sisa Konveksi + utilitas)
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)
-- [x] C0 Keputusan strategi (4 Nov 2026, disetujui pemilik): hibrida. UI Konveksi lama (satu aplikasi Vue 3 ±14.000 baris, logika bisnis di browser) disajikan lewat Laravel: rute /index.php merakit view yang sama dengan index.php lama; login, CSRF, workspace, dan seluruh 27 metode RPC dari Laravel. Aset di public/assets/konveksi. Smoke Playwright (`npm run test:visual:konveksi`): klien boot, mengirim token CSRF Laravel, 19 menu sidebar dibuka tanpa galat
+- [x] C0 Keputusan strategi (4 Nov 2026, disetujui pemilik): hibrida. UI Konveksi lama (satu aplikasi Vue 3 ±14.000 baris, logika bisnis di browser) disajikan lewat Laravel: rute /konveksi (bukan /index.php: front controller membacanya sebagai "/"; yang lama dialihkan) merakit view yang sama dengan index.php lama; login, CSRF, workspace, dan seluruh 27 metode RPC dari Laravel. Aset di public/assets/konveksi. Smoke Playwright (`npm run test:visual:konveksi`): klien boot, mengirim token CSRF Laravel, 19 menu sidebar dibuka tanpa galat
 - [ ] C1 Verifikasi fungsional per menu dengan database nyata (digabung ke UAT F2): HPP, SPK, penjualan, hutang, keuangan, backup
 - [ ] C2 (opsional, pasca-cutover) Tulis ulang menu terpilih ke Vue/Inertia bila diperlukan
 
@@ -88,6 +88,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [ ] E3 Live terbatas — hanya dengan persetujuan tertulis
 
 ### Fase F — Penutupan
+- [x] F0 Staging lokal sekali-pakai (MariaDB terpisah, port 3320; skema dari alat legacy + data sintetis): `docs/deployment/local-staging-20261104.md`. Uji E2E nyata `tests/e2e/staging-e2e.mjs`: login, 11 halaman Marketplace, tulis pengeluaran/HPP/minimum stok/antrean sinkron + worker, klien Konveksi dengan data impor — 85/85 lolos. Menemukan dan memperbaiki: rute /index.php tak pernah cocok, bug indeks SchemaManager. Belum: data asli, performa, hosting
 - [ ] F1 Keputusan pemilik: 17 orphan, 4 stub, `install.php`/`repair_owner.php`
 - [ ] F2 UAT per peran, bandingkan data dengan baseline
 - [ ] F3 Artifact baru + scan secret + rehearsal rollback

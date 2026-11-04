@@ -246,7 +246,7 @@ final class SchemaManager {
         }
         foreach ($indexes as $name => $index) {
             ksort($index['columns']);
-            if ($index['unique'] && $index['columns'] === ['idempotency_key'] && strtoupper($name) !== 'PRIMARY') {
+            if ($index['unique'] && array_values($index['columns']) === ['idempotency_key'] && strtoupper($name) !== 'PRIMARY') {
                 $pdo->exec("ALTER TABLE `idempotency_keys` DROP INDEX `" . str_replace('`', '', $name) . "`");
             }
         }
@@ -261,7 +261,7 @@ final class SchemaManager {
         $scoped = false;
         foreach ($indexes as $index) {
             ksort($index['columns']);
-            if ($index['unique'] && $index['columns'] === ['company_key', 'module', 'idempotency_key']) {
+            if ($index['unique'] && array_values($index['columns']) === ['company_key', 'module', 'idempotency_key']) {
                 $scoped = true;
                 break;
             }

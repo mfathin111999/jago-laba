@@ -14,7 +14,7 @@ const href = (path: string) => props.storeId ? `${path}?store=${encodeURICompone
             <Link v-if="storeId" :href="href('/marketplace/expenses')">Pengeluaran</Link>
             <Link href="/marketplace/stores">Toko</Link>
         </template>
-        <Link v-else href="/pilot/konveksi">Konveksi</Link>
+        <a v-else href="/konveksi">Konveksi</a>
     </nav>
 </template>
 <style scoped>

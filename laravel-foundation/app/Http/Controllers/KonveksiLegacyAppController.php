@@ -9,7 +9,7 @@ use RuntimeException;
 
 /**
  * Serves the Konveksi single-page application (the legacy Vue 3 client) behind Laravel's session, company and
- * workspace checks. It assembles the same view files, in the same order, as the legacy index.php; every data call
+ * workspace checks. It assembles the same view files, in the same order, as the legacy index.php (served at /konveksi: a request for /index.php is read as "/" by the front controller); every data call
  * the page makes goes to the Laravel RPC gate at /api/rpc.php with the Laravel CSRF token.
  */
 final class KonveksiLegacyAppController

@@ -978,7 +978,7 @@ final class PilotReadOnlyTest extends TestCase
     {
         $this->loginAndSelect('konveksi');
 
-        $this->get('/index.php?tab=dashboard')->assertOk()->assertSee('Jago Laba · Manajemen Konveksi', false);
+        $this->get('/konveksi?tab=dashboard')->assertOk()->assertSee('Jago Laba · Manajemen Konveksi', false);
         $this->inertiaGet('/pilot/konveksi?tab=dashboard')->assertOk()->assertJsonPath('component', 'Pilot/Konveksi');
     }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Prints the assembled Konveksi page exactly as /index.php would serve it, without a database.
+ * Prints the assembled Konveksi page exactly as /konveksi would serve it, without a database.
  * Used by konveksi-smoke.mjs.   php tests/visual/render-konveksi.php > page.html
  */
 
@@ -18,7 +18,7 @@ $app->make(Kernel::class)->bootstrap();
 
 $session = new Store('smoke', new ArraySessionHandler(120));
 $session->put('_token', 'smoke-csrf-token');
-$request = Request::create('/index.php');
+$request = Request::create('/konveksi');
 $request->setLaravelSession($session);
 $request->setUserResolver(static fn () => new LegacyUser(['id' => 'u1', 'username' => 'smoke', 'name' => 'Smoke Test', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']));
 

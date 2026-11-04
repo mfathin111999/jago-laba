@@ -35,7 +35,7 @@ final class WorkspaceController
         return response()->json([
             'success' => true,
             'workspace' => $selected,
-            'url' => $selected === WorkspaceContext::MARKETPLACE ? 'marketplace.php' : 'index.php',
+            'url' => $selected === WorkspaceContext::MARKETPLACE ? 'marketplace.php' : 'konveksi',
         ]);
     }
 }
