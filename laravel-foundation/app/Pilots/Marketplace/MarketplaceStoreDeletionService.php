@@ -525,14 +525,27 @@ final class MarketplaceStoreDeletionService
     {
         foreach (['INSERT', 'UPDATE'] as $event) {
             $name = $this->triggerName($table, $event);
-            if ($this->db()->selectOne('SELECT COUNT(*) AS c FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE() AND TRIGGER_NAME=?', [$name])->c) {
+            if (isset($this->triggerNames()[$name])) {
                 continue;
             }
             $this->db()->unprepared("CREATE TRIGGER `$name` BEFORE $event ON `$table` FOR EACH ROW BEGIN
                 IF $missing OR EXISTS(SELECT 1 FROM marketplace_store_deletions WHERE store_id=$id) THEN
                     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='STORE_PERMANENTLY_DELETING';
                 END IF; END");
+            $this->triggerNames[$name] = true;
         }
+    }
+
+    /** @var array<string, true>|null names of the existing write-barrier triggers, read with ONE query (information_schema is slow on MariaDB) */
+    private ?array $triggerNames = null;
+
+    /** @return array<string, true> */
+    private function triggerNames(): array
+    {
+        return $this->triggerNames ??= array_fill_keys(array_map(
+            static fn (object $row): string => (string) $row->name,
+            $this->db()->select("SELECT TRIGGER_NAME AS name FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE() AND TRIGGER_NAME LIKE 'jl\_erase\_%'"),
+        ), true);
     }
 
     private function triggerName(string $table, string $event): string
@@ -546,11 +559,13 @@ final class MarketplaceStoreDeletionService
             return;
         }
         $tables = array_merge(array_keys($this->plan()), ['marketplace_stores']);
+        $this->triggerNames = null;
         $missing = fn () => collect($tables)->crossJoin(['INSERT', 'UPDATE'])->contains(
-            fn ($pair) => ! $this->db()->selectOne('SELECT COUNT(*) AS c FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA=DATABASE() AND TRIGGER_NAME=?', [$this->triggerName($pair[0], $pair[1])])->c
+            fn ($pair) => ! isset($this->triggerNames()[$this->triggerName($pair[0], $pair[1])])
         );
         if ($missing()) {
             $this->install();
+            $this->triggerNames = null;
         }
         if ($missing()) {
             throw new DomainException('Pengaman penghapusan belum terpasang. Jalankan migrasi penghapusan toko.');

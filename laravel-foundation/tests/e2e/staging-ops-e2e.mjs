@@ -94,6 +94,12 @@ check('scheduler: the four jobs are registered', ['marketplace:sync', 'marketpla
 const run = artisan('schedule:run').replace(/\u001b\[[0-9;]*m/g, '');
 check('scheduler: a run executes the due jobs and reports them DONE', /Running \[.*\] \.+ .* DONE/.test(run) && !/FAIL|exception/.test(run), run.slice(0, 400));
 
+// ----- 8. live sync: the legacy engine runs inside Laravel (fake provider, real MySQL) -----
+const probe = JSON.parse(execFileSync(php, ['tests/e2e/helpers/live-sync-probe.php'], { encoding: 'utf8', env: process.env }).trim().split(/\r?\n/).pop());
+check('live sync: products, orders, transactions and returns all succeeded', probe.jobs.length === 4 && probe.jobs.every((job) => job.status === 'succeeded'), JSON.stringify(probe.jobs));
+check('live sync: the run finished and the connection records the successful sync', probe.pending === false && !!probe.last_successful_sync_at, JSON.stringify(probe));
+check('live sync: the provider received the token decrypted from the legacy vault', String(probe.token_seen_by_provider).includes('token=probe-access-token'), String(probe.token_seen_by_provider));
+
 await browser.close();
 const failed = results.filter((result) => !result.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed.`);

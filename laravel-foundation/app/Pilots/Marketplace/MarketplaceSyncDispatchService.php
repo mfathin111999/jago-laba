@@ -64,8 +64,20 @@ final class MarketplaceSyncDispatchService
             throw new \InvalidArgumentException('Company dan store wajib diisi.');
         }
 
-        $runKey = $this->normaliseKey($runKey ?: $this->newRunKey($mode), 'run key', 100);
         $requestId = $this->normaliseKey($requestId ?: $this->newRequestId(), 'request ID', 100);
+
+        // Live mode: the legacy sync engine reads the official APIs; the queue only drives it step by step.
+        $live = app(MarketplaceLiveSyncService::class);
+        if ($live->enabled()) {
+            $result = $live->enqueue($companyKey, $storeId, $requestId);
+            if (! $result['duplicate']) {
+                MarketplaceLiveSyncJob::dispatch($companyKey, $storeId, $result['run_key'], $requestId)->onQueue((string) config('jago.sync.queue', 'marketplace'));
+            }
+
+            return $result;
+        }
+
+        $runKey = $this->normaliseKey($runKey ?: $this->newRunKey($mode), 'run key', 100);
         try {
             $result = DB::transaction(function () use ($companyKey, $storeId, $mode, $runKey, $requestId): array {
                 $connection = DB::table('marketplace_oauth_connections as c')
