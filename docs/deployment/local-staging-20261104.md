@@ -80,8 +80,7 @@ tulisan Konveksi sengaja ditolak.
 
 ## Temuan saat menyiapkan staging
 
-0. Balasan backup membocorkan path absolut server (`C:
-mpp\...`) ke browser lewat `snapshot_file`, `manifest_file`, `url`,
+0. Balasan backup membocorkan path absolut server (misalnya `C:/xampp/...`) ke browser lewat `snapshot_file`, `manifest_file`, `url`,
    dan salinan eksternal. Kini hanya nama berkas yang dikirim; path lengkap tetap di tabel `backup_log` untuk operator.
    Baris baru di `loadSemuaData` tidak selalu berada di ujung daftar (urutan baris tabel bukan urutan tambah); uji
    mencocokkan berdasarkan ID, dan klien lama memang bekerja seperti itu.
