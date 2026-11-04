@@ -1,3 +1,20 @@
+# Menjalankan di komputer sendiri (XAMPP): cara tercepat
+
+Klik dua kali `run-local.cmd` di folder proyek, atau `powershell -ExecutionPolicy Bypass -File scripts\development\run-local.ps1 -Seed`.
+Prasyarat: MySQL XAMPP menyala, PHP 8.3+ (`C:\xampp\php8_4\php.exe`), Node.js.
+
+| Keadaan | Yang terjadi |
+|---|---|
+| Database `jago_laba` belum ada | dibuat lengkap (skema, data Konveksi contoh, login `owner` / `owner123`); `-Seed` menambah data contoh Marketplace |
+| Database sudah berisi tabel Jago | **tidak disentuh**; aplikasi langsung memakainya (mis. setelah Anda mengimpor dump asli ke `jago_laba`) |
+| `.env` belum ada | dibuat otomatis (kunci aplikasi acak, tidak masuk Git); yang sudah ada tidak ditimpa |
+
+Kunci partner Shopee/TikTok diisi manual di `laravel-foundation\.env`; tidak ada form web untuk itu.
+Opsi: `-DbName`, `-DbPort`, `-Port`, `-Php`, `-NoWorker` (tanpa antrean dan penjadwal), `-Rebuild` (bangun ulang tampilan), `-OwnerPassword`.
+Web, antrean, dan penjadwal berjalan di tiga jendela PowerShell; tutup jendelanya untuk berhenti.
+
+---
+
 # Staging lokal sekali-pakai (4 November 2026)
 
 Tujuan: menjalankan aplikasi Laravel terhadap MySQL/MariaDB sungguhan di mesin sendiri, memakai data **sintetis**,
