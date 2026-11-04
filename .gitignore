@@ -29,3 +29,7 @@
 /release-artifacts/
 /storage/sess_*
 /storage/sync-worker/
+
+# Local runtime data (private database, local backups)
+/laravel-foundation/storage/local-mysql/
+/storage/local-backups/

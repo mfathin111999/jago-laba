@@ -28,7 +28,8 @@ param(
     [switch]$NoWorker,
     [switch]$Rebuild,
     [switch]$Live,
-    [switch]$Sandbox
+    [switch]$Sandbox,
+    [switch]$OwnMySql
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,6 +39,34 @@ function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
 function Fail($text) { Write-Host "`nGAGAL: $text" -ForegroundColor Red; exit 1 }
 
 # ---------- 1. PHP dan MySQL ----------
+# ---------- MariaDB pribadi (opsional): tidak menyentuh MySQL XAMPP ----------
+if ($OwnMySql) {
+    $DbPort = 3307
+    $dataDir = Join-Path $app 'storage\local-mysql\data'
+    $installer = 'C:\xampp\mysql\bin\mysql_install_db.exe'
+    $server = 'C:\xampp\mysql\bin\mysqld.exe'
+    if (-not (Test-Path (Join-Path $dataDir 'mysql'))) {
+        Write-Host "Membuat database pribadi di $dataDir ..."
+        New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+        & $installer "--datadir=$dataDir" '--password=' | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Inisialisasi MariaDB pribadi gagal.' }
+    }
+    $probe = New-Object System.Net.Sockets.TcpClient
+    $listening = $false
+    try { $probe.Connect($DbHost, $DbPort); $listening = $true } catch { } finally { $probe.Close() }
+    if (-not $listening) {
+        Write-Host "Menyalakan MariaDB pribadi di port $DbPort ..."
+        Start-Process -FilePath $server -ArgumentList "--defaults-file=$dataDir\my.ini", "--port=$DbPort", '--bind-address=127.0.0.1', '--skip-name-resolve' -WindowStyle Hidden
+        $deadline = (Get-Date).AddSeconds(90)
+        while ((Get-Date) -lt $deadline) {
+            Start-Sleep -Seconds 2
+            $probe = New-Object System.Net.Sockets.TcpClient
+            try { $probe.Connect($DbHost, $DbPort); $listening = $true; break } catch { } finally { $probe.Close() }
+        }
+        if (-not $listening) { Fail 'MariaDB pribadi tidak menyala dalam 90 detik.' }
+    }
+}
+
 Step 'Memeriksa PHP dan MySQL'
 $candidates = @($Php, $env:PHP_BIN, 'C:\xampp\php8_4\php.exe', 'C:\xampp\php8_3\php.exe', 'php') | Where-Object { $_ }
 $phpExe = $null
@@ -73,7 +102,14 @@ function Set-EnvValue($lines, $key, $value) {
     return @($result)
 }
 if (Test-Path $envFile) {
-    Write-Host '.env sudah ada, dipakai apa adanya (tidak ditimpa).'
+    Write-Host '.env sudah ada, dipakai apa adanya.'
+    # Koneksi database yang Anda berikan lewat parameter menang atas isi .env lama (bagian lain tidak diubah).
+    if ($OwnMySql -or $PSBoundParameters.ContainsKey('DbPort') -or $PSBoundParameters.ContainsKey('DbName') -or $PSBoundParameters.ContainsKey('DbHost')) {
+        $existing = Get-Content $envFile
+        foreach ($pair in @(@('DB_HOST', $DbHost), @('DB_PORT', "$DbPort"), @('DB_DATABASE', $DbName), @('JL_DB_HOST', $DbHost), @('JL_DB_PORT', "$DbPort"), @('JL_DB_NAME', $DbName))) { $existing = Set-EnvValue $existing $pair[0] $pair[1] }
+        Set-Content -Path $envFile -Value $existing -Encoding UTF8
+        Write-Host ('Koneksi database di .env disesuaikan: ' + $DbHost + ':' + $DbPort + ' / ' + $DbName)
+    }
 } else {
     $lines = Get-Content (Join-Path $app '.env.example')
     Push-Location $app
