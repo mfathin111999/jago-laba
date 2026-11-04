@@ -1,0 +1,118 @@
+{
+ "component": "Marketplace/Income",
+ "props": {
+  "errors": [],
+  "income": {
+   "summary": {
+    "estimated": 180000,
+    "final": null,
+    "unknown": 0,
+    "count": 1
+   },
+   "rows": [
+    {
+     "order_id": "EST-1",
+     "order_date": "2026-11-03 10:00:00",
+     "store_name": "Toko A",
+     "platform": "TikTok Shop",
+     "payout_batch_id": null,
+     "state": "estimated",
+     "gross_amount": 200000,
+     "total_fees": 20000,
+     "net_income": 180000
+    }
+   ],
+   "stores": {
+    "a": {
+     "name": "Toko A",
+     "platform": "TikTok Shop",
+     "last_sync": null
+    }
+   },
+   "store_options": [
+    {
+     "id": "a",
+     "store_name": "Toko A",
+     "platform": "TikTok Shop"
+    }
+   ],
+   "total": 1,
+   "page": 1,
+   "pages": 1
+  },
+  "withdrawals": {
+   "rows": [
+    {
+     "id": 1,
+     "company_key": "A",
+     "store_id": "a",
+     "external_id": "WD-1",
+     "withdrawal_type": null,
+     "requested_at": "2026-11-02 09:00:00",
+     "completed_at": "2026-11-02 12:00:00",
+     "amount": 500000,
+     "fee": 1000,
+     "net_amount": 499000,
+     "currency": "IDR",
+     "source_status": "PAID",
+     "normalized_status": "succeeded",
+     "bank_name": "BCA",
+     "account_mask": "•••• 1234",
+     "failure_reason": null,
+     "source_kind": "import",
+     "source_hash": "h",
+     "row_hash": "r",
+     "imported_by": "u1",
+     "imported_at": null,
+     "updated_at": null,
+     "store_name": "Toko A",
+     "platform": "TikTok Shop"
+    }
+   ],
+   "summary": {
+    "total": 1,
+    "paid": 499000,
+    "paid_nominal": 500000,
+    "processing": 0,
+    "failed": 0
+   },
+   "page": 1,
+   "pages": 1
+  },
+  "filters": {
+   "store_id": null,
+   "date_start": "2026-11-01",
+   "date_end": "2026-11-30",
+   "status": "estimated",
+   "tab": "income"
+  },
+  "stores": [
+   {
+    "id": "a",
+    "platform": "TikTok Shop",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": null,
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": null
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": null
+  },
+  "can_import": true
+ },
+ "url": "/marketplace/income?date_end=2026-11-30&date_start=2026-11-01&status=estimated",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

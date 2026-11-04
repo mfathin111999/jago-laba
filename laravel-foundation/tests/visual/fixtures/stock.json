@@ -1,0 +1,124 @@
+{
+ "component": "Marketplace/Stock",
+ "props": {
+  "errors": [],
+  "stock": {
+   "rows": [
+    {
+     "id": 3,
+     "store_id": "a",
+     "external_product_id": "P2",
+     "external_variant_id": "V3",
+     "product_name": "Dompet",
+     "parent_sku": null,
+     "sku": "DMP",
+     "variant_name": "Standar",
+     "image_url": null,
+     "price": null,
+     "original_price": null,
+     "stock_qty": null,
+     "source_status": "NORMAL",
+     "catalog_visible": 1,
+     "fetched_at": null,
+     "current": null,
+     "minimum": null,
+     "initial": null,
+     "sold": null,
+     "returned": null,
+     "stock_status": "unknown",
+     "warehouse": ""
+    },
+    {
+     "id": 2,
+     "store_id": "a",
+     "external_product_id": "P1",
+     "external_variant_id": "V2",
+     "product_name": "Tas Kulit",
+     "parent_sku": null,
+     "sku": "TAS-C",
+     "variant_name": "Cokelat",
+     "image_url": null,
+     "price": null,
+     "original_price": null,
+     "stock_qty": 0,
+     "source_status": "NORMAL",
+     "catalog_visible": 1,
+     "fetched_at": "2026-11-01 08:00:00",
+     "current": 0,
+     "minimum": null,
+     "initial": null,
+     "sold": null,
+     "returned": null,
+     "stock_status": "out",
+     "warehouse": ""
+    },
+    {
+     "id": 1,
+     "store_id": "a",
+     "external_product_id": "P1",
+     "external_variant_id": "V1",
+     "product_name": "Tas Kulit",
+     "parent_sku": null,
+     "sku": "TAS-H",
+     "variant_name": "Hitam",
+     "image_url": null,
+     "price": null,
+     "original_price": null,
+     "stock_qty": 3,
+     "source_status": "NORMAL",
+     "catalog_visible": 1,
+     "fetched_at": "2026-11-01 08:00:00",
+     "current": 3,
+     "minimum": 5,
+     "initial": null,
+     "sold": null,
+     "returned": null,
+     "stock_status": "low",
+     "warehouse": ""
+    }
+   ],
+   "summary": {
+    "sku": 3,
+    "known_stock": 3,
+    "unknown": 1,
+    "low": 1,
+    "out": 1
+   },
+   "warehouses": [],
+   "date_start": "2026-11-01",
+   "date_end": "2026-11-04",
+   "warehouse": ""
+  },
+  "filters": {
+   "store_id": "a"
+  },
+  "stores": [
+   {
+    "id": "a",
+    "platform": "TikTok Shop",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": null,
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": null
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": "a"
+  },
+  "can_edit_minimum": true
+ },
+ "url": "/marketplace/stock",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

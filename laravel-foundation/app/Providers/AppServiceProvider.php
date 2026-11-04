@@ -4,10 +4,13 @@ namespace App\Providers;
 
 use App\Auth\LegacyUserProvider;
 use App\Pilots\Konveksi\KonveksiConnection;
+use App\Pilots\Marketplace\MarketplaceBrandingService;
 use App\Policies\RolePolicy;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Inertia;
+use Throwable;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +29,26 @@ class AppServiceProvider extends ServiceProvider
     {
         Auth::provider('legacy', function ($app, array $config): LegacyUserProvider {
             return new LegacyUserProvider($app['db'], $config['connection'] ?? null);
+        });
+
+        // The company logo for the Marketplace sidebar; resolved lazily and never allowed to break a page.
+        Inertia::share('marketplaceBrand', static function (): ?array {
+            $companyKey = (string) request()->attributes->get('company_key', '');
+            if ($companyKey === '') {
+                return null;
+            }
+            try {
+                $brand = app(MarketplaceBrandingService::class)->read($companyKey);
+            } catch (Throwable) {
+                return null;
+            }
+
+            return [
+                'has_logo' => ! empty($brand['logo_mime']),
+                'logo_size' => (int) $brand['logo_size'],
+                'logo_fit' => (string) $brand['logo_fit'],
+                'version' => (string) ($brand['logo_hash'] ?? ''),
+            ];
         });
 
         Gate::define('role-action', function ($user, string $action): bool {

@@ -1,0 +1,262 @@
+{
+ "component": "Marketplace/Integrations",
+ "props": {
+  "errors": [],
+  "stores": [
+   {
+    "id": "a",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": "Terhubung",
+    "authorization_status": "verified",
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": {
+     "status": "verified",
+     "authorized_at": "2026-10-01 00:00:00",
+     "token_expires_at": null,
+     "last_successful_sync_at": "2026-11-01 08:00:00"
+    }
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": "a"
+  },
+  "health": {
+   "store_id": "a",
+   "platform": "Shopee",
+   "store_name": "Toko A",
+   "connection_status": "verified",
+   "connection_label": "Terhubung",
+   "environment": "unspecified",
+   "environment_label": "Lingkungan belum diverifikasi",
+   "token_expired": false,
+   "last_successful_sync_at": "2026-11-01 08:00:00",
+   "counts": {
+    "products": 0,
+    "variants": 0,
+    "prices": 0,
+    "stock": 0
+   },
+   "resources": [
+    {
+     "key": "products",
+     "label": "Produk & varian",
+     "state": "unverified",
+     "state_label": "Belum diverifikasi",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "prices",
+     "label": "Harga (baca)",
+     "state": "unverified",
+     "state_label": "Belum diverifikasi",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "stock",
+     "label": "Stok tersedia",
+     "state": "unverified",
+     "state_label": "Belum diverifikasi",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "orders",
+     "label": "Pesanan & status",
+     "state": "unverified",
+     "state_label": "Belum diverifikasi",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "shipping",
+     "label": "PDF resi & pengemasan",
+     "state": "unsupported",
+     "state_label": "Tidak didukung konektor",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "returns",
+     "label": "Retur / pembatalan",
+     "state": "unsupported",
+     "state_label": "Tidak didukung konektor",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "finance",
+     "label": "Rincian keuangan",
+     "state": "unsupported",
+     "state_label": "Tidak didukung konektor",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "withdrawals",
+     "label": "Penarikan dana API",
+     "state": "unsupported",
+     "state_label": "Tidak didukung konektor",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    },
+    {
+     "key": "ads",
+     "label": "Data iklan API",
+     "state": "unsupported",
+     "state_label": "Tidak didukung konektor",
+     "last_verified_at": null,
+     "last_attempt_at": null,
+     "error_code": null,
+     "sync_status": "not_started",
+     "sync_label": "Belum dijalankan",
+     "processed": 0,
+     "retry_at": null,
+     "retry_attempt": 0,
+     "retry_job_id": null
+    }
+   ],
+   "webhook_active": false,
+   "auto_driver": "browser-pulse",
+   "manual_driver": "server-worker",
+   "metadata_ready": false,
+   "can_manage": false
+  },
+  "health_error": null,
+  "sync": {
+   "jobs": [],
+   "returns": [],
+   "pending": 0,
+   "failed": 0,
+   "can_close": true
+  },
+  "platforms": [
+   {
+    "platform": "Shopee",
+    "environment": "sandbox",
+    "ready": true,
+    "missing": [],
+    "label": "Sandbox tersedia; provider Live tidak dipanggil",
+    "authorization": "Stub OAuth untuk uji state, callback, token exchange, refresh, dan scope.",
+    "callback_url": "http://localhost/api/marketplace-oauth.php?action=callback"
+   },
+   {
+    "platform": "TikTok Shop",
+    "environment": "sandbox",
+    "ready": true,
+    "missing": [],
+    "label": "Sandbox tersedia; provider Live tidak dipanggil",
+    "authorization": "Stub OAuth untuk uji state, callback, token exchange, refresh, dan scope.",
+    "callback_url": "http://localhost/api/marketplace-oauth.php?action=callback"
+   },
+   {
+    "platform": "Tokopedia",
+    "environment": "sandbox",
+    "ready": true,
+    "missing": [],
+    "label": "Sandbox tersedia; provider Live tidak dipanggil",
+    "authorization": "Stub OAuth untuk uji state, callback, token exchange, refresh, dan scope.",
+    "callback_url": "http://localhost/api/marketplace-oauth.php?action=callback"
+   },
+   {
+    "platform": "Lazada",
+    "environment": "sandbox",
+    "ready": true,
+    "missing": [],
+    "label": "Sandbox tersedia; provider Live tidak dipanggil",
+    "authorization": "Stub OAuth untuk uji state, callback, token exchange, refresh, dan scope.",
+    "callback_url": "http://localhost/api/marketplace-oauth.php?action=callback"
+   },
+   {
+    "platform": "Blibli",
+    "environment": "sandbox",
+    "ready": true,
+    "missing": [],
+    "label": "Sandbox tersedia; provider Live tidak dipanggil",
+    "authorization": "Stub OAuth untuk uji state, callback, token exchange, refresh, dan scope.",
+    "callback_url": "http://localhost/api/marketplace-oauth.php?action=callback"
+   }
+  ],
+  "oauth": null,
+  "branding": {
+   "has_logo": false,
+   "logo_size": 32,
+   "logo_fit": "contain",
+   "updated_at": null
+  },
+  "can_manage": false,
+  "can_sync": false,
+  "can_brand": false
+ },
+ "url": "/marketplace/integrations?store_id=a",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

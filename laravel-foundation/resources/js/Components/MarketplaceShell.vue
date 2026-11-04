@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { MARKETPLACE_NAV, navHref } from '../lib/marketplaceNav';
 
 defineProps<{
@@ -11,13 +12,23 @@ defineProps<{
     storeId?: string | null;
     companyKey?: string | null;
 }>();
+
+interface Brand {
+    has_logo: boolean;
+    logo_size: number;
+    logo_fit: string;
+    version: string;
+}
+const page = usePage();
+const brand = computed(() => (page.props.marketplaceBrand ?? null) as Brand | null);
+const logoSrc = computed(() => (brand.value?.has_logo ? `/api/marketplace-branding.php?image=1&v=${encodeURIComponent(brand.value.version)}` : null));
 </script>
 
 <template>
     <Head :title="`${title} · Marketplace`" />
     <main class="marketplace-app">
         <aside class="marketplace-sidebar" aria-label="Navigasi Marketplace">
-            <div class="brand-lockup"><span class="brand-mark">JL</span><span><strong>JagoLaba</strong><small>MARKETPLACE</small></span></div>
+            <div class="brand-lockup"><span v-if="logoSrc" class="brand-logo" :style="{ width: `${brand?.logo_size}px`, height: `${brand?.logo_size}px` }"><img :src="logoSrc" alt="Logo perusahaan" :style="{ objectFit: brand?.logo_fit === 'cover' ? 'cover' : 'contain' }" /></span><span v-else class="brand-mark">JL</span><span><strong>JagoLaba</strong><small>MARKETPLACE</small></span></div>
             <nav class="sidebar-nav">
                 <Link
                     v-for="item in MARKETPLACE_NAV"

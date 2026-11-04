@@ -1,0 +1,101 @@
+{
+ "component": "Marketplace/Catalog",
+ "props": {
+  "errors": [],
+  "catalog": {
+   "products": [
+    {
+     "name": "=SUM(1+1)",
+     "sku": "P1",
+     "store_id": "a",
+     "store_name": "Toko A",
+     "platform": "Shopee",
+     "variants": [
+      {
+       "id": 1,
+       "store_id": "a",
+       "external_product_id": "P1",
+       "external_variant_id": "V1",
+       "product_name": "=SUM(1+1)",
+       "parent_sku": "P1",
+       "sku": "SKU-1",
+       "variant_name": "Hitam",
+       "price": 100000,
+       "original_price": null,
+       "stock_qty": 0,
+       "source_status": "NORMAL",
+       "catalog_visible": 1,
+       "hpp": 45000,
+       "sold": 2
+      }
+     ],
+     "sold": 2
+    },
+    {
+     "name": "Unknown",
+     "sku": "P2",
+     "store_id": "a",
+     "store_name": "Toko A",
+     "platform": "Shopee",
+     "variants": [
+      {
+       "id": 2,
+       "store_id": "a",
+       "external_product_id": "P2",
+       "external_variant_id": "V2",
+       "product_name": "Unknown",
+       "parent_sku": "P2",
+       "sku": "SKU-2",
+       "variant_name": "Biru",
+       "price": null,
+       "original_price": null,
+       "stock_qty": null,
+       "source_status": "NORMAL",
+       "catalog_visible": 1,
+       "hpp": null,
+       "sold": 0
+      }
+     ],
+     "sold": 0
+    }
+   ],
+   "sold": 2,
+   "statuses": [
+    "NORMAL"
+   ],
+   "missing_hpp": 1
+  },
+  "filters": {
+   "store_id": "a"
+  },
+  "read_only": true,
+  "stores": [
+   {
+    "id": "a",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": null,
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": null
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": "a"
+  },
+  "can_edit_hpp": true
+ },
+ "url": "/marketplace/catalog",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

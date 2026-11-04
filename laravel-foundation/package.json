@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vue-tsc --noEmit && vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test:visual": "node tests/visual/smoke.mjs"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^3.9.1",

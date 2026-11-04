@@ -1,0 +1,132 @@
+{
+ "component": "Pilot/MarketplaceOrders",
+ "props": {
+  "errors": [],
+  "read_only": true,
+  "workspace": "marketplace",
+  "scope": {
+   "company_key": "LOCAL-COMPANY",
+   "store_id": "store-a"
+  },
+  "stores": [
+   {
+    "id": "store-a",
+    "company_key": "LOCAL-COMPANY",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "store_identifier": "shop-a",
+    "authorization_status": "verified",
+    "archived_at": null,
+    "oauth_connection_id": 1,
+    "oauth_authorized_at": "2026-10-01 00:00:00",
+    "oauth_status": "authorized",
+    "oauth_verified_at": "2026-10-01 00:00:00",
+    "last_successful_sync_at": "2026-10-30 08:00:00",
+    "authorization_label": "Terhubung & terverifikasi",
+    "is_connection_verified": true
+   }
+  ],
+  "active_store": {
+   "id": "store-a",
+   "company_key": "LOCAL-COMPANY",
+   "platform": "Shopee",
+   "store_name": "Toko A",
+   "store_identifier": "shop-a",
+   "authorization_status": "verified",
+   "archived_at": null,
+   "oauth_connection_id": 1,
+   "oauth_authorized_at": "2026-10-01 00:00:00",
+   "oauth_status": "authorized",
+   "oauth_verified_at": "2026-10-01 00:00:00",
+   "last_successful_sync_at": "2026-10-30 08:00:00",
+   "authorization_label": "Terhubung & terverifikasi",
+   "is_connection_verified": true
+  },
+  "filters": {
+   "period": "custom",
+   "date_start": "2026-10-01",
+   "date_end": "2026-10-31",
+   "order_tab": "returns",
+   "search_by": "order",
+   "per_page": 50,
+   "page": 1,
+   "return_type": "goods",
+   "return_date": "created"
+  },
+  "orders": {
+   "store": {
+    "id": "store-a",
+    "company_key": "LOCAL-COMPANY",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "store_identifier": "shop-a",
+    "authorization_status": "verified",
+    "archived_at": null,
+    "oauth_connection_id": 1,
+    "oauth_authorized_at": "2026-10-01 00:00:00",
+    "oauth_status": "authorized",
+    "oauth_verified_at": "2026-10-01 00:00:00",
+    "last_successful_sync_at": "2026-10-30 08:00:00",
+    "authorization_label": "Terhubung & terverifikasi",
+    "is_connection_verified": true
+   },
+   "period": {
+    "start": "2026-10-01",
+    "end": "2026-10-31",
+    "preset": "custom",
+    "exclusive_end": "2026-11-01"
+   },
+   "counts": {
+    "all": 0,
+    "new": 0,
+    "pickup": 0,
+    "shipped": 0,
+    "cancelled": 0,
+    "returns": 0
+   },
+   "tab": "returns",
+   "rows": [],
+   "total": 0,
+   "page": 1,
+   "pages": 1,
+   "per_page": 50,
+   "return_date": "created",
+   "return_coverage": {
+    "available": false,
+    "last_success": null,
+    "status": "unavailable",
+    "error": null
+   },
+   "complaint_coverage": false,
+   "label_supported": false
+  },
+  "query": {
+   "tab": "pesanan",
+   "store": "store-a",
+   "filters": {
+    "period": "custom",
+    "date_start": "2026-10-01",
+    "date_end": "2026-10-31",
+    "order_tab": "returns",
+    "search_by": "order",
+    "per_page": 50,
+    "page": 1,
+    "return_type": "goods",
+    "return_date": "created"
+   },
+   "read_only": true,
+   "provider_call": false,
+   "tables": [
+    "marketplace_stores",
+    "marketplace_orders",
+    "marketplace_order_items",
+    "marketplace_sync_records"
+   ]
+  }
+ },
+ "url": "/pilot/marketplace/orders?date_end=2026-10-31&date_start=2026-10-01&order_tab=returns&period=custom&return_type=goods&store=store-a",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

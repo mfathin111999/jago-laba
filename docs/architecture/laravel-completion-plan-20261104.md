@@ -69,7 +69,7 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [x] B5 Halaman Integrasi: status koneksi, hubungkan/segarkan/putuskan, sinkron sekarang, kesehatan sumber data + coba ulang, antrean sinkron, identitas & logo. Callback OAuth kini kembali ke /marketplace/integrations. Ditunda: form pengaturan aplikasi (berisi rahasia partner; menunggu keputusan owner)
 - [x] B6 Pemasukan per pesanan (final/estimasi/belum tersedia), riwayat penarikan + impor XLSX/CSV (pratinjau lalu konfirmasi), halaman Iklan dari laporan CSV (filter, KPI, penanda bocor, impor, template). Sinkronisasi iklan provider tetap nonaktif; "pusat iklan" lama berisi data demo dan sengaja tidak dipindahkan. Perbaikan: KpiCard kini mendukung teks apa adanya (ROAS, total stok tidak lagi salah tampil sebagai Rupiah)
 - [x] B7 Halaman Sinkronisasi (/marketplace/sync): ringkasan cakupan, sinkron manual + status antrean live (polling 5 dtk), jadwal otomatis per mode (admin), editor harga ditampilkan sebagai nonaktif dengan alasan. Playwright terpasang untuk smoke visual (B8). Catatan: worker masih sandbox (pemindaian lokal), belum mengambil data provider
-- [ ] B8 Suite + smoke visual desktop/mobile + commit
+- [x] B8 Smoke visual: `npm run test:visual` (laravel-foundation/tests/visual) membuka 11 halaman Marketplace di desktop 1366px dan mobile 390px dengan build asli + fixture props; gagal bila ada galat konsol, overflow horizontal, halaman kosong, atau teks "undefined/NaN". Menemukan dan memperbaiki overflow mobile di 6 halaman; logo perusahaan kini tampil di sidebar (shared prop). Checklist: 113 pilot, 31 sebagian, 26 belum (sisa Konveksi + utilitas)
 
 ### Fase C — UI Konveksi (24 menu → ±7 halaman)
 - [ ] C0 Layout Konveksi + komponen bersama (pakai komponen B0)

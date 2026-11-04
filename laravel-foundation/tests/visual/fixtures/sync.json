@@ -1,0 +1,129 @@
+{
+ "component": "Marketplace/Sync",
+ "props": {
+  "errors": [],
+  "stores": [
+   {
+    "id": "u",
+    "platform": "Shopee",
+    "store_name": "Toko Belum Terhubung",
+    "store_identifier": null,
+    "status": null,
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": null
+   },
+   {
+    "id": "a",
+    "platform": "TikTok Shop",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": null,
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": {
+     "status": "verified",
+     "authorized_at": null,
+     "token_expires_at": null,
+     "last_successful_sync_at": "2026-11-01 08:00:00"
+    }
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": "a"
+  },
+  "preview": {
+   "id": "a",
+   "store_name": "Toko A",
+   "platform": "TikTok Shop",
+   "external_store_name": "Ext A",
+   "last_successful_sync_at": "2026-11-01 08:00:00",
+   "order_count": 2,
+   "window": {
+    "policy": "calendar_month",
+    "window_start": 1793466000,
+    "window_end": 1793763504
+   }
+  },
+  "status": {
+   "jobs": [
+    {
+     "id": 1,
+     "job_type": "orders",
+     "status": "queued",
+     "phase": "queued",
+     "counts": [],
+     "processed": 0,
+     "success_count": 0,
+     "failure_count": 0,
+     "last_error_code": null,
+     "run_key": "browser-20261104033824-y84inna8dmuj",
+     "requested_at": "2026-11-04 03:38:24",
+     "finished_at": null
+    }
+   ],
+   "returns": [],
+   "pending": 1,
+   "failed": 0,
+   "can_close": true
+  },
+  "auto": [
+   {
+    "mode": "status",
+    "enabled": true,
+    "next_run_at": null,
+    "last_success_at": null,
+    "last_error_code": "PROVIDER_TIMEOUT"
+   },
+   {
+    "mode": "new",
+    "enabled": true,
+    "next_run_at": "2026-11-04 03:38:24",
+    "last_success_at": null,
+    "last_error_code": null
+   },
+   {
+    "mode": "unpaid",
+    "enabled": false,
+    "next_run_at": null,
+    "last_success_at": null,
+    "last_error_code": null
+   },
+   {
+    "mode": "finance",
+    "enabled": false,
+    "next_run_at": null,
+    "last_success_at": null,
+    "last_error_code": null
+   },
+   {
+    "mode": "returns",
+    "enabled": false,
+    "next_run_at": null,
+    "last_success_at": null,
+    "last_error_code": null
+   }
+  ],
+  "scheduler_available": true,
+  "can_sync": true,
+  "can_manage": true
+ },
+ "url": "/marketplace/sync",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "component": "Marketplace/Expenses",
+ "props": {
+  "errors": [],
+  "stores": [
+   {
+    "id": "a",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "store_identifier": null,
+    "status": "Terhubung",
+    "authorization_status": null,
+    "sync_mode": null,
+    "default_admin_fee_pct": null,
+    "default_free_shipping_pct": null,
+    "default_payment_fee_pct": null,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": null,
+    "connection": null
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": "a"
+  },
+  "filters": {
+   "search": "Setor"
+  },
+  "summary": {
+   "total_amount": 50000,
+   "affects_profit": 0,
+   "cashflow_only": 50000,
+   "count": 1
+  },
+  "expenses": [
+   {
+    "id": 2,
+    "store_id": "a",
+    "expense_date": "2026-10-03",
+    "category": "Kas",
+    "description": "Setor kas",
+    "vendor_name": "Vendor",
+    "amount": 50000,
+    "payment_method": null,
+    "account_id": null,
+    "notes": null,
+    "affects_profit": 0,
+    "is_cashflow_only": 1,
+    "created_at": null
+   }
+  ],
+  "can_manage": true
+ },
+ "url": "/marketplace/expenses?search=Setor&store_id=a",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}

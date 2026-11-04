@@ -149,6 +149,18 @@ final class MarketplaceIntegrationsPageTest extends TestCase
         }
     }
 
+    public function test_the_company_logo_is_shared_with_every_page_without_its_bytes(): void
+    {
+        $this->page()->assertJsonPath('props.marketplaceBrand.has_logo', false);
+
+        DB::table('marketplace_branding')->insert(['company_key' => 'A', 'logo_blob' => 'LOGO-BYTES-RAHASIA', 'logo_mime' => 'image/png', 'logo_size' => 44, 'logo_fit' => 'cover', 'logo_hash' => 'abc123', 'updated_by' => 'u1', 'updated_at' => now()]);
+
+        $response = $this->page()->assertJsonPath('props.marketplaceBrand.has_logo', true)
+            ->assertJsonPath('props.marketplaceBrand.logo_size', 32)
+            ->assertJsonPath('props.marketplaceBrand.version', 'abc123');
+        $this->assertStringNotContainsString('LOGO-BYTES-RAHASIA', $response->getContent());
+    }
+
     public function test_another_companys_store_is_refused(): void
     {
         $this->page('?store_id=b')->assertForbidden();

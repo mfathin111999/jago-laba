@@ -1,0 +1,53 @@
+{
+ "component": "Marketplace/Stores",
+ "props": {
+  "errors": [],
+  "stores": [
+   {
+    "id": "STR-TIKTOK-TB",
+    "platform": "TikTok Shop",
+    "store_name": "Toko Baru 2",
+    "store_identifier": "x1",
+    "status": "Terputus",
+    "authorization_status": "pending",
+    "sync_mode": "API",
+    "default_admin_fee_pct": 10,
+    "default_free_shipping_pct": 3,
+    "default_payment_fee_pct": 1.5,
+    "default_account_id": null,
+    "last_synced_at": null,
+    "created_at": "2026-11-04 03:38:23",
+    "connection": null
+   }
+  ],
+  "archived": [
+   {
+    "id": "old",
+    "platform": "Lazada",
+    "store_name": "Toko Lama",
+    "archived_at": "2026-10-01 00:00:00",
+    "archived_by": "admin"
+   },
+   {
+    "id": "a",
+    "platform": "Shopee",
+    "store_name": "Toko A",
+    "archived_at": "2026-11-04 03:38:23",
+    "archived_by": "u1"
+   }
+  ],
+  "scope": {
+   "company_key": "A",
+   "store_id": null
+  },
+  "can_manage": true,
+  "can_delete": true,
+  "deletions": [],
+  "deletion_ready": false
+ },
+ "url": "/marketplace/stores",
+ "version": "c1345b327993c38bab9a4ae68c034ff7",
+ "sharedProps": [
+  "errors"
+ ]
+}
