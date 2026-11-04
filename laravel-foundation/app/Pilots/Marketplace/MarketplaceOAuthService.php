@@ -4,6 +4,7 @@ namespace App\Pilots\Marketplace;
 
 use App\Auth\LegacyUser;
 use App\Exceptions\MarketplaceOAuthException;
+use App\Marketplace\OAuth\LegacyClientOAuthProvider;
 use App\Marketplace\OAuth\MarketplaceOAuthProvider;
 use App\Marketplace\OAuth\SandboxMarketplaceOAuthProvider;
 use Illuminate\Database\Connection;
@@ -22,20 +23,37 @@ final class MarketplaceOAuthService
         private readonly MarketplaceStoreDeletionService $deletion,
     ) {}
 
+    /** Live mode runs the legacy Shopee / TikTok Shop OAuth clients; everything else stays in the sandbox. */
+    public function isLive(): bool
+    {
+        return strtolower((string) config('jago.oauth.mode', 'sandbox')) === 'live';
+    }
+
+    /** Replaces the provider for its platform (used by tests to avoid real network calls). */
+    public function registerProvider(MarketplaceOAuthProvider $provider): void
+    {
+        $this->providers[$provider->platform()] = $provider;
+    }
+
     /** @return list<string> */
     public function platforms(): array
     {
         $platforms = config('jago.oauth.platforms', ['Shopee', 'TikTok Shop', 'Tokopedia', 'Lazada', 'Blibli']);
-
-        return array_values(array_unique(array_filter(array_map(
+        $platforms = array_values(array_unique(array_filter(array_map(
             static fn (mixed $platform): string => trim((string) $platform),
             is_array($platforms) ? $platforms : [],
         ))));
+
+        return $this->isLive() ? array_values(array_intersect($platforms, LegacyClientOAuthProvider::PLATFORMS)) : $platforms;
     }
 
     /** @return array<string, mixed> */
     public function configurationStatus(): array
     {
+        if ($this->isLive()) {
+            return $this->liveConfigurationStatus();
+        }
+
         $callback = $this->legacyCallbackUrl();
         $platforms = [];
 
@@ -54,6 +72,38 @@ final class MarketplaceOAuthService
         return [
             'mode' => 'sandbox',
             'provider_live_enabled' => false,
+            'credentials_exposed_to_client' => false,
+            'platforms' => $platforms,
+            'callback_urls' => array_fill_keys($this->platforms(), $callback),
+            'legacy_callback_url' => $callback,
+            'laravel_callback_url' => route('pilot.marketplace.oauth.callback'),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function liveConfigurationStatus(): array
+    {
+        $callback = $this->legacyCallbackUrl();
+        $platforms = [];
+
+        foreach ($this->platforms() as $platform) {
+            $provider = $this->providerFor($platform);
+            $missing = $provider instanceof LegacyClientOAuthProvider ? $provider->configurationMissing() : [];
+            $environment = $provider instanceof LegacyClientOAuthProvider ? (string) ($provider->context()['environment'] ?? 'live') : 'live';
+            $platforms[$platform] = [
+                'platform' => $platform,
+                'environment' => $environment,
+                'ready' => $missing === [],
+                'missing' => $missing,
+                'label' => $missing === [] ? 'Siap: otorisasi memakai API resmi ('.$environment.')' : 'Belum siap: isi '.implode(', ', $missing).' di .env',
+                'authorization' => 'OAuth resmi platform, logika sama dengan aplikasi lama.',
+                'callback_url' => $callback,
+            ];
+        }
+
+        return [
+            'mode' => 'live',
+            'provider_live_enabled' => true,
             'credentials_exposed_to_client' => false,
             'platforms' => $platforms,
             'callback_urls' => array_fill_keys($this->platforms(), $callback),
@@ -84,8 +134,8 @@ final class MarketplaceOAuthService
 
         return [
             'platform' => $platform,
-            'environment' => 'sandbox',
-            'authorization_url' => $this->providerFor($platform)->authorizationUrl($state, $this->legacyCallbackUrl(), $scenario),
+            'environment' => $this->isLive() ? 'live' : 'sandbox',
+            'authorization_url' => $this->providerFor($platform)->authorizationUrl($state, $this->legacyCallbackUrl(), $this->isLive() ? null : $scenario),
             'callback_url' => $this->legacyCallbackUrl(),
             'laravel_callback_url' => route('pilot.marketplace.oauth.callback'),
             'expires_in' => $expiresIn,
@@ -520,7 +570,7 @@ final class MarketplaceOAuthService
 
     private function providerFor(string $platform): MarketplaceOAuthProvider
     {
-        return $this->providers[$platform] ??= new SandboxMarketplaceOAuthProvider($platform);
+        return $this->providers[$platform] ??= $this->isLive() ? new LegacyClientOAuthProvider($platform) : new SandboxMarketplaceOAuthProvider($platform);
     }
 
     private function assertPlatform(string $platform): string
@@ -588,10 +638,10 @@ final class MarketplaceOAuthService
             try {
                 return $operation();
             } catch (MarketplaceOAuthException $exception) {
-                $retryable = in_array($exception->errorCode, ['SANDBOX_TIMEOUT', 'SANDBOX_RATE_LIMITED'], true);
+                $retryable = in_array($exception->errorCode, ['SANDBOX_TIMEOUT', 'SANDBOX_RATE_LIMITED', 'PROVIDER_TIMEOUT', 'PROVIDER_RATE_LIMITED'], true);
                 if (! $retryable || $attempt >= $maxAttempts) {
                     $code = $exception->errorCode === 'SANDBOX_TIMEOUT' ? 'PROVIDER_TIMEOUT' : ($exception->errorCode === 'SANDBOX_RATE_LIMITED' ? 'PROVIDER_RATE_LIMITED' : $exception->errorCode);
-                    throw new MarketplaceOAuthException('Permintaan provider sandbox gagal setelah retry.', $code, $exception);
+                    throw new MarketplaceOAuthException($this->isLive() ? 'Permintaan ke platform gagal setelah percobaan ulang.' : 'Permintaan provider sandbox gagal setelah retry.', $code, $exception);
                 }
             }
         }

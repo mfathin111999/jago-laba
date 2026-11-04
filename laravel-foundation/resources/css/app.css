@@ -200,3 +200,5 @@ code, .muted, .cell-note { overflow-wrap: anywhere; }
 .section-stack > *, .panel { min-width: 0; }
 .brand-logo { display: grid; place-items: center; overflow: hidden; border-radius: .6rem; background: #fff; flex: 0 0 auto; }
 .brand-logo img { width: 100%; height: 100%; }
+
+.callback-url { display: block; margin-top: .4rem; padding: .45rem .6rem; background: #f1f5fa; border-radius: 6px; user-select: all; }

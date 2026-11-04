@@ -18,6 +18,8 @@ const props = defineProps<{
     health_error: string | null;
     sync: Row | null;
     platforms: Row[];
+    oauth_mode: string;
+    callback_url: string;
     oauth: { status: string; message: string; pending_id: string | null; platform: string | null; shops: Array<{ id: string; name: string }> } | null;
     branding: { has_logo: boolean; logo_size: number; logo_fit: string; updated_at: string | null };
     can_manage: boolean;
@@ -62,6 +64,9 @@ function chooseStore(event: Event): void {
 const storeId = computed(() => props.scope.store_id ?? '');
 const platform = computed(() => String(props.health?.platform ?? ''));
 const connected = computed(() => props.health?.connection_status === 'verified');
+const live = computed(() => props.oauth_mode === 'live');
+const platformStatus = computed(() => props.platforms.find((item) => item.platform === platform.value) ?? null);
+const connectBlocked = computed(() => platformStatus.value !== null && platformStatus.value.ready === false);
 const connectionTone = computed(() => (connected.value ? 'ok' : props.health?.connection_status === 'reauthorize' ? 'warn' : 'muted'));
 
 async function connect(): Promise<void> {
@@ -145,8 +150,12 @@ const logoUrl = computed(() => (props.branding.has_logo ? `/api/marketplace-bran
     >
         <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
-        <section class="panel notice">
-            <strong>Mode sandbox.</strong> <span class="muted">Koneksi saat ini memakai provider uji. Server tidak memanggil marketplace Live, dan data pesanan belum diambil dari provider.</span>
+        <section v-if="live" class="panel notice">
+            <strong>Mode live.</strong> <span class="muted">Koneksi memakai API resmi marketplace, dengan alur yang sama seperti aplikasi lama. Daftarkan alamat callback ini di konsol pengembang platform:</span>
+            <code class="callback-url">{{ callback_url }}</code>
+        </section>
+        <section v-else class="panel notice">
+            <strong>Mode sandbox.</strong> <span class="muted">Koneksi saat ini memakai provider uji. Server tidak memanggil marketplace Live. Untuk mode live, isi kunci partner di .env lalu setel JL_MARKETPLACE_OAUTH_MODE=live.</span>
         </section>
 
         <section v-if="oauth?.status === 'choose' && oauth.shops.length" class="panel">
@@ -175,13 +184,15 @@ const logoUrl = computed(() => (props.branding.has_logo ? `/api/marketplace-bran
                         <p class="muted">Sinkron berhasil terakhir: {{ formatDate(health.last_successful_sync_at) }}<span v-if="health.token_expired"> · <span class="warn-text">Token kedaluwarsa</span></span></p>
                     </div>
                     <div class="form-actions">
-                        <button v-if="can_manage && !connected" class="button button-primary" type="button" :disabled="busy" @click="connect">Hubungkan {{ platform }}</button>
+                        <button v-if="can_manage && !connected" class="button button-primary" type="button" :disabled="busy || connectBlocked" @click="connect">Hubungkan {{ platform }}</button>
                         <button v-if="can_manage && connected" class="button button-secondary" type="button" :disabled="busy" @click="refreshToken">Segarkan token</button>
                         <button v-if="can_sync && connected" class="button button-secondary" type="button" :disabled="busy" @click="syncNow">Sinkronkan sekarang</button>
                         <button v-if="can_manage && connected" class="button button-danger" type="button" :disabled="busy" @click="confirmDisconnect = true">Putuskan</button>
                     </div>
                 </div>
                 <p v-if="!can_manage" class="muted">Hanya administrator yang dapat menghubungkan atau memutus toko.</p>
+                <p v-else-if="connectBlocked" class="warn-text" role="status">{{ platformStatus?.label }}. Setelah mengisi .env, muat ulang halaman ini.</p>
+                <p v-else-if="live && platformStatus && !connected" class="muted">{{ platformStatus.label }}</p>
             </section>
 
             <section class="panel">

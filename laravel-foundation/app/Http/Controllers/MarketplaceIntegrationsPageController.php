@@ -51,6 +51,7 @@ final class MarketplaceIntegrationsPageController
         }
 
         $brand = $this->branding->read($companyKey);
+        $oauth = $this->oauth->configurationStatus();
 
         return Inertia::render('Marketplace/Integrations', [
             'stores' => $overview['stores'],
@@ -58,7 +59,9 @@ final class MarketplaceIntegrationsPageController
             'health' => $health,
             'health_error' => $healthError,
             'sync' => $storeId !== '' ? $this->syncStatus->status($companyKey, $storeId) : null,
-            'platforms' => array_values($this->oauth->configurationStatus()['platforms']),
+            'platforms' => array_values($oauth['platforms']),
+            'oauth_mode' => (string) $oauth['mode'],
+            'callback_url' => (string) $oauth['legacy_callback_url'],
             'oauth' => $this->oauthReturn($request, $canManage, $companyKey),
             'branding' => [
                 'has_logo' => ! empty($brand['logo_mime']),
