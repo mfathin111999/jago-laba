@@ -26,7 +26,9 @@ param(
     [string]$OwnerPassword = 'owner123',
     [switch]$Seed,
     [switch]$NoWorker,
-    [switch]$Rebuild
+    [switch]$Rebuild,
+    [switch]$Live,
+    [switch]$Sandbox
 )
 
 $ErrorActionPreference = 'Stop'
@@ -89,6 +91,20 @@ if (Test-Path $envFile) {
     foreach ($name in $values.Keys) { $lines = Set-EnvValue $lines $name $values[$name] }
     Set-Content -Path $envFile -Value $lines -Encoding UTF8
     Write-Host ".env dibuat (database: $DbName di ${DbHost}:${DbPort}). File ini tidak ikut Git."
+}
+
+# ---------- 2b. mode integrasi ----------
+if ($Live -or $Sandbox) {
+    $mode = if ($Live) { 'live' } else { 'sandbox' }
+    $current = Get-Content $envFile
+    Set-Content -Path $envFile -Value (Set-EnvValue $current 'JL_MARKETPLACE_OAUTH_MODE' $mode) -Encoding UTF8
+    Write-Host "Mode integrasi marketplace: $mode (JL_MARKETPLACE_OAUTH_MODE di .env)."
+}
+$modeNow = ((Get-Content $envFile | Where-Object { $_ -match '^JL_MARKETPLACE_OAUTH_MODE=' }) -replace '^JL_MARKETPLACE_OAUTH_MODE=', '')
+if ($modeNow -eq 'live') {
+    $text = Get-Content $envFile -Raw
+    $missing = @('JL_SHOPEE_PARTNER_ID', 'JL_SHOPEE_PARTNER_KEY', 'JL_TIKTOK_SHOP_APP_KEY', 'JL_TIKTOK_SHOP_APP_SECRET', 'JL_TIKTOK_SHOP_SERVICE_ID') | Where-Object { $text -notmatch "(?m)^$_=\S" }
+    if ($missing) { Write-Host ('Mode live aktif, tetapi belum terisi di .env: ' + ($missing -join ', ') + '. Isi kunci platform yang akan Anda uji, lalu jalankan ulang.') -ForegroundColor Yellow }
 }
 
 # ---------- 3. database ----------

@@ -5,6 +5,7 @@ import DataTable, { type Column } from '../../Components/DataTable.vue';
 import KpiCard from '../../Components/KpiCard.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
+import ShippingLabels from '../../Components/ShippingLabels.vue';
 import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatDate, formatText, formatValue } from '../../lib/format';
@@ -23,6 +24,7 @@ const props = defineProps<{
     orders: OrdersPayload;
     query: Record<string, any>;
     message?: string;
+    provider?: { live: boolean; can_fulfill: boolean; seller_center: string | null };
 }>();
 
 const TAB_LABELS: Record<string, string> = {
@@ -67,6 +69,16 @@ function loadOrders(page = 1): void {
     router.get('/pilot/marketplace/orders', params(page), { preserveState: true, preserveScroll: true, replace: true });
 }
 
+// ----- shipping labels and shipment arrangement (live mode) -----
+const live = computed(() => props.provider?.live === true);
+const selected = ref<string[]>([]);
+const labelIds = ref<string[]>([]);
+const labelsOpen = ref(false);
+const printLabels = (ids: string[]) => {
+    labelIds.value = ids;
+    labelsOpen.value = true;
+};
+
 const exportUrl = computed(() => {
     const { page: _page, per_page: _perPage, ...rest } = params(1);
 
@@ -94,8 +106,28 @@ async function openDetail(order: Order): Promise<void> {
     }
 }
 
+// ----- finance refresh (live mode) -----
+const financeBusy = ref(false);
+const financeMessage = ref<string | null>(null);
+async function refreshFinance(): Promise<void> {
+    const id = detail.value?.presentation?.order_id;
+    if (!id) return;
+    financeBusy.value = true;
+    financeMessage.value = null;
+    try {
+        const result = await apiRequest('/api/marketplace-order-finance.php', { store_id: props.scope.store_id, order_id: id });
+        if (result.presentation && detail.value) detail.value = { ...detail.value, presentation: result.presentation };
+        financeMessage.value = result.message ?? null;
+    } catch (error) {
+        financeMessage.value = error instanceof ApiError ? error.message : 'Finance API belum dapat diperbarui.';
+    } finally {
+        financeBusy.value = false;
+    }
+}
+
 // ----- display -----
 const columns: Column[] = [
+    { key: 'select', label: '' },
     { key: 'date', label: 'Tanggal', kind: 'date' },
     { key: 'order', label: 'Kode & produk' },
     { key: 'status', label: 'Status' },
@@ -119,6 +151,7 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
         :company-key="scope.company_key"
     >
         <template #actions>
+            <button v-if="live && orders" class="button button-secondary" type="button" :disabled="selected.length === 0 || selected.length > 20" @click="printLabels(selected)">Cetak resi ({{ selected.length }})</button>
             <a v-if="orders" class="button button-secondary" :href="exportUrl">Unduh CSV</a>
         </template>
 
@@ -170,6 +203,7 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
                 </div>
 
                 <DataTable :columns="columns" :rows="orders.rows" row-key="id" empty="Tidak ada pesanan pada filter ini.">
+                    <template #cell-select="{ row }"><input v-if="live" v-model="selected" type="checkbox" :value="String(row.id)" :aria-label="'Pilih pesanan ' + row.id" /></template>
                     <template #cell-date="{ row }">{{ formatDate(row.date) }}</template>
                     <template #cell-order="{ row }">
                         <button class="link-button" type="button" @click="openDetail(row)">{{ row.id }}</button>
@@ -181,7 +215,10 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
                     </template>
                     <template #cell-payment="{ row }">{{ payment(row) }}</template>
                     <template #cell-shipping="{ row }">{{ formatText(row.courier) }}<div class="muted cell-note">{{ row.tracking || 'Resi belum tersedia' }}</div></template>
-                    <template #actions="{ row }"><button class="button button-secondary button-small" type="button" @click="openDetail(row)">Lihat detail</button></template>
+                    <template #actions="{ row }">
+                        <button class="button button-secondary button-small" type="button" @click="openDetail(row)">Lihat detail</button>
+                        <button v-if="live" class="button button-secondary button-small" type="button" @click="printLabels([String(row.id)])">Cetak resi</button>
+                    </template>
                 </DataTable>
 
                 <div class="form-actions page-controls">
@@ -190,6 +227,8 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
                 </div>
             </section>
         </template>
+
+        <ShippingLabels :open="labelsOpen" :store-id="String(scope.store_id ?? '')" :order-ids="labelIds" :seller-center="provider?.seller_center ?? null" :can-fulfill="provider?.can_fulfill === true" @close="labelsOpen = false" />
 
         <Modal :open="detailOpen" title="Rincian pesanan" :busy="detailBusy" @close="detailOpen = false">
             <p v-if="detailBusy" class="muted">Memuat rincian…</p>
@@ -202,6 +241,10 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
                     <KpiCard label="Laba bersih" :value="presentation.net_profit" />
                 </div>
                 <p><strong>Status:</strong> {{ formatText(presentation.status) }} · <strong>Kode:</strong> {{ presentation.order_id }}</p>
+                <div v-if="live && presentation.platform === 'TikTok Shop'" class="form-actions">
+                    <button class="button button-secondary button-small" type="button" :disabled="financeBusy" @click="refreshFinance">{{ financeBusy ? 'Mengambil data resmi…' : 'Perbarui dari Finance API' }}</button>
+                    <span v-if="financeMessage" class="muted cell-note" role="status">{{ financeMessage }}</span>
+                </div>
                 <div>
                     <h3>Produk</h3>
                     <p v-for="item in presentation.items" :key="`${item.sku}-${item.name}`" class="cell-note">

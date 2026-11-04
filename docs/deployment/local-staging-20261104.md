@@ -13,6 +13,34 @@ Kunci partner Shopee/TikTok diisi manual di `laravel-foundation\.env`; tidak ada
 Opsi: `-DbName`, `-DbPort`, `-Port`, `-Php`, `-NoWorker` (tanpa antrean dan penjadwal), `-Rebuild` (bangun ulang tampilan), `-OwnerPassword`.
 Web, antrean, dan penjadwal berjalan di tiga jendela PowerShell; tutup jendelanya untuk berhenti.
 
+## Uji manual integrasi pihak ketiga (mode live)
+
+Default-nya sandbox (tidak memanggil provider). Untuk mengujinya dengan akun Anda sendiri:
+
+1. Isi `laravel-foundation\.env`: Shopee `JL_SHOPEE_PARTNER_ID`, `JL_SHOPEE_PARTNER_KEY` (`JL_SHOPEE_REGION=sandbox` untuk lingkungan uji Shopee);
+   TikTok Shop `JL_TIKTOK_SHOP_APP_KEY`, `JL_TIKTOK_SHOP_APP_SECRET`, `JL_TIKTOK_SHOP_SERVICE_ID` (dan `JL_TIKTOK_SHOP_REGION`, `JL_TIKTOK_SHOP_REQUIRED_SCOPES` bila perlu).
+   `JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY` sudah dibuat otomatis oleh peluncur (wajib: token disimpan dengan format vault legacy).
+2. Jalankan `run-local.cmd -Live` (menyetel `JL_MARKETPLACE_OAUTH_MODE=live`; `-Sandbox` untuk kembali).
+3. Buka **Integrasi**: banner menampilkan alamat callback. **Daftarkan alamat itu** di konsol pengembang platform (Shopee Open Platform / TikTok Partner Center).
+   Tombol Hubungkan menyala setelah kunci terisi; bila belum, halaman menyebut kunci `.env` yang kurang.
+4. Hubungkan toko lewat otorisasi resmi. Token tersimpan terenkripsi (format sama dengan aplikasi lama).
+
+Yang berjalan di mode live (semuanya memakai kode legacy yang sama, hanya dibungkus Laravel):
+
+| Fitur | Di mana | Catatan |
+|---|---|---|
+| Otorisasi toko, segarkan token, putuskan | Integrasi | Shopee dan TikTok Shop |
+| Sinkronisasi produk, pesanan, transaksi, retur | Sinkronisasi (dan penjadwal otomatis) | Butuh worker antrean yang berjalan (jendela "antrean" dari peluncur); batas laju dan percobaan ulang mengikuti aturan legacy |
+| Perbarui keuangan pesanan | Transaksi, rincian pesanan | Hanya TikTok Shop, tombol "Perbarui dari Finance API" |
+| Cetak resi (satu atau ssampai 20 pesanan) dan atur pengiriman | Transaksi | Tombol "Cetak resi"; bila paket belum diatur muncul "Atur pengiriman" (metode, jadwal pickup, persetujuan) |
+| Ubah harga dasar dan buat promo | Produk dan HPP | Tombol "Ubah harga", khusus administrator |
+
+Tetap nonaktif karena memang tidak berfungsi di aplikasi lama: tes koneksi legacy, sinkron iklan, tarik biaya iklan, ubah stok marketplace, webhook.
+Kunci partner hanya lewat `.env` (tidak ada form web).
+
+Yang **belum** bisa saya buktikan: pemanggilan ke server Shopee/TikTok yang sebenarnya (tidak ada kunci). Yang terbukti: alur otorisasi dan token dengan jawaban provider tiruan,
+mesin sinkron legacy berjalan di Laravel terhadap MySQL, serta semua layar baru dipakai di browser dengan API tiruan.
+
 ---
 
 # Staging lokal sekali-pakai (4 November 2026)

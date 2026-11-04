@@ -21,6 +21,12 @@ final class LegacyRuntime
                 putenv($name.'='.$value);
             }
         }
+        foreach (['DB_HOST' => 'JL_DB_HOST', 'DB_PORT' => 'JL_DB_PORT', 'DB_DATABASE' => 'JL_DB_NAME', 'DB_USERNAME' => 'JL_DB_USER', 'DB_PASSWORD' => 'JL_DB_PASS'] as $laravel => $legacy) {
+            $value = env($laravel);
+            if (getenv($legacy) === false && is_scalar($value) && (string) $value !== '') {
+                putenv($legacy.'='.$value);
+            }
+        }
         $root = dirname(__DIR__, 3);
         if (! class_exists(\Database::class, false)) {
             require_once $root.'/app/Core/Database/Database.php';

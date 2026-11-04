@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceCatalogRequest;
 use App\Marketplace\CatalogReadService;
+use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Inertia\Inertia;
 
 final class MarketplaceCatalogController
 {
-    public function __invoke(MarketplaceCatalogRequest $request, CatalogReadService $catalog, MarketplaceStoreReadService $stores, RolePolicy $policy): mixed
+    public function __invoke(MarketplaceCatalogRequest $request, CatalogReadService $catalog, MarketplaceStoreReadService $stores, RolePolicy $policy, LiveGateway $live): mixed
     {
         $filters = $request->validated();
         $overview = $stores->overview((string) $request->attributes->get('company_key'));
@@ -43,6 +44,7 @@ final class MarketplaceCatalogController
             'stores' => $overview['stores'],
             'scope' => ['company_key' => (string) $request->attributes->get('company_key'), 'store_id' => $filters['store_id']],
             'can_edit_hpp' => $policy->allows($request->user('web'), 'hpp.edit'),
+            'provider' => ['live' => $live->enabled(), 'can_edit_price' => $policy->allows($request->user('web'), 'price.manage')],
         ]);
     }
 }

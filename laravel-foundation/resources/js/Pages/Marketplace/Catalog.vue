@@ -5,6 +5,7 @@ import FlashBanner from '../../Components/FlashBanner.vue';
 import KpiCard from '../../Components/KpiCard.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
+import PriceEditor from '../../Components/PriceEditor.vue';
 import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatText, formatValue } from '../../lib/format';
@@ -17,6 +18,7 @@ const props = defineProps<{
     stores: Row[];
     scope: { company_key: string; store_id: string | null };
     can_edit_hpp: boolean;
+    provider?: { live: boolean; can_edit_price: boolean };
 }>();
 
 const flash = reactive<{ message: string | null; kind: 'success' | 'error' }>({ message: null, kind: 'success' });
@@ -47,6 +49,14 @@ const exportUrl = computed(() => {
 const products = computed<Row[]>(() => props.catalog.products ?? []);
 const variantCount = computed(() => products.value.reduce((sum, product) => sum + product.variants.length, 0));
 const hppMissing = (variant: Row): boolean => variant.hpp === null || variant.hpp === undefined || Number(variant.hpp) <= 0;
+
+// ----- price editor (live mode: reads and writes prices at the marketplace) -----
+const priceEditor = reactive({ open: false, productId: '' });
+const canEditPrice = computed(() => props.provider?.live === true && props.provider?.can_edit_price === true);
+const openPrice = (product: Row): void => {
+    priceEditor.productId = String(product.variants[0]?.external_product_id ?? '');
+    priceEditor.open = priceEditor.productId !== '';
+};
 
 // ----- HPP editor -----
 const editor = reactive({ open: false, product: null as Row | null, variant: null as Row | null });
@@ -123,6 +133,7 @@ async function saveHpp(): Promise<void> {
             <div class="section-heading compact">
                 <div><span class="eyebrow">{{ product.store_name }} · {{ product.platform }}</span><h2>{{ product.name }}</h2></div>
                 <span class="muted">{{ formatValue(product.sold, 'count') }} terjual</span>
+                <button v-if="canEditPrice" class="button button-secondary button-small" type="button" @click="openPrice(product)">Ubah harga</button>
             </div>
             <div class="table-wrap">
                 <table>
@@ -140,6 +151,8 @@ async function saveHpp(): Promise<void> {
                 </table>
             </div>
         </section>
+
+        <PriceEditor :open="priceEditor.open" :store-id="String(scope.store_id ?? '')" :product-id="priceEditor.productId" @close="priceEditor.open = false" />
 
         <Modal :open="editor.open" title="Ubah HPP" :busy="busy" @close="editor.open = false">
             <form v-if="editor.variant" class="form-stack" @submit.prevent="saveHpp">

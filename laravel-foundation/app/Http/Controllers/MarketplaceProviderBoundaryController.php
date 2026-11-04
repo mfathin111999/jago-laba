@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
+use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\OrderReadService;
 use App\Security\CsrfTokenValidator;
 use DomainException;
@@ -27,6 +28,7 @@ final class MarketplaceProviderBoundaryController
         private readonly OrderReadService $orders,
         private readonly StoreContext $stores,
         private readonly CsrfTokenValidator $csrf,
+        private readonly LiveGateway $live,
     ) {}
 
     public function orderFinance(Request $request): JsonResponse
@@ -47,6 +49,10 @@ final class MarketplaceProviderBoundaryController
                 throw new DomainException('Pesanan tidak ditemukan.');
             }
 
+            if ($this->live->enabled()) {
+                return $this->liveFinance($request, $storeId, $orderId, $detail);
+            }
+
             return $this->json([
                 'success' => true,
                 'synced' => false,
@@ -60,6 +66,38 @@ final class MarketplaceProviderBoundaryController
             Log::error('Marketplace order finance failed.', ['exception' => $exception::class, 'message' => $exception->getMessage()]);
 
             return $this->json(['success' => false, 'message' => 'Finance API belum dapat diperbarui. Periksa izin seller.finance.info atau coba lagi setelah batas API mereda.'], 400);
+        }
+    }
+
+    /**
+     * Live mode: refresh the order's finance from the Finance API with the legacy engine (skipped when it was refreshed in
+     * the last 30 seconds, like the legacy endpoint), then answer with the order's current presentation.
+     *
+     * @param  array<string, mixed>  $detail
+     */
+    private function liveFinance(Request $request, string $storeId, string $orderId, array $detail): JsonResponse
+    {
+        $companyKey = (string) $request->attributes->get('company_key');
+        try {
+            $snapshot = (array) ($detail['presentation'] ?? []);
+            $fresh = ! empty($snapshot['finance_updated_at']) && strtotime((string) $snapshot['finance_updated_at']) > time() - 30;
+            $synced = $fresh || $this->live->run($request->user('web'), $companyKey, ['MarketplaceSyncService.php'], static fn (\PDO $pdo): bool => (new \MarketplaceSyncService($pdo, null, true))->refreshOrderFinance($storeId, $orderId));
+            $current = $this->orders->detail($companyKey, $storeId, $orderId);
+
+            return $this->json([
+                'success' => true,
+                'synced' => (bool) $synced,
+                'presentation' => $current['presentation'] ?? $snapshot,
+                'message' => $synced ? 'Data Finance API diperbarui.' : 'Marketplace belum menyediakan data keuangan pesanan ini.',
+            ]);
+        } catch (Throwable $e) {
+            Log::error('Marketplace order finance (live) failed.', ['exception' => $e::class, 'message' => $e->getMessage()]);
+
+            return $this->json([
+                'success' => false,
+                'message' => $e instanceof DomainException ? $e->getMessage() : 'Finance API belum dapat diperbarui. Periksa izin seller.finance.info atau coba lagi setelah batas API mereda.',
+                'error_code' => $e instanceof \MarketplaceIntegrationException ? $e->errorCode : null,
+            ], $e instanceof DomainException ? 403 : 400);
         }
     }
 

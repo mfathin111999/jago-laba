@@ -18,6 +18,7 @@ const props = defineProps<{
     status: Row | null;
     auto: Row[];
     scheduler_available: boolean;
+    live?: boolean;
     can_sync: boolean;
     can_manage: boolean;
 }>();
@@ -134,7 +135,11 @@ async function toggleAuto(state: Row): Promise<void> {
     >
         <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
-        <section class="panel notice">
+        <section v-if="live" class="panel notice">
+            <strong>Mode live.</strong>
+            <span class="muted"> Sinkronisasi membaca produk, pesanan, transaksi, dan retur dari API resmi marketplace dengan mesin yang sama seperti aplikasi lama. Worker antrean harus berjalan; kemajuan tampil di tabel di bawah.</span>
+        </section>
+        <section v-else class="panel notice">
             <strong>Mode sandbox.</strong>
             <span class="muted"> Worker saat ini memindai data pesanan yang sudah tersimpan. Belum ada pengambilan data dari marketplace Live, jadi sinkronisasi tidak menambah pesanan baru dari provider.</span>
         </section>

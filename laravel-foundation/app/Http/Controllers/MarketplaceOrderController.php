@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceOrderRequest;
 use App\Http\Responses\CsvDownload;
+use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\OrderReadService;
+use App\Policies\RolePolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,14 +16,20 @@ use Throwable;
 
 final class MarketplaceOrderController
 {
-    public function __construct(private readonly OrderReadService $orders) {}
+    public function __construct(private readonly OrderReadService $orders, private readonly LiveGateway $live, private readonly RolePolicy $policy) {}
 
     public function index(MarketplaceOrderRequest $request): Response
     {
         $companyKey = (string) $request->attributes->get('company_key');
 
         try {
-            return Inertia::render('Pilot/MarketplaceOrders', $this->orders->overview($companyKey, $request->storeId(), $request->filters()));
+            $payload = $this->orders->overview($companyKey, $request->storeId(), $request->filters());
+
+            return Inertia::render('Pilot/MarketplaceOrders', $payload + ['provider' => [
+                'live' => $this->live->enabled(),
+                'can_fulfill' => $this->policy->allows($request->user('web'), 'shipping.fulfill'),
+                'seller_center' => (($payload['active_store']['platform'] ?? '') === 'Shopee') ? 'https://seller.shopee.co.id/' : 'https://seller-id.tokopedia.com/',
+            ]]);
         } catch (Throwable $exception) {
             if ($exception instanceof \DomainException && $exception->getCode() === OrderReadService::NO_INTEGRATED_STORE) {
                 return Inertia::render('Pilot/MarketplaceOrders', [

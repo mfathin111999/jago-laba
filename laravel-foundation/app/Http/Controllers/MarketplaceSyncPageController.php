@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
+use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\MarketplaceAutoSyncService;
 use App\Pilots\Marketplace\MarketplaceStoreReadService;
 use App\Pilots\Marketplace\MarketplaceSyncStatusService;
@@ -20,6 +21,7 @@ final class MarketplaceSyncPageController
         private readonly MarketplaceAutoSyncService $autoSync,
         private readonly StoreContext $storeAccess,
         private readonly RolePolicy $policy,
+        private readonly LiveGateway $live,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -41,6 +43,7 @@ final class MarketplaceSyncPageController
             'status' => $storeId !== '' ? $this->syncStatus->status($companyKey, $storeId) : null,
             'auto' => $storeId !== '' ? array_values($this->autoSync->states($companyKey, $storeId)) : [],
             'scheduler_available' => $this->autoSync->available(),
+            'live' => $this->live->enabled(),
             'can_sync' => $this->policy->allows($user, 'sync.trigger'),
             'can_manage' => $this->policy->allows($user, 'integration.manage'),
         ]);

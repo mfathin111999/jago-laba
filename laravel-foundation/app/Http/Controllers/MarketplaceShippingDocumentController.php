@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
+use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\OrderReadService;
 use App\Security\CsrfTokenValidator;
 use DomainException;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 /**
@@ -25,9 +27,10 @@ final class MarketplaceShippingDocumentController
         private readonly OrderReadService $orders,
         private readonly StoreContext $stores,
         private readonly CsrfTokenValidator $csrf,
+        private readonly LiveGateway $live,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request): Response
     {
         try {
             if ($request->isMethod('POST')) {
@@ -38,6 +41,9 @@ final class MarketplaceShippingDocumentController
             }
             if (preg_match('/^[a-f0-9]{48}$/', (string) $request->query('id', '')) !== 1) {
                 throw new DomainException('Dokumen tidak tersedia.');
+            }
+            if ($this->live->enabled()) {
+                return $this->liveDownload($request);
             }
 
             throw new DomainException('Dokumen kedaluwarsa atau tidak tersedia. Klik Cetak Resi untuk mengambil ulang.');
@@ -79,11 +85,43 @@ final class MarketplaceShippingDocumentController
             throw new DomainException('Pesanan belum dibayar atau sudah dibatalkan. Resi tidak diminta.');
         }
 
+        if ($this->live->enabled()) {
+            $documents = $this->live->run($request->user('web'), (string) $request->attributes->get('company_key'), ['MarketplaceShippingDocumentService.php'], static function (\PDO $pdo) use ($storeId, $orderId): array {
+                $documents = (new \MarketplaceShippingDocumentService($pdo))->prepare($storeId, $orderId);
+                foreach ($documents as &$document) {
+                    if (! empty($document['success'])) {
+                        $document['download_url'] = 'api/marketplace-shipping-document.php?id='.$document['document_id'];
+                        $document['preview_url'] = $document['download_url'].'&preview=1';
+                    }
+                }
+                unset($document);
+
+                return $documents;
+            });
+
+            return $this->json(['success' => true, 'documents' => $documents]);
+        }
+
         return $this->json([
             'success' => false,
             'message' => 'Konektor resi marketplace belum aktif. Ambil resi melalui Seller Center.',
             'error_code' => 'PROVIDER_CONNECTOR_INACTIVE',
         ], 503);
+    }
+
+    /** Live mode: serves a prepared PDF (attachment, or inline with preview=1) exactly like the legacy endpoint. */
+    private function liveDownload(Request $request): Response
+    {
+        $preview = (string) $request->query('preview', '') === '1';
+        $document = $this->live->run($request->user('web'), (string) $request->attributes->get('company_key'), ['MarketplaceShippingDocumentService.php'], static fn (\PDO $pdo): array => (new \MarketplaceShippingDocumentService($pdo))->read((string) $request->query('id', ''), $preview));
+
+        return response((string) $document['pdf'], 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => ($preview ? 'inline' : 'attachment').'; filename="'.$document['filename'].'"',
+            'Content-Length' => (string) strlen((string) $document['pdf']),
+            'Cache-Control' => 'no-store, private',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /** @param array<string, mixed> $payload */
