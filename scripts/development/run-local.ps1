@@ -83,7 +83,7 @@ if (Test-Path $envFile) {
         DB_CONNECTION = 'mysql'; DB_HOST = $DbHost; DB_PORT = "$DbPort"; DB_DATABASE = $DbName; DB_USERNAME = $DbUser; DB_PASSWORD = $DbPass
         JL_DB_HOST = $DbHost; JL_DB_PORT = "$DbPort"; JL_DB_NAME = $DbName; JL_DB_USER = $DbUser; JL_DB_PASS = $DbPass
         SESSION_DRIVER = 'file'; CACHE_STORE = 'file'; QUEUE_CONNECTION = 'database'
-        JL_COMPANY_KEY = 'LOCAL-COMPANY'; JL_MARKETPLACE_OAUTH_MODE = 'sandbox'; JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY = "base64:$randomKey"
+        JL_COMPANY_KEY = 'LOCAL-COMPANY'; JL_MARKETPLACE_OAUTH_MODE = 'sandbox'; JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY = $randomKey
         JL_BACKUP_DIR = (Join-Path $repo 'storage\local-backups'); JL_MYSQLDUMP = 'C:\xampp\mysql\bin\mysqldump.exe'
     }
     foreach ($name in $values.Keys) { $lines = Set-EnvValue $lines $name $values[$name] }

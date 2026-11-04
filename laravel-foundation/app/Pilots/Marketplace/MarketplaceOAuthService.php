@@ -7,9 +7,9 @@ use App\Exceptions\MarketplaceOAuthException;
 use App\Marketplace\OAuth\LegacyClientOAuthProvider;
 use App\Marketplace\OAuth\MarketplaceOAuthProvider;
 use App\Marketplace\OAuth\SandboxMarketplaceOAuthProvider;
+use App\Marketplace\TokenVault;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -609,7 +609,7 @@ final class MarketplaceOAuthService
     private function encrypt(string $value): string
     {
         try {
-            return Crypt::encryptString($value);
+            return (new TokenVault)->encrypt($value);
         } catch (Throwable $exception) {
             throw new MarketplaceOAuthException('Penyimpanan token sandbox belum dikonfigurasi.', 'TOKEN_STORAGE_UNAVAILABLE', $exception);
         }
@@ -622,7 +622,7 @@ final class MarketplaceOAuthService
         }
 
         try {
-            return Crypt::decryptString($value);
+            return (new TokenVault)->decrypt($value);
         } catch (Throwable $exception) {
             throw new MarketplaceOAuthException('Token sandbox tidak dapat dibaca.', 'TOKEN_STORAGE_UNAVAILABLE', $exception);
         }
