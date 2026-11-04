@@ -72,10 +72,11 @@ $copy = static function (string $from, string $to, string $prefix) use (&$copy, 
     return $count;
 };
 
-foreach (['', '/app', '/laravel-foundation'] as $directory) {
+foreach (['', '/app', '/config', '/laravel-foundation'] as $directory) {
     @mkdir($out.$directory, 0755, true);
 }
-$files = $copy($root.'/app', $out.'/app', 'app') + $copy($root.'/laravel-foundation', $out.'/laravel-foundation', 'laravel-foundation');
+// The legacy services still read their settings from the root config/ (environment driven, no secrets in the files).
+$files = $copy($root.'/app', $out.'/app', 'app') + $copy($root.'/config', $out.'/config', 'config') + $copy($root.'/laravel-foundation', $out.'/laravel-foundation', 'laravel-foundation');
 foreach (['storage/framework/cache/data', 'storage/framework/sessions', 'storage/framework/views', 'storage/logs', 'storage/app/private', 'bootstrap/cache'] as $directory) {
     @mkdir($out.'/laravel-foundation/'.$directory, 0775, true);
     file_put_contents($out.'/laravel-foundation/'.$directory.'/.gitkeep', '');
@@ -133,7 +134,7 @@ ksort($manifest);
 
 // ----- things that must NOT be in a release -----
 $forbidden = array_values(array_filter(array_keys($manifest), static fn (string $path): bool => preg_match('#(^|/)(install\.php|repair_owner\.php|\.env(\..*)?)$#', $path) === 1 && ! str_ends_with($path, '.env.example')));
-$required = ['laravel-foundation/artisan', 'laravel-foundation/public/index.php', 'laravel-foundation/public/build/manifest.json', 'laravel-foundation/public/assets/konveksi/js/jl-api.js', 'app/Modules/Konveksi/Views/28_Core.html', 'app/Modules/Marketplace/Services/MarketplaceService.php', 'laravel-foundation/vendor/autoload.php'];
+$required = ['config/marketplace.php', 'laravel-foundation/artisan', 'laravel-foundation/public/index.php', 'laravel-foundation/public/build/manifest.json', 'laravel-foundation/public/assets/konveksi/js/jl-api.js', 'app/Modules/Konveksi/Views/28_Core.html', 'app/Modules/Marketplace/Services/MarketplaceService.php', 'laravel-foundation/vendor/autoload.php'];
 $missing = array_values(array_filter($required, static fn (string $path): bool => ! isset($manifest[$path]) && ! ($skipComposer && str_contains($path, '/vendor/'))));
 
 $commit = trim((string) shell_exec('git -C '.escapeshellarg($root).' rev-parse HEAD 2>NUL'));

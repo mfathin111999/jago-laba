@@ -32,7 +32,7 @@ Yang berjalan di mode live (semuanya memakai kode legacy yang sama, hanya dibung
 | Otorisasi toko, segarkan token, putuskan | Integrasi | Shopee dan TikTok Shop |
 | Sinkronisasi produk, pesanan, transaksi, retur | Sinkronisasi (dan penjadwal otomatis) | Butuh worker antrean yang berjalan (jendela "antrean" dari peluncur); batas laju dan percobaan ulang mengikuti aturan legacy |
 | Perbarui keuangan pesanan | Transaksi, rincian pesanan | Hanya TikTok Shop, tombol "Perbarui dari Finance API" |
-| Cetak resi (satu atau ssampai 20 pesanan) dan atur pengiriman | Transaksi | Tombol "Cetak resi"; bila paket belum diatur muncul "Atur pengiriman" (metode, jadwal pickup, persetujuan) |
+| Cetak resi (satu sampai 20 pesanan) dan atur pengiriman | Transaksi | Tombol "Cetak resi"; bila paket belum diatur muncul "Atur pengiriman" (metode, jadwal pickup, persetujuan) |
 | Ubah harga dasar dan buat promo | Produk dan HPP | Tombol "Ubah harga", khusus administrator |
 
 Tetap nonaktif karena memang tidak berfungsi di aplikasi lama: tes koneksi legacy, sinkron iklan, tarik biaya iklan, ubah stok marketplace, webhook.

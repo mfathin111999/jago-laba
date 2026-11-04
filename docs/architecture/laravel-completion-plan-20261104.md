@@ -83,8 +83,8 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 - [ ] D3 Izin file privat & checksum dokumen (langkah 9)
 
 ### Fase E — Provider
-- [ ] E1 Sandbox per platform (callback terdaftar) — butuh pemilik akun
-- [ ] E2 Adapter sync nyata + webhook (keputusan pemilik: stub vs bangun)
+- [~] E1 Uji manual oleh pemilik dengan akun sendiri (diputuskan 4 Nov 2026): jalankan `run-local.cmd -Live`, isi kunci di `.env`, daftarkan alamat callback. Panduan: `docs/deployment/local-staging-20261104.md` (bagian mode live)
+- [x] E2 Mode live memakai mesin legacy tanpa mengubah logikanya: OAuth Shopee/TikTok (klien OAuth legacy), sinkronisasi (MarketplaceSyncService dijalankan per langkah lewat antrean), resi dan pengaturan pengiriman, editor harga/promo, perbarui keuangan pesanan; token dalam format vault legacy; layar baru sama alurnya dengan UI lama. Terbukti dengan provider tiruan + MySQL; panggilan ke server provider asli menunggu uji manual (E1)
 - [ ] E3 Live terbatas — hanya dengan persetujuan tertulis
 
 ### Fase F — Penutupan
