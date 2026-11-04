@@ -12,8 +12,10 @@ declare(strict_types=1);
  */
 $name = getenv('JL_DB_NAME') ?: '';
 $host = getenv('JL_DB_HOST') ?: '';
-if (! preg_match('/^jl_staging[a-z0-9_]*$/', $name) || ! in_array($host, ['127.0.0.1', 'localhost'], true)) {
-    fwrite(STDERR, "Refusing: JL_DB_NAME must start with jl_staging and JL_DB_HOST must be loopback.\n");
+// Allowed: a name starting with jl_staging, or exactly the name in JL_SETUP_ALLOW_NAME (the local launcher sets it), on loopback only.
+$allowedName = preg_match('/^jl_staging[a-z0-9_]*$/', $name) === 1 || (getenv('JL_SETUP_ALLOW_NAME') === $name && preg_match('/^[a-z0-9_]+$/i', $name) === 1);
+if (! $allowedName || ! in_array($host, ['127.0.0.1', 'localhost'], true)) {
+    fwrite(STDERR, "Refusing: JL_DB_NAME must start with jl_staging (or equal JL_SETUP_ALLOW_NAME) and JL_DB_HOST must be loopback.\n");
     exit(1);
 }
 $pdo = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, (int) (getenv('JL_DB_PORT') ?: 3306), $name), getenv('JL_DB_USER') ?: 'root', getenv('JL_DB_PASS') ?: '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);

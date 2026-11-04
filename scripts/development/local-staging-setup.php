@@ -13,8 +13,10 @@ declare(strict_types=1);
 $root = dirname(__DIR__, 2);
 $name = getenv('JL_DB_NAME') ?: '';
 $host = getenv('JL_DB_HOST') ?: '';
-if (! preg_match('/^jl_staging[a-z0-9_]*$/', $name) || ! in_array($host, ['127.0.0.1', 'localhost'], true)) {
-    fwrite(STDERR, "Refusing: JL_DB_NAME must start with jl_staging and JL_DB_HOST must be loopback.\n");
+// Allowed: a name starting with jl_staging, or exactly the name in JL_SETUP_ALLOW_NAME (the local launcher sets it), on loopback only.
+$allowedName = preg_match('/^jl_staging[a-z0-9_]*$/', $name) === 1 || (getenv('JL_SETUP_ALLOW_NAME') === $name && preg_match('/^[a-z0-9_]+$/i', $name) === 1);
+if (! $allowedName || ! in_array($host, ['127.0.0.1', 'localhost'], true)) {
+    fwrite(STDERR, "Refusing: JL_DB_NAME must start with jl_staging (or equal JL_SETUP_ALLOW_NAME) and JL_DB_HOST must be loopback.\n");
     exit(1);
 }
 $ownerPassword = 'owner123';
@@ -28,6 +30,14 @@ require $root.'/app/Bootstrap/bootstrap.php';
 
 SchemaManager::createDatabase();
 $pdo = Database::pdo();
+
+// The snapshot import REPLACES the Konveksi collections, so never run this on a database that already holds data.
+$existing = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('marketplace_orders','marketplace_stores','jl_data_produk')")->fetchColumn();
+if ($existing > 0 && ! in_array('--force', $argv, true)) {
+    fwrite(STDERR, "Refusing: this database already contains Jago tables. Pass --force only for a database you can afford to overwrite.
+");
+    exit(3);
+}
 SchemaManager::ensureSystemSchema($pdo);
 echo "core schema ready\n";
 
