@@ -1,5 +1,10 @@
 # Lembar keputusan pemilik — 4 November 2026
 
+> **Keputusan pemilik (4 Nov 2026):** semua rekomendasi disetujui, dengan satu syarat tegas: **tidak boleh mengubah logika bisnis**.
+> Urutan kerja: selesaikan migrasi dulu; urusan logika bisnis (mis. A4, C2, C3, serta pemetaan data A1–A3) dikerjakan di akhir.
+> Konsekuensi: baris A1–A3 tetap menunggu data dari pemilik dan tidak menghalangi cutover; B1–B6 diterapkan sebagai konfigurasi,
+> dokumentasi, dan pengamanan rilis tanpa mengubah perhitungan atau alur bisnis.
+
 Tujuan: semua keputusan yang menahan penutupan migrasi, dalam satu halaman. Setiap baris punya **rekomendasi** dan alasannya.
 Cukup beri tanda pada kolom "Keputusan Anda" (setuju / ganti dengan: …). Rekomendasi bukan persetujuan sampai Anda memberi tanda.
 

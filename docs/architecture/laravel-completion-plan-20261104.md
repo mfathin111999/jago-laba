@@ -89,10 +89,10 @@ Menggantikan urutan kerja di [laravel-completion-plan-20261101.md](laravel-compl
 
 ### Fase F — Penutupan
 - [x] F0 Staging lokal sekali-pakai (MariaDB terpisah, port 3320; skema dari alat legacy + data sintetis): `docs/deployment/local-staging-20261104.md`. Uji E2E nyata `tests/e2e/staging-e2e.mjs`: login, 11 halaman Marketplace, tulis pengeluaran/HPP/minimum stok/antrean sinkron + worker, klien Konveksi dengan data impor — 85/85 lolos. Menemukan dan memperbaiki: rute /index.php tak pernah cocok, bug indeks SchemaManager. Belum: data asli, performa, hosting
-- [ ] F1 Keputusan pemilik: 17 orphan, 4 stub, `install.php`/`repair_owner.php`
+- [x] F1 Keputusan pemilik: semua rekomendasi disetujui (4 Nov 2026) dengan syarat tidak mengubah logika bisnis; data A1–A3 dan logika bisnis ditunda ke akhir. B1–B6 diterapkan sebagai konfigurasi/pengamanan rilis (`docs/architecture/keputusan-pemilik-20261104.md`)
 - [ ] F2 UAT per peran, bandingkan data dengan baseline
-- [ ] F3 Artifact baru + scan secret + rehearsal rollback
-- [ ] F4 Cutover + observasi + arsip legacy
+- [x] F3 Artifact baru, pindai secret, latihan rollback: `scripts/deployment/build-release.php` (6.392 file, tanpa install.php/repair_owner.php/.env, pindai secret bersih), rilis lulus E2E 84/84 + 42/42 + 13/13, pemulihan dump ke skema baru identik (96 tabel, 628 baris, 70 trigger). Runbook: `docs/deployment/cutover-runbook-20261104.md`
+- [ ] F4 Cutover + observasi + arsip legacy — runbook siap; menunggu D1–D4 (host), UAT F2 dengan data asli, dan jadwal dari pemilik
 
 ## Urutan eksekusi
 
