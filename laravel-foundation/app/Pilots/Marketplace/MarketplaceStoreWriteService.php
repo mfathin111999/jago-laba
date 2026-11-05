@@ -7,6 +7,7 @@ use App\Auth\LegacyUser;
 use App\Exceptions\InvalidInput;
 use App\Exceptions\ResourceNotFound;
 use App\Exceptions\StoreForbidden;
+use App\Models\Marketplace\MarketplaceStore;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -146,24 +147,16 @@ final class MarketplaceStoreWriteService
         $connection = $this->database->connection();
 
         return $connection->transaction(function () use (
-            $connection, $user, $companyKey, $storeId, $platform, $storeName,
+            $user, $companyKey, $storeId, $platform, $storeName,
             $identifier, $defaultAccId, $adminFee, $freeShipping, $paymentFee, $syncMode, $status
         ): array {
-            $store = $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->whereNull('archived_at')
-                ->lockForUpdate()
-                ->first();
+            $store = MarketplaceStore::query()->forCompany($companyKey)->active()->whereKey($storeId)->lockForUpdate()->first();
 
             if ($store === null) {
                 throw new StoreForbidden();
             }
 
-            $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->update([
+            MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
                     'platform' => $platform,
                     'store_name' => $storeName,
                     'store_identifier' => $identifier,
@@ -215,13 +208,8 @@ final class MarketplaceStoreWriteService
 
         $connection = $this->database->connection();
 
-        return $connection->transaction(function () use ($connection, $user, $companyKey, $storeId, $status): array {
-            $store = $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->whereNull('archived_at')
-                ->lockForUpdate()
-                ->first();
+        return $connection->transaction(function () use ($user, $companyKey, $storeId, $status): array {
+            $store = MarketplaceStore::query()->forCompany($companyKey)->active()->whereKey($storeId)->lockForUpdate()->first();
 
             if ($store === null) {
                 throw new StoreForbidden();
@@ -235,10 +223,7 @@ final class MarketplaceStoreWriteService
                 $updates['authorization_status'] = 'disconnected';
             }
 
-            $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->update($updates);
+            MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update($updates);
 
             $this->audit->record(
                 $user,
@@ -265,11 +250,7 @@ final class MarketplaceStoreWriteService
         $connection = $this->database->connection();
 
         return $connection->transaction(function () use ($connection, $user, $companyKey, $storeId): array {
-            $store = $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->lockForUpdate()
-                ->first();
+            $store = MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->lockForUpdate()->first();
 
             if (! $store || $store->archived_at !== null) {
                 throw new ResourceNotFound('Toko aktif tidak ditemukan.', 'STORE_NOT_FOUND');
@@ -278,10 +259,7 @@ final class MarketplaceStoreWriteService
             $userId = (string) ($user->getAuthIdentifier() ?: $user->getUsername() ?: 'system');
             $now = now();
 
-            $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->update([
+            MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
                     'archived_at' => $now,
                     'archived_by' => $userId,
                     'status' => 'Terputus',
@@ -323,23 +301,15 @@ final class MarketplaceStoreWriteService
     {
         $connection = $this->database->connection();
 
-        return $connection->transaction(function () use ($connection, $user, $companyKey, $storeId): array {
-            $store = $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->whereNotNull('archived_at')
-                ->lockForUpdate()
-                ->first();
+        return $connection->transaction(function () use ($user, $companyKey, $storeId): array {
+            $store = MarketplaceStore::query()->forCompany($companyKey)->archived()->whereKey($storeId)->lockForUpdate()->first();
 
             if (! $store) {
                 throw new ResourceNotFound('Toko arsip tidak ditemukan.', 'STORE_NOT_FOUND');
             }
 
             $now = now();
-            $connection->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->update([
+            MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
                     'archived_at' => null,
                     'archived_by' => null,
                     'status' => 'Terputus',

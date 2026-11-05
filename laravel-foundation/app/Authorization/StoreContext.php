@@ -2,14 +2,13 @@
 
 namespace App\Authorization;
 
+use App\Models\Marketplace\MarketplaceStore;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\DatabaseManager;
 use Throwable;
 
 final class StoreContext
 {
     public function __construct(
-        private readonly DatabaseManager $database,
         private readonly CompanyContext $company,
     ) {}
 
@@ -23,11 +22,7 @@ final class StoreContext
         }
 
         try {
-            return $this->database->connection()->table('marketplace_stores')
-                ->where('id', $storeId)
-                ->where('company_key', $companyKey)
-                ->whereNull('archived_at')
-                ->exists();
+            return MarketplaceStore::query()->forCompany($companyKey)->active()->whereKey($storeId)->exists();
         } catch (Throwable) {
             return false;
         }
