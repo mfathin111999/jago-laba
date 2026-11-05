@@ -1,0 +1,407 @@
+/**
+ * JAGO LABA — Marketplace Advertising Center Stylesheet
+ * Shopee Ads + TikTok Ads + GMV Max
+ * Single Source of Truth: Jago Laba Enterprise Business OS (Navy/Gold/Blue)
+ * Versi: 2026-10-29
+ */
+
+/* ============================================================
+   CONTAINER & LAYOUT
+   ============================================================ */
+.jl-ads-center {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    font-family: var(--jl-font-family, 'Inter', 'Plus Jakarta Sans', sans-serif);
+    color: #1e293b;
+}
+
+/* ============================================================
+   SUB-NAVIGATION TABS (Segmented Control)
+   ============================================================ */
+.jl-ads-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 6px;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.jl-ads-tabs::-webkit-scrollbar { display: none; }
+
+.jl-ads-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border: 1px solid transparent;
+}
+.jl-ads-tab:hover {
+    color: #1e293b;
+    background: #f8fafc;
+}
+.jl-ads-tab.is-active {
+    background: linear-gradient(135deg, #0b132b 0%, #1e3a8a 100%);
+    color: #ffffff;
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 4px 14px rgba(11, 19, 43, 0.2);
+}
+.jl-ads-tab.is-active .jl-ads-tab-badge {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.jl-ads-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 800;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Platform Tag Pills */
+.jl-platform-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+.jl-platform-pill--shopee {
+    background: #fff7ed;
+    color: #ea580c;
+    border: 1px solid #ffedd5;
+}
+.jl-platform-pill--tiktok {
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #1e293b;
+}
+.jl-platform-pill--gmv {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: #a855f7;
+    border: 1px solid #3b0764;
+}
+
+/* ============================================================
+   THE 4 MAIN KPI CARDS (AdsKpiCard) — PERSIS SCREENSHOT
+   ============================================================ */
+.jl-ads-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.jl-ads-kpi-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px 22px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+}
+.jl-ads-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
+    border-color: #cbd5e1;
+}
+
+.jl-ads-kpi-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.jl-ads-kpi-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+}
+.jl-ads-kpi-info-trigger {
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.jl-ads-kpi-info-trigger:hover {
+    color: #2563eb;
+}
+
+.jl-ads-kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    line-height: 1.25;
+    margin: 8px 0 4px;
+    overflow-wrap: anywhere;
+}
+
+.jl-ads-kpi-desc {
+    font-size: 11px;
+    line-height: 1.4;
+    display: block;
+    margin: 0;
+}
+.jl-ads-kpi-desc--gray    { color: #64748b; }
+.jl-ads-kpi-desc--emerald { color: #059669; font-weight: 600; }
+.jl-ads-kpi-desc--teal    { color: #0d9488; font-weight: 600; }
+.jl-ads-kpi-desc--purple  { color: #7c3aed; font-weight: 600; }
+
+.jl-ads-kpi-icon-box {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+.jl-ads-kpi-icon-box--rose {
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #ffe4e6;
+}
+.jl-ads-kpi-icon-box--emerald {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+}
+.jl-ads-kpi-icon-box--teal {
+    background: #f0fdfa;
+    color: #0d9488;
+    border: 1px solid #ccfbf1;
+}
+.jl-ads-kpi-icon-box--purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ede9fe;
+}
+
+/* ============================================================
+   ADVANCED METRICS GRID (Metrik Iklan Lanjutan)
+   ============================================================ */
+.jl-ads-advanced-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.jl-ads-metric-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 86px;
+}
+.jl-ads-metric-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.jl-ads-metric-card__label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+.jl-ads-metric-card__icon {
+    font-size: 12px;
+    color: #94a3b8;
+}
+.jl-ads-metric-card__value {
+    font-size: 18px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+    margin-top: 4px;
+}
+.jl-ads-metric-card__sub {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* ============================================================
+   CHARTS & PERFORMANCE PANELS
+   ============================================================ */
+.jl-ads-chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.jl-ads-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.jl-ads-chart-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+.jl-ads-chart-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 2px 0 0;
+}
+.jl-ads-chart-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+/* ============================================================
+   STATUS CALLOUTS & BANNERS
+   ============================================================ */
+.jl-ads-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.jl-ads-alert--info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+.jl-ads-alert--warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+.jl-ads-alert--danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+.jl-ads-alert--success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+/* Demo Simulation Mode Banner */
+.jl-demo-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+/* ============================================================
+   GMV MAX SPECIAL ACTION BUTTONS
+   ============================================================ */
+.jl-gmv-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    transition: all 0.15s;
+}
+.jl-gmv-action-btn:disabled,
+.jl-gmv-action-btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+@media (max-width: 1200px) {
+    .jl-ads-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .jl-ads-advanced-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .jl-ads-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .jl-ads-advanced-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .jl-ads-kpi-card {
+        padding: 16px 18px;
+    }
+    .jl-ads-kpi-value {
+        font-size: 20px;
+    }
+    .jl-ads-chart-canvas-wrap {
+        height: 240px;
+    }
+}
+
+@media (max-width: 480px) {
+    .jl-ads-advanced-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
-import DataTable, { type Column } from '../../Components/DataTable.vue';
 import FlashBanner from '../../Components/FlashBanner.vue';
-import KpiCard from '../../Components/KpiCard.vue';
+import JlIcon from '../../Components/JlIcon.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
-import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest, newIdempotencyKey } from '../../lib/api';
-import { formatDate, formatText } from '../../lib/format';
+import { formatValue } from '../../lib/format';
 
 type Expense = Record<string, any>;
 
@@ -104,94 +102,125 @@ async function remove(): Promise<void> {
     }
 }
 
-const columns: Column[] = [
-    { key: 'expense_date', label: 'Tanggal', kind: 'date' },
-    { key: 'description', label: 'Keterangan' },
-    { key: 'category', label: 'Kategori' },
-    { key: 'vendor_name', label: 'Vendor' },
-    { key: 'amount', label: 'Nominal', kind: 'currency', align: 'right' },
-    { key: 'effect', label: 'Pengaruh' },
+const activeStore = computed(() => props.stores.find((store) => store.id === props.scope.store_id) ?? null);
+const money = (value: unknown) => formatValue(value, 'currency');
+const cards = computed<Array<[string, unknown]>>(() => [
+    ['Total Pengeluaran', props.summary.total_amount],
+    ['Mempengaruhi laba', props.summary.affects_profit],
+    ['Arus kas saja', props.summary.cashflow_only],
+]);
+const opened = ref(new Set<number>());
+const toggle = (id: number) => {
+    const next = new Set(opened.value);
+    next.has(id) ? next.delete(id) : next.add(id);
+    opened.value = next;
+};
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const dateLabel = (date: unknown) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(date ?? ''));
+
+    return match ? `${match[3]} ${MONTHS[Number(match[2]) - 1]} ${match[1]}` : String(date ?? '');
+};
+const subCategory = (row: Expense) => {
+    if (!/iklan|advertising/i.test(String(row.category ?? ''))) return '—';
+    const platform = String(activeStore.value?.platform ?? '');
+
+    return platform === 'TikTok Shop' ? 'TikTok Ads Manager' : platform === 'Shopee' ? 'Shopee Ads Manager' : `${platform} Ads`;
+};
+const effect = (row: Expense) => (Number(row.is_cashflow_only) ? 'Arus kas saja' : Number(row.affects_profit) ? 'Mengurangi laba' : 'Tidak mempengaruhi laba');
+const detail = (row: Expense): Array<[string, string]> => [
+    ['Deskripsi', row.description], ['Kategori', row.category], ['Subkategori', subCategory(row)], ['Jumlah', `-${money(row.amount)}`],
+    ['Metode Pembayaran', row.payment_method || '—'], ['Vendor', row.vendor_name || '—'], ['Tanggal', dateLabel(row.expense_date)],
+    ['Proyek', activeStore.value?.store_name ?? ''], ['Pengaruh', effect(row)], ['Catatan', row.notes || '—'],
 ];
 </script>
 
 <template>
-    <MarketplaceShell
-        active="expenses"
-        title="Pengeluaran"
-        eyebrow="Marketplace / Pengeluaran"
-        subtitle="Biaya toko yang dicatat manual. Tidak memanggil provider Marketplace."
-        :store-id="scope.store_id"
-        :company-key="scope.company_key"
-    >
-        <template #actions>
-            <a v-if="scope.store_id" class="button button-secondary" :href="exportUrl">Unduh CSV</a>
-            <button v-if="can_manage && scope.store_id" class="button button-primary" type="button" @click="openCreate">Catat pengeluaran</button>
-        </template>
+    <MarketplaceShell active="expenses" title="Pengeluaran" :store-id="scope.store_id" :company-key="scope.company_key">
+        <section class="space-y-4" id="global-expenses">
+            <header class="flex flex-wrap items-start justify-between gap-3">
+                <div><p class="text-xs text-slate-500 mb-1">{{ activeStore?.platform }} · {{ activeStore?.store_name }}</p><h1 class="text-2xl font-extrabold text-slate-900">Pengeluaran</h1><p class="text-xs text-slate-500 mt-2">Biaya toko yang dicatat manual. Tidak memanggil provider Marketplace.</p></div>
+                <div class="flex gap-2">
+                    <a v-if="scope.store_id" class="rounded-xl border bg-white px-4 py-2 text-xs font-bold" :href="exportUrl">↓ Unduh CSV</a>
+                    <button v-if="can_manage && scope.store_id" class="rounded-xl bg-brand-600 text-white px-4 py-2 text-xs font-bold" type="button" @click="openCreate">+ Catat pengeluaran</button>
+                </div>
+            </header>
+            <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
-        <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
+            <form class="flex flex-wrap gap-3 bg-white rounded-2xl border p-4 items-end" @submit.prevent="applyFilters">
+                <label class="flex-1 min-w-48 text-xs font-semibold">Pencarian<input v-model="filter.search" type="search" maxlength="200" placeholder="Keterangan, vendor, catatan…" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="text-xs font-semibold">Kategori<input v-model="filter.category" maxlength="100" class="block mt-2 border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="text-xs font-semibold">Tanggal<input v-model="filter.date" type="date" class="block mt-2 border rounded-xl px-3 py-2 font-normal" /></label>
+                <button class="rounded-xl bg-brand-600 text-white text-xs font-bold px-4 py-2" type="submit">Terapkan</button>
+            </form>
 
-        <form class="panel filter-bar" @submit.prevent="applyFilters">
-            <div class="field filter-store">
-                <label for="e-store">Toko</label>
-                <select id="e-store" v-model="filter.store_id"><option value="" disabled>Pilih toko</option><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select>
-            </div>
-            <div class="field"><label for="e-search">Pencarian</label><input id="e-search" v-model="filter.search" type="search" maxlength="200" placeholder="Keterangan, vendor, catatan…" /></div>
-            <div class="field"><label for="e-category">Kategori</label><input id="e-category" v-model="filter.category" maxlength="100" /></div>
-            <div class="field"><label for="e-date">Tanggal</label><input id="e-date" v-model="filter.date" type="date" /></div>
-            <button class="button button-primary" type="submit">Terapkan</button>
-        </form>
+            <section v-if="!scope.store_id" class="bg-white rounded-2xl border p-8 text-center"><h2 class="font-extrabold">Belum ada toko</h2><p class="text-xs text-slate-500 mt-2">Tambahkan toko di menu Toko, lalu catat pengeluarannya di sini.</p></section>
 
-        <section v-if="!scope.store_id" class="panel empty-state"><h2>Belum ada toko</h2><p class="muted">Tambahkan toko di menu Toko, lalu catat pengeluarannya di sini.</p></section>
-
-        <template v-else>
-            <section class="kpi-grid" aria-label="Ringkasan pengeluaran">
-                <KpiCard label="Total pengeluaran" :value="summary.total_amount" />
-                <KpiCard label="Mempengaruhi laba" :value="summary.affects_profit" />
-                <KpiCard label="Arus kas saja" :value="summary.cashflow_only" />
-                <KpiCard label="Jumlah catatan" :value="summary.count" kind="count" />
-            </section>
-
-            <section class="panel">
-                <DataTable :columns="columns" :rows="expenses" row-key="id" empty="Belum ada pengeluaran pada filter ini.">
-                    <template #cell-expense_date="{ row }">{{ formatDate(row.expense_date) }}</template>
-                    <template #cell-description="{ row }">{{ row.description }}<div v-if="row.notes" class="muted cell-note">{{ row.notes }}</div></template>
-                    <template #cell-vendor_name="{ row }">{{ formatText(row.vendor_name) }}</template>
-                    <template #cell-effect="{ row }">
-                        <StatusBadge v-if="Number(row.is_cashflow_only)" label="Arus kas saja" tone="info" />
-                        <StatusBadge v-else-if="Number(row.affects_profit)" label="Mengurangi laba" tone="warn" />
-                        <StatusBadge v-else label="Tidak mempengaruhi laba" tone="muted" />
-                    </template>
-                    <template #actions="{ row }"><button v-if="can_manage" class="button button-danger button-small" type="button" @click="pendingDelete = row">Hapus</button></template>
-                </DataTable>
-            </section>
-        </template>
+            <template v-else>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div v-for="[label, value] in cards" :key="label" class="bg-white rounded-2xl border border-slate-200 border-l-4 border-l-rose-500 p-5"><p class="text-xs text-slate-500">{{ label }}</p><p class="text-xl font-extrabold text-rose-600 mt-2">{{ money(value) }}</p><p class="text-xs text-slate-400 mt-1">Sesuai filter aktif</p></div>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex flex-wrap justify-between gap-3 items-center">
+                        <div><h2 class="font-extrabold">Pengeluaran Toko</h2><p class="text-xs text-slate-500 mt-1">{{ summary.count ?? 0 }} entri · Pengeluaran harian toko ini</p></div>
+                        <button type="button" class="rounded-xl border px-3 py-2 text-xs font-bold" @click="applyFilters">Perbarui</button>
+                    </div>
+                    <p class="px-5 py-3 bg-amber-50 text-amber-900 text-xs">Pengambilan otomatis biaya iklan TikTok/Shopee belum aktif. Data di bawah berasal dari pengeluaran yang sudah tercatat. PPN mengikuti catatan transaksi.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs jl-table">
+                            <thead class="bg-slate-50 text-slate-500 uppercase"><tr><th v-for="heading in ['Deskripsi', 'Tanggal', 'Kategori', 'Jumlah', 'Metode', 'Catatan', 'Aksi']" :key="heading" class="p-3 text-left">{{ heading }}</th></tr></thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template v-for="row in expenses" :key="row.id">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-3 min-w-[260px]"><b>{{ row.description }}</b><span class="block text-slate-500 mt-1">{{ subCategory(row) }}</span><span class="block text-blue-600">Proyek: {{ activeStore?.store_name }}</span><span class="block text-slate-400">Vendor: {{ row.vendor_name || '—' }}</span></td>
+                                        <td class="p-3 whitespace-nowrap">{{ dateLabel(row.expense_date) }}</td>
+                                        <td class="p-3"><span class="inline-block rounded-full bg-purple-100 text-purple-700 px-2 py-1">{{ row.category }}</span></td>
+                                        <td class="p-3 font-bold text-rose-600 whitespace-nowrap">-{{ money(row.amount) }}</td>
+                                        <td class="p-3">{{ row.payment_method || '—' }}</td>
+                                        <td class="p-3">{{ row.notes || '—' }}</td>
+                                        <td class="p-3 whitespace-nowrap">
+                                            <button type="button" :aria-expanded="opened.has(row.id)" class="rounded-lg border px-3 py-2 text-slate-600 hover:bg-slate-100" :aria-label="`Lihat detail ${row.description}`" @click="toggle(row.id)"><JlIcon name="eye" /></button>
+                                            <button v-if="can_manage" type="button" class="rounded-lg border px-3 py-2 text-rose-600 hover:bg-rose-50 ml-1" @click="pendingDelete = row">Hapus</button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="opened.has(row.id)"><td colspan="7" class="p-4 bg-slate-50"><h3 class="font-bold mb-3">Detail Pengeluaran</h3>
+                                        <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 rounded-xl bg-white border p-4">
+                                            <div v-for="[label, value] in detail(row)" :key="label"><dt class="text-slate-400 mb-1">{{ label }}</dt><dd class="font-bold break-words" :class="{ 'text-rose-600': label === 'Jumlah' }">{{ value }}</dd></div>
+                                        </dl></td></tr>
+                                </template>
+                                <tr v-if="!expenses.length"><td colspan="7" class="p-12 text-center text-slate-500">Belum ada pengeluaran untuk filter ini. Catat pengeluaran dengan tombol Catat pengeluaran.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </template>
+        </section>
 
         <Modal :open="creating" title="Catat pengeluaran" :busy="busy" @close="creating = false">
-            <form class="form-grid" @submit.prevent="save">
-                <div class="field field-wide"><label for="x-desc">Keterangan</label><input id="x-desc" v-model="form.description" required maxlength="255" placeholder="Contoh: biaya iklan Oktober" /></div>
-                <div class="field"><label for="x-amount">Nominal</label><input id="x-amount" v-model="form.amount" required inputmode="decimal" placeholder="Rp 12.500" /></div>
-                <div class="field"><label for="x-date">Tanggal</label><input id="x-date" v-model="form.expense_date" required type="date" /></div>
-                <div class="field"><label for="x-cat">Kategori</label><input id="x-cat" v-model="form.category" required maxlength="100" /></div>
-                <div class="field"><label for="x-vendor">Vendor</label><input id="x-vendor" v-model="form.vendor_name" maxlength="150" /></div>
-                <div class="field"><label for="x-method">Metode pembayaran</label><input id="x-method" v-model="form.payment_method" required maxlength="50" /></div>
-                <div class="field field-wide"><label for="x-notes">Catatan</label><input id="x-notes" v-model="form.notes" placeholder="Opsional" /></div>
-                <div class="checkbox-row field-wide">
-                    <label><input v-model="form.affects_profit" type="checkbox" /> Mempengaruhi laba</label>
-                    <label><input v-model="form.is_cashflow_only" type="checkbox" /> Hanya arus kas</label>
+            <form class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs" @submit.prevent="save">
+                <label class="sm:col-span-2 font-semibold">Keterangan<input v-model="form.description" required maxlength="255" placeholder="Contoh: biaya iklan Oktober" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Nominal<input v-model="form.amount" required inputmode="decimal" placeholder="Rp 12.500" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Tanggal<input v-model="form.expense_date" required type="date" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Kategori<input v-model="form.category" required maxlength="100" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Vendor<input v-model="form.vendor_name" maxlength="150" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Metode pembayaran<input v-model="form.payment_method" required maxlength="50" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <label class="font-semibold">Catatan<input v-model="form.notes" placeholder="Opsional" class="mt-2 w-full border rounded-xl px-3 py-2 font-normal" /></label>
+                <div class="sm:col-span-2 flex flex-wrap gap-5 font-semibold">
+                    <label class="flex items-center gap-2"><input v-model="form.affects_profit" type="checkbox" /> Mempengaruhi laba</label>
+                    <label class="flex items-center gap-2"><input v-model="form.is_cashflow_only" type="checkbox" /> Hanya arus kas</label>
                 </div>
-                <p v-if="formError" class="inline-error field-wide" role="alert">{{ formError }}</p>
-                <div class="form-actions field-wide">
-                    <button class="button button-secondary" type="button" @click="creating = false">Batal</button>
-                    <button class="button button-primary" type="submit" :disabled="busy">{{ busy ? 'Menyimpan…' : 'Simpan' }}</button>
+                <p v-if="formError" class="sm:col-span-2" style="color: #b42318" role="alert">{{ formError }}</p>
+                <div class="sm:col-span-2 flex justify-end gap-2 pt-3 border-t">
+                    <button class="border rounded-xl bg-white px-4 py-2 font-bold" type="button" @click="creating = false">Batal</button>
+                    <button class="rounded-xl bg-brand-600 text-white px-4 py-2 font-bold" type="submit" :disabled="busy">{{ busy ? 'Menyimpan…' : 'Simpan' }}</button>
                 </div>
             </form>
         </Modal>
 
         <Modal :open="pendingDelete !== null" title="Hapus pengeluaran?" :busy="busy" @close="pendingDelete = null">
-            <p v-if="pendingDelete">Pengeluaran “{{ pendingDelete.description }}” akan dihapus dan tidak dapat dikembalikan.</p>
-            <div class="form-actions">
-                <button class="button button-secondary" type="button" @click="pendingDelete = null">Batal</button>
-                <button class="button button-danger" type="button" :disabled="busy" @click="remove">{{ busy ? 'Menghapus…' : 'Hapus' }}</button>
+            <div class="p-6 text-xs">
+                <p v-if="pendingDelete">Pengeluaran “{{ pendingDelete.description }}” akan dihapus dan tidak dapat dikembalikan.</p>
+                <div class="flex justify-end gap-2 mt-5"><button class="border rounded-xl bg-white px-4 py-2 font-bold" type="button" @click="pendingDelete = null">Batal</button><button class="rounded-xl bg-rose-600 text-white px-4 py-2 font-bold" type="button" :disabled="busy" @click="remove">{{ busy ? 'Menghapus…' : 'Hapus' }}</button></div>
             </div>
         </Modal>
     </MarketplaceShell>

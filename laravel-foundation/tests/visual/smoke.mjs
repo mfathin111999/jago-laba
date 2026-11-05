@@ -52,6 +52,16 @@ const server = createServer((request, response) => {
             return;
         }
     }
+    if (url.pathname.startsWith('/assets/')) {
+        const assets = join(root, 'public', 'assets');
+        const file = normalize(join(assets, url.pathname.slice('/assets/'.length)));
+        if (file.startsWith(assets) && existsSync(file) && statSync(file).isFile()) {
+            response.writeHead(200, { 'Content-Type': { '.png': 'image/png', '.svg': 'image/svg+xml' }[extname(file)] ?? 'application/octet-stream' });
+            response.end(readFileSync(file));
+
+            return;
+        }
+    }
     const fixture = PAGES[url.pathname];
     if (!fixture) {
         response.writeHead(404, { 'Content-Type': 'application/json' });
@@ -78,6 +88,7 @@ const failures = [];
 for (const viewport of VIEWPORTS) {
     const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height }, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
     for (const [path, fixture] of Object.entries(PAGES)) {
+        if (process.env.ONLY && !process.env.ONLY.split(',').includes(fixture)) continue;
         const tab = await context.newPage();
         const problems = [];
         tab.on('console', (message) => message.type() === 'error' && problems.push(`console: ${message.text()}`));
@@ -85,13 +96,13 @@ for (const viewport of VIEWPORTS) {
         tab.on('requestfailed', (req) => problems.push(`request failed: ${req.url()}`));
         const fixturePath = JSON.parse(readFileSync(join(fixtureDir, `${fixture}.json`), 'utf8')).url;
         await tab.goto(base + fixturePath, { waitUntil: 'networkidle' });
-        await tab.waitForSelector('h1', { timeout: 5000 }).catch(() => problems.push('no <h1> rendered'));
+        await tab.waitForSelector('h1, h2', { timeout: 5000 }).catch(() => problems.push('no <h1> rendered'));
 
         const report = await tab.evaluate(() => ({
             overflow: document.documentElement.scrollWidth - window.innerWidth,
             text: document.body.innerText,
-            nav: [...document.querySelectorAll('.sidebar-nav a')].map((a) => a.getAttribute('href')),
-            wide: [...document.querySelectorAll('body *')].filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && !el.closest('.table-wrap, .sidebar-nav') && getComputedStyle(el).display !== 'none').slice(0, 4).map((el) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ').join('.')}(${Math.round(el.getBoundingClientRect().right)})`),
+            nav: [...document.querySelectorAll('.jl-navigation a')].map((a) => a.getAttribute('href')),
+            wide: [...document.querySelectorAll('body *')].filter((el) => el.getBoundingClientRect().right > window.innerWidth + 1 && !el.closest('.table-wrap, .jl-navigation, .mp-order-table-wrap, .sd-table-wrap') && getComputedStyle(el).display !== 'none').slice(0, 4).map((el) => `${el.tagName.toLowerCase()}.${String(el.className).split(' ').join('.')}(${Math.round(el.getBoundingClientRect().right)})`),
         }));
         if (report.overflow > 1) problems.push(`horizontal overflow of ${report.overflow}px (widest: ${report.wide.join(', ') || 'unknown'})`);
         for (const bad of ['undefined', 'NaN', '[object Object]']) {

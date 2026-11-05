@@ -20,12 +20,18 @@ test('there are Vue files to check', () => {
     assert.ok(files.length >= 10);
 });
 
-test('templates do not use Tailwind utility classes, because the project ships no Tailwind CSS', () => {
-    // These classes would silently render unstyled.
-    const utility = /class="[^"]*\b(min-h-screen|bg-(?:slate|orange|emerald|amber|red)-\d+|text-(?:slate|orange|emerald|amber|red)-\d+|rounded-(?:lg|xl|2xl|full)|(?:p|px|py|m|mt|mb)-\d+|space-y-\d+|gap-\d+|font-(?:black|bold)|max-w-\w+|md:\w+|sm:\w+|lg:\w+)\b/;
-    const offenders = files.filter(({ source }) => utility.test(template(source))).map(({ name }) => name);
+test('the generated Tailwind utility CSS exists and covers the utility classes used in templates', () => {
+    // Templates may use Tailwind utilities (as the legacy pages did); they only render if `npm run css:tailwind` has been run.
+    const generated = readFileSync(join(root, '..', 'css', 'legacy', 'tailwind.generated.css'), 'utf8');
+    const used = new Set<string>();
+    files.forEach(({ source }) => {
+        for (const match of template(source).matchAll(/class="([^"]*)"/g)) {
+            match[1].split(/s+/).filter((name) => /^(?:min-h-screen|rounded-(?:lg|xl|2xl|full)|(?:p|px|py|m|mt|mb)-d+|gap-d+|font-(?:black|bold|extrabold)|space-y-d+)$/.test(name)).forEach((name) => used.add(name));
+        }
+    });
+    const missing = [...used].filter((name) => !generated.includes(`.${name}`));
 
-    assert.deepEqual(offenders, [], `use the classes from resources/css/app.css instead: ${offenders.join(', ')}`);
+    assert.deepEqual(missing, [], `run npm run css:tailwind: missing ${missing.join(', ')}`);
 });
 
 test('templates do not reach for window or document, which Vue does not expose to templates', () => {

@@ -1,0 +1,78 @@
+/*
+ * Small generic classes still used by shared Vue components (dialogs, label printing, price editor, forms).
+ * They are drawn with the legacy Jago Laba look (same radius, borders and colors as marketplace-orders.css / jl-components.css).
+ */
+.jl-marketplace .muted { color: #728198; }
+.jl-marketplace .warn-text { color: #9c6919; }
+.jl-marketplace .cell-note { display: block; margin-top: 3px; font-size: 11px; color: #8591a3; }
+.jl-marketplace .inline-error { color: #b42318; font-size: 12px; }
+.jl-marketplace .success { color: #088164; font-size: 12px; }
+.jl-marketplace .error { color: #b42318; font-size: 11px; }
+.jl-marketplace .link-button { background: none; border: 0; padding: 0; color: #365c9a; font-weight: 700; text-align: left; }
+.jl-marketplace .panel { background: #fff; border: 1px solid #e1e8f1; border-radius: 16px; padding: 22px; box-shadow: 0 3px 12px #17274403; min-width: 0; }
+.jl-marketplace .panel h2 { font-size: 16px; font-weight: 750; letter-spacing: -.25px; }
+.jl-marketplace .form-stack { display: grid; gap: 14px; }
+.jl-marketplace .form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.jl-marketplace .field { display: grid; gap: 6px; min-width: 0; }
+.jl-marketplace .field > label { font-size: 11px; font-weight: 700; color: #708099; }
+.jl-marketplace .field :is(input, select, textarea) { border: 1px solid #dce4ef; border-radius: 8px; padding: 8px 10px; background: #fbfcfe; font-size: 12px; width: 100%; }
+.jl-marketplace .checkbox-row { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; font-weight: 600; color: #52647d; }
+.jl-marketplace .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 39px; padding: 9px 14px; border: 1px solid #dde5ef; background: #fff; border-radius: 10px; font-size: 12px; font-weight: 700; color: #3d526f; white-space: nowrap; }
+.jl-marketplace .button:hover:not(:disabled) { border-color: #ee9c62; }
+.jl-marketplace .button:disabled { opacity: .55; cursor: not-allowed; }
+.jl-marketplace .button-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); border-color: #1d4ed8; color: #fff; box-shadow: 0 4px 14px rgba(37, 99, 235, .25); }
+.jl-marketplace .button-small { min-height: 31px; padding: 5px 10px; font-size: 11px; }
+.jl-marketplace .button-danger { color: #b42318; border-color: #f2c9c4; }
+.jl-marketplace .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 767px) { .jl-marketplace .grid-3 { grid-template-columns: 1fr; } }
+.jl-marketplace .table-wrap { overflow-x: auto; position: relative; }
+.jl-marketplace .table-wrap table { width: 100%; border-collapse: collapse; }
+.jl-marketplace .table-wrap th { text-align: left; padding: 10px 12px; color: #708099; background: #f7f9fc; border-bottom: 1px solid #e6ecf4; white-space: nowrap; }
+.jl-marketplace .table-wrap td { padding: 11px 12px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+.jl-marketplace .table-wrap .is-right { text-align: right; }
+.jl-marketplace .empty-note { padding: 18px; text-align: center; color: #8591a3; }
+.jl-marketplace .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.jl-marketplace .status-badge { display: inline-block; border-radius: 20px; padding: 4px 9px; font-size: 10px; font-weight: 700; white-space: nowrap; background: #eef3f9; color: #536b8a; }
+.jl-marketplace .status-ok { color: #088164; background: #eafaf4; }
+.jl-marketplace .status-warn { color: #9c6919; background: #fff4dd; }
+.jl-marketplace .status-danger { color: #b42318; background: #fdecea; }
+.jl-marketplace .status-info { color: #365c9a; background: #edf5ff; }
+.jl-marketplace .section-stack { display: grid; gap: 18px; }
+.jl-marketplace .data-list { display: grid; gap: 0; }
+.jl-marketplace .data-list > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #eef2f7; font-size: 12px; }
+.jl-marketplace .data-list dt { color: #728198; }
+.jl-marketplace .data-list dd { font-weight: 700; }
+.jl-marketplace .hint { font-size: 11px; color: #8591a3; }
+.jl-marketplace .eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: #e36b25; }
+.jl-marketplace .section-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.jl-marketplace .section-heading h2 { margin: 4px 0; }
+.jl-marketplace .notice { background: #edf5ff; border-color: #dbe9fc; color: #52749d; font-size: 12px; margin-bottom: 16px; }
+.jl-marketplace .empty-state { text-align: center; padding: 34px 22px; margin-bottom: 16px; }
+.jl-marketplace .filter-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+.jl-marketplace .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+.jl-marketplace .field-wide { grid-column: 1 / -1; }
+.jl-marketplace .callback-url { display: block; margin-top: 8px; padding: 8px 10px; background: #f7f9fc; border-radius: 8px; font-size: 11px; overflow-wrap: anywhere; }
+.jl-marketplace .brand-preview { max-height: 64px; margin: 10px 0; }
+.jl-marketplace .panel + .panel, .jl-marketplace .notice + .panel { margin-top: 16px; }
+.jl-marketplace .page-controls { justify-content: flex-end; margin-top: 12px; }
+@media (max-width: 767px) { .jl-marketplace .form-grid { grid-template-columns: 1fr; } }
+
+/* Plain report / pilot pages that are not inside the Marketplace shell. */
+.pilot-shell { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; color: #21344f; font-size: 13px; }
+.pilot-header { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.pilot-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -.65px; }
+.pilot-shell .panel { background: #fff; border: 1px solid #e1e8f1; border-radius: 16px; padding: 20px; box-shadow: 0 3px 12px #17274403; }
+.pilot-shell .button, .pilot-shell form .button { display: inline-flex; align-items: center; min-height: 36px; padding: 8px 14px; border: 1px solid #dde5ef; border-radius: 10px; background: #fff; font-weight: 700; font-size: 12px; color: #3d526f; }
+.pilot-shell input { border: 1px solid #dce4ef; border-radius: 8px; padding: 8px 10px; background: #fbfcfe; margin: 0 8px; }
+.pilot-shell table { width: 100%; border-collapse: collapse; }
+.pilot-shell th { text-align: left; padding: 10px 12px; font-size: 10px; letter-spacing: .35px; color: #708099; background: #f7f9fc; }
+.pilot-shell td { padding: 10px 12px; border-top: 1px solid #eef2f7; font-size: 11px; }
+.pilot-shell .muted { color: #728198; }
+.pilot-shell .badge { display: inline-block; border-radius: 20px; padding: 5px 9px; background: #eef3f9; color: #536b8a; font-size: 10px; font-weight: 700; margin-left: 6px; }
+.pilot-shell .badge-read { color: #088164; background: #eafaf4; }
+.pilot-shell .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pilot-shell .kpi { background: #fff; border: 1px solid #e1e8f1; border-radius: 15px; padding: 16px; display: grid; gap: 4px; }
+.pilot-shell .kpi strong { font-size: 22px; }
+.pilot-shell .data-list > div { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eef2f7; }
+.pilot-shell .eyebrow { font-size: 10px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase; color: #e36b25; }
+body:not(.jl-marketplace) { font-family: 'Inter', 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }

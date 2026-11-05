@@ -1,0 +1,657 @@
+/**
+ * JAGO LABA — Shared Component CSS
+ * Komponen UI yang digunakan bersama oleh Konveksi dan Marketplace.
+ * Hanya berisi style — tidak ada logika bisnis, query, atau data.
+ * Versi: 2026-10-29
+ */
+
+/* ============================================================
+   KPI / STAT CARDS — standar dari Konveksi
+   ============================================================ */
+.jl-kpi-grid {
+  display: grid;
+  gap: 14px;
+}
+.jl-kpi-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.jl-kpi-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.jl-kpi-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.jl-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e1e8f1;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 3px 12px rgba(23, 39, 68, 0.03);
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.jl-kpi-card__eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: #e36b25;
+  text-transform: uppercase;
+}
+.jl-kpi-card__label {
+  font-size: 11px;
+  color: #8591a3;
+  margin-bottom: 6px;
+  display: block;
+}
+.jl-kpi-card__value {
+  display: block;
+  font-size: 22px;
+  font-weight: 750;
+  color: #172744;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+  margin-top: 6px;
+}
+.jl-kpi-card__sub {
+  font-size: 10px;
+  color: #8b98aa;
+  margin-top: 6px;
+  display: block;
+  line-height: 1.6;
+}
+.jl-kpi-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f1f5fb;
+  color: #537199;
+  width: 37px;
+  height: 37px;
+  flex-shrink: 0;
+  margin-bottom: 14px;
+}
+.jl-kpi-card--positive .jl-kpi-card__value { color: #008b73; }
+.jl-kpi-card--warning  .jl-kpi-card__value { color: #9c6919; }
+.jl-kpi-card--danger   .jl-kpi-card__value { color: #c34f5e; }
+
+/* ============================================================
+   PAGE HEADER (Hero Banner Minimal)
+   ============================================================ */
+.jl-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.jl-page-header__eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  color: #e36b25;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+.jl-page-header__title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #172744;
+  letter-spacing: -0.6px;
+  line-height: 1.3;
+  margin: 4px 0;
+}
+.jl-page-header__desc {
+  font-size: 12px;
+  color: #728198;
+  line-height: 1.7;
+  margin: 4px 0 0;
+}
+.jl-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   BADGES / STATUS PILLS
+   ============================================================ */
+.jl-badge {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 4px 9px;
+  background: #eef3f9;
+  color: #536b8a;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.jl-badge--positive { color: #088164; background: #eafaf4; }
+.jl-badge--warning  { color: #9c6919; background: #fff4dd; }
+.jl-badge--danger   { color: #c34f5e; background: #fff0f1; }
+.jl-badge--info     { color: #3165b2; background: #eef4ff; }
+.jl-badge--new {
+  background: linear-gradient(135deg, #2563eb, #f59e0b);
+  color: white;
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 12px;
+}
+
+/* ============================================================
+   NOTICE / ALERT STRIP
+   ============================================================ */
+.jl-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #edf5ff;
+  border: 1px solid #dbe9fc;
+  border-radius: 12px;
+  padding: 12px 15px;
+  font-size: 11px;
+  color: #52749d;
+}
+.jl-notice--warning {
+  background: #fff8e8;
+  border-color: #fde68a;
+  color: #9c6919;
+}
+.jl-notice--success {
+  background: #edfaf4;
+  border-color: #c6f2e2;
+  color: #088164;
+}
+.jl-notice--danger {
+  background: #fff0f1;
+  border-color: #ffc9cc;
+  color: #c34f5e;
+}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+.jl-table-wrap {
+  background: white;
+  border: 1px solid #e1e8f1;
+  border-radius: 15px;
+  overflow: hidden;
+}
+.jl-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #edf1f7;
+}
+.jl-table-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.jl-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.jl-table-scroll th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #f6f9fc;
+  color: #7f8fa5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.35px;
+  padding: 12px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e8edf5;
+  vertical-align: middle;
+}
+.jl-table-scroll td {
+  padding: 14px 12px;
+  border-top: 1px solid #e8edf5;
+  font-size: 11px;
+  vertical-align: middle;
+  color: #273c59;
+}
+.jl-table-scroll tbody tr:hover td { background: #f8faff; }
+.jl-table-empty {
+  padding: 50px;
+  text-align: center;
+  color: #8d9bb0;
+  font-size: 12px;
+}
+
+/* ============================================================
+   MODAL / DIALOG (standar Marketplace yang sudah baik)
+   ============================================================ */
+.jl-modal {
+  border: 0;
+  border-radius: 18px;
+  padding: 0;
+  width: min(680px, calc(100% - 28px));
+  max-height: 90vh;
+  box-shadow: 0 25px 80px rgba(23, 44, 72, 0.25);
+}
+.jl-modal::backdrop {
+  background: rgba(19, 34, 61, 0.55);
+  backdrop-filter: blur(4px);
+}
+.jl-modal__header {
+  position: sticky;
+  top: 0;
+  background: white;
+  border-bottom: 1px solid #e6ecf4;
+  padding: 20px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1;
+  border-radius: 18px 18px 0 0;
+}
+.jl-modal__header h2 {
+  font-size: 16px;
+  font-weight: 750;
+  color: #172744;
+}
+.jl-modal__close {
+  font-size: 22px;
+  color: #8292a7;
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 6px;
+}
+.jl-modal__close:hover { background: #f1f5f9; color: #172744; }
+.jl-modal__body {
+  padding: 22px;
+  overflow-y: auto;
+  display: grid;
+  gap: 16px;
+}
+.jl-modal__footer {
+  padding: 16px 22px;
+  border-top: 1px solid #e6ecf4;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   FILTER FORM (dari Marketplace—sudah baik, distandarkan)
+   ============================================================ */
+.jl-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 14px;
+  padding: 18px 20px;
+  background: white;
+  border: 1px solid #e1e8f1;
+  border-radius: 14px;
+}
+.jl-filter-bar label {
+  display: grid;
+  gap: 7px;
+  font-size: 10px;
+  color: #7788a0;
+  font-weight: 700;
+  min-width: 0;
+}
+.jl-filter-bar input,
+.jl-filter-bar select {
+  border: 1px solid #dce4ef;
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fcfdff;
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+  color: #3c526e;
+  font-family: inherit;
+}
+.jl-filter-bar input:focus,
+.jl-filter-bar select:focus {
+  outline: 2px solid #e98a36;
+  outline-offset: 1px;
+  border-color: #e98a36;
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.jl-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  font-size: 10px;
+  color: #8a99ad;
+  border-top: 1px solid #e8eef5;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.jl-pagination__links { display: flex; gap: 8px; }
+.jl-pagination a {
+  color: #c15a21;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.jl-pagination a:hover { background: #fff3e9; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px) {
+  .jl-kpi-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .jl-filter-bar  { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .jl-kpi-grid-4,
+  .jl-kpi-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .jl-kpi-grid-2 { grid-template-columns: 1fr; }
+  .jl-filter-bar  { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px; }
+  .jl-page-header { flex-direction: column; }
+  .jl-page-header__title { font-size: 22px; }
+  .jl-modal { width: calc(100% - 16px); }
+}
+@media (max-width: 480px) {
+  .jl-kpi-grid-4,
+  .jl-kpi-grid-3,
+  .jl-kpi-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .jl-marketplace * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ============================================================
+   ROTATING GRADIENT FRAME (Single Source: Konveksi 00_Base.html)
+   Blue - Cyan - Amber - Gold conic animation
+   ============================================================ */
+@property --jl-grad-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes jlSpinGradient {
+    0% {
+        --jl-grad-angle: 0deg;
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        --jl-grad-angle: 360deg;
+        background-position: 0% 50%;
+    }
+}
+
+.jl-rotating-logo-frame {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5px;
+    box-sizing: border-box;
+    contain: paint;
+    overflow: hidden;
+    background: linear-gradient(135deg, #2563eb, #38bdf8, #f59e0b, #fbbf24, #1d4ed8, #f59e0b, #2563eb);
+    background-size: 300% 300%;
+    background-image: conic-gradient(
+        from var(--jl-grad-angle, 0deg),
+        #2563eb 0deg,
+        #38bdf8 65deg,
+        #f59e0b 135deg,
+        #fbbf24 185deg,
+        #d97706 245deg,
+        #1d4ed8 305deg,
+        #2563eb 360deg
+    );
+    animation: jlSpinGradient 4s linear infinite;
+}
+
+.jl-rotating-logo-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: #0b132b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.jl-rotating-card-frame {
+    position: relative;
+    padding: 3px;
+    box-sizing: border-box;
+    contain: paint;
+    overflow: hidden;
+    background: linear-gradient(135deg, #2563eb, #38bdf8, #f59e0b, #fbbf24, #1d4ed8, #f59e0b, #2563eb);
+    background-size: 300% 300%;
+    background-image: conic-gradient(
+        from var(--jl-grad-angle, 0deg),
+        #2563eb 0deg,
+        #38bdf8 65deg,
+        #f59e0b 135deg,
+        #fbbf24 185deg,
+        #d97706 245deg,
+        #1d4ed8 305deg,
+        #2563eb 360deg
+    );
+    animation: jlSpinGradient 6s linear infinite;
+}
+
+.jl-rotating-card-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    border-radius: inherit;
+}
+
+/* ============================================================
+   HERO COMMAND CENTER — EXECUTIVE NAVY & BLUE (dari Konveksi)
+   ============================================================ */
+.jl-marketplace .jl-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    background: radial-gradient(circle at 85% 15%, rgba(245, 158, 11, 0.22), transparent 35%),
+                linear-gradient(125deg, #0b132b 0%, #172b5a 45%, #1e3a8a 75%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 20px 45px rgba(11, 19, 43, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.jl-marketplace .jl-hero-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fde68a !important;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.jl-marketplace .jl-hero h1 {
+    font-size: 26px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+    line-height: 1.3;
+}
+
+.jl-marketplace .jl-hero p {
+    color: #dbeafe;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.jl-marketplace .jl-hero-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #0b132b;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: 0 8px 18px rgba(245, 158, 11, 0.35);
+    transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.jl-marketplace .jl-hero-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(245, 158, 11, 0.45);
+}
+
+.jl-marketplace .jl-hero-action-secondary {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: none;
+}
+.jl-marketplace .jl-hero-action-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================
+   SIDEBAR UNIFIED VISUAL HARMONY
+   ============================================================ */
+.jl-marketplace .jl-sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+    box-shadow: 4px 0 20px rgba(11, 19, 43, 0.04);
+}
+.jl-marketplace .jl-sidebar-brand {
+    border-bottom: 1px solid #f1f5f9;
+}
+.jl-marketplace .jl-sidebar nav a[aria-current="page"],
+.jl-marketplace .jl-sidebar .jl-nav-selected {
+    background: linear-gradient(90deg, #eff6ff, #fef3c7);
+    color: #1d4ed8;
+    border-left: 3.5px solid #f59e0b;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+.jl-marketplace .jl-sidebar nav a[aria-current="page"] .jl-icon {
+    color: #2563eb;
+}
+
+/* ============================================================
+   ENTERPRISE KPI & DATA CARDS (Konveksi Match)
+   ============================================================ */
+.jl-marketplace .jl-stat-card,
+.jl-marketplace .sd-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.04), 0 2px 6px -2px rgba(15, 23, 42, 0.02);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.jl-marketplace .jl-stat-card:hover,
+.jl-marketplace .sd-card:hover {
+    box-shadow: 0 8px 25px -4px rgba(15, 23, 42, 0.07);
+}
+
+/* Button primary styling */
+.jl-marketplace .sd-primary,
+.jl-marketplace .mp-order-button.primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.jl-marketplace .sd-primary:hover,
+.jl-marketplace .mp-order-button.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+}
+
+/* ============================================================
+   ORDERS & TRANSACTIONS — UNIFIED ENTERPRISE STYLING
+   ============================================================ */
+.jl-marketplace .mp-order-filter,
+.jl-marketplace .mp-order-list {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.04), 0 2px 6px -2px rgba(15, 23, 42, 0.02);
+}
+
+.jl-marketplace .mp-order-tabs a {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.jl-marketplace .mp-order-tabs a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.jl-marketplace .mp-order-tabs a[aria-current="page"] {
+    background: linear-gradient(135deg, #eff6ff 0%, #fffbeb 100%);
+    border-color: #f59e0b;
+    color: #1d4ed8;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+}
+
+.jl-marketplace .mp-order-tabs a[aria-current="page"] strong {
+    color: #1e3a8a;
+}
+
+.jl-marketplace .status-new {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.jl-marketplace .status-pickup {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.jl-marketplace .status-shipped {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.jl-marketplace .status-cancelled {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+}

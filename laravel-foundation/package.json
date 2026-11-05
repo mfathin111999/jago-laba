@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vue-tsc --noEmit && vite build",
+        "css:tailwind": "npx --yes tailwindcss@3.4.17 -c tailwind.legacy.config.cjs -i resources/css/legacy/tailwind-input.css -o resources/css/legacy/tailwind.generated.css --minify",
         "dev": "vite",
         "test:visual": "node tests/visual/smoke.mjs",
         "test:visual:konveksi": "node tests/visual/konveksi-smoke.mjs",

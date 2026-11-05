@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import JlIcon from '../Components/JlIcon.vue';
 import { Head } from '@inertiajs/vue3';
 
 type User = { name?: string; username?: string } | null;
@@ -21,6 +22,12 @@ const selecting = ref<string | null>(null);
 const authenticated = ref(props.authenticated);
 const user = ref<User>(props.user);
 const workspaces = ref(props.workspaces);
+const dialogOpen = ref(true);
+const displayName = computed(() => user.value?.name || user.value?.username || 'Pengguna');
+const WORKSPACES: Record<string, { title: string; description: string; button: string; icon: string }> = {
+    konveksi: { title: 'Manajemen Konveksi', description: 'Kelola produksi, bahan baku, HPP, persediaan, dan keuangan konveksi.', button: 'Masuk ke Konveksi', icon: 'package' },
+    marketplace: { title: 'Manajemen Marketplace', description: 'Pantau pesanan, laba, pencairan dana, iklan, dan retur marketplace.', button: 'Masuk ke Marketplace', icon: 'store' },
+};
 
 async function readJson(response: Response): Promise<Record<string, any>> {
     try {
@@ -96,30 +103,42 @@ async function logout() {
 </script>
 
 <template>
-    <Head :title="authenticated ? 'Pilih ruang kerja · Jago Laba' : 'Login · Jago Laba'" />
-    <main class="foundation-shell">
-        <section class="foundation-card">
-            <div class="foundation-brand"><span class="foundation-mark">JL</span><span><strong>JAGO LABA</strong><small>Ruang kerja bisnis Anda</small></span></div>
-
-            <template v-if="!authenticated">
-                <div class="foundation-heading"><span class="eyebrow">Akses aplikasi</span><h1>Masuk ke Jago Laba</h1><p>Masuk menggunakan akun Jago Laba Anda.</p></div>
-                <form class="foundation-form" @submit.prevent="login">
+    <Head :title="authenticated ? 'Pilih Ruang Kerja · Jago Laba' : 'Login · Jago Laba'" />
+    <div class="ws">
+        <template v-if="!authenticated">
+            <section class="login-card">
+                <div class="brand"><span class="brandmark">JL</span> Jago Laba</div>
+                <span class="eyebrow" style="display: block; margin-top: 22px">Akses aplikasi</span>
+                <h1>Masuk ke Jago Laba</h1>
+                <p>Masuk menggunakan akun Jago Laba Anda.</p>
+                <form @submit.prevent="login">
                     <label>Username<input v-model="username" autocomplete="username" required placeholder="Username" /></label>
                     <label>Password<input v-model="password" autocomplete="current-password" required type="password" placeholder="Password" /></label>
-                    <p v-if="error" class="foundation-error" role="alert">{{ error }}</p>
-                    <button class="button button-primary" :disabled="loading" type="submit">{{ loading ? 'Memeriksa…' : 'Masuk' }}</button>
+                    <p v-if="error" class="error" role="alert">{{ error }}</p>
+                    <button class="submit" :disabled="loading" type="submit">{{ loading ? 'Memeriksa…' : 'Masuk' }}</button>
                 </form>
-            </template>
+            </section>
+        </template>
 
-            <template v-else>
-                <div class="foundation-heading"><span class="eyebrow">Jago Laba · Ruang kerja</span><h1>Selamat datang{{ user?.name ? `, ${user.name}` : '' }}</h1><p>Pilih ruang kerja yang ingin Anda gunakan.</p></div>
-                <div class="workspace-cards">
-                    <button v-if="workspaces.includes('konveksi')" class="workspace-card workspace-konveksi" :disabled="selecting !== null" type="button" @click="selectWorkspace('konveksi')"><span class="workspace-icon">K</span><strong>Manajemen Konveksi</strong><small>Produk, bahan baku, HPP, persediaan, dan keuangan konveksi.</small><b>{{ selecting === 'konveksi' ? 'Membuka…' : 'Masuk ke Konveksi →' }}</b></button>
-                    <button v-if="workspaces.includes('marketplace')" class="workspace-card workspace-marketplace" :disabled="selecting !== null" type="button" @click="selectWorkspace('marketplace')"><span class="workspace-icon">M</span><strong>Manajemen Marketplace</strong><small>Pesanan, laba, pengeluaran, pencairan dana, dan retur marketplace.</small><b>{{ selecting === 'marketplace' ? 'Membuka…' : 'Masuk ke Marketplace →' }}</b></button>
+        <template v-else>
+            <main class="shell" :inert="dialogOpen">
+                <div class="top"><div class="brand"><span class="brandmark">JL</span> Jago Laba</div><button class="logout" type="button" @click="logout">Keluar</button></div>
+                <div class="intro"><h1>Pilih ruang kerja</h1><p>Anda masuk sebagai {{ displayName }}. Pilihan ini dapat diganti kapan saja.</p></div>
+                <div class="cards">
+                    <button v-for="key in workspaces.filter((k) => WORKSPACES[k])" :key="key" type="button" class="card" :class="key" :disabled="selecting !== null" @click="selectWorkspace(key)"><span class="icon"><JlIcon :name="WORKSPACES[key].icon" /></span><h2>{{ WORKSPACES[key].title }}</h2><p>{{ WORKSPACES[key].description }}</p><span class="action">{{ selecting === key ? 'Membuka ruang kerja…' : WORKSPACES[key].button }} →</span></button>
                 </div>
-                <p v-if="error" class="foundation-error" role="alert">{{ error }}</p>
-                <div class="foundation-footer"><span>Workspace aktif: {{ active_workspace || 'belum dipilih' }}</span><button class="link-button" type="button" @click="logout">Keluar dari akun</button></div>
-            </template>
-        </section>
-    </main>
+            </main>
+            <div v-if="dialogOpen" class="backdrop">
+                <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1">
+                    <div class="dialog-head"><div><span class="eyebrow">JAGO LABA · RUANG KERJA</span><h1 id="dialogTitle">Selamat datang di Jago Laba</h1><p class="lead">Pilih ruang kerja untuk mulai mengelola bisnis Anda.</p></div><button class="close" type="button" aria-label="Tutup dialog" @click="dialogOpen = false">✕</button></div>
+                    <p class="hello">Halo, <strong>{{ displayName }}</strong></p>
+                    <div v-if="error" class="error show" role="alert">{{ error }}</div>
+                    <div class="cards">
+                        <button v-for="key in workspaces.filter((k) => WORKSPACES[k])" :key="key" type="button" class="card" :class="key" :disabled="selecting !== null" @click="selectWorkspace(key)"><span class="icon"><JlIcon :name="WORKSPACES[key].icon" /></span><h2>{{ WORKSPACES[key].title }}</h2><p>{{ WORKSPACES[key].description }}</p><span class="action">{{ selecting === key ? 'Membuka ruang kerja…' : WORKSPACES[key].button }} →</span></button>
+                    </div>
+                    <div class="foot"><span>Ruang kerja aktif hanya berubah setelah Anda memilih.</span><button class="logout" type="button" @click="logout">Keluar dari akun</button></div>
+                </section>
+            </div>
+        </template>
+    </div>
 </template>

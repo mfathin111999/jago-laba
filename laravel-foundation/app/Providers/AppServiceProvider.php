@@ -51,6 +51,14 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Shown in the sidebar footer, like the legacy "Pengguna Jago Laba" card.
+        Inertia::share('authUserName', static function (): ?string {
+            $user = Auth::guard('web')->user();
+            $name = $user === null ? '' : (string) ($user->name ?? $user->username ?? '');
+
+            return $name !== '' ? $name : null;
+        });
+
         Gate::define('role-action', function ($user, string $action): bool {
             return app(RolePolicy::class)->allows($user, $action);
         });

@@ -140,14 +140,12 @@ const logoUrl = computed(() => (props.branding.has_logo ? `/api/marketplace-bran
 </script>
 
 <template>
-    <MarketplaceShell
-        active="integrations"
-        title="Integrasi"
-        eyebrow="Marketplace / Integrasi"
-        subtitle="Koneksi toko ke marketplace, kesehatan sumber data, dan identitas perusahaan."
-        :store-id="scope.store_id"
-        :company-key="scope.company_key"
-    >
+    <MarketplaceShell active="integrations" title="Integrasi API" :store-id="scope.store_id" :company-key="scope.company_key">
+        <section class="space-y-5" aria-labelledby="integration-title">
+            <header><h1 id="integration-title" class="text-lg font-extrabold text-slate-900">Integrasi API</h1><p class="mt-1 text-xs leading-5 text-slate-500">Atur akses aplikasi Shopee dan TikTok Shop, kemudian hubungkan toko melalui otorisasi resmi.</p></header>
+            <ol class="grid gap-3 sm:grid-cols-3 rounded-2xl border border-slate-200 bg-white p-4 text-xs"><li v-for="(step, index) in ['Konfigurasi aplikasi', 'Uji akses API', 'Hubungkan toko']" :key="step" class="flex items-center gap-3"><span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 font-bold text-brand-700">{{ index + 1 }}</span><span class="font-semibold text-slate-600">{{ step }}</span></li></ol>
+        </section>
+        <div class="mt-5"></div>
         <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
         <section v-if="live" class="panel notice">

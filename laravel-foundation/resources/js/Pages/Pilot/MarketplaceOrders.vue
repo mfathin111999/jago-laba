@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
-import DataTable, { type Column } from '../../Components/DataTable.vue';
-import KpiCard from '../../Components/KpiCard.vue';
+import JlIcon from '../../Components/JlIcon.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
 import ShippingLabels from '../../Components/ShippingLabels.vue';
-import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
-import { formatDate, formatText, formatValue } from '../../lib/format';
+import { formatValue } from '../../lib/format';
 
 type Store = Record<string, any>;
 type Order = Record<string, any>;
-type OrdersPayload = { counts: Record<string, number>; rows: Order[]; total: number; page: number; pages: number; per_page: number; period: Record<string, any>; tab: string } | null;
+type OrdersPayload = { counts: Record<string, number>; rows: Order[]; total: number; page: number; pages: number; per_page: number; period: Record<string, any>; tab: string; return_date?: string; return_coverage?: Record<string, any> | null } | null;
 
 const props = defineProps<{
     read_only: boolean;
@@ -29,12 +27,19 @@ const props = defineProps<{
 
 const TAB_LABELS: Record<string, string> = {
     all: 'Semua',
-    new: 'Pesanan baru',
-    pickup: 'Menunggu pickup',
+    new: 'Pesanan Baru',
+    pickup: 'Menunggu Pickup',
     shipped: 'Dikirim',
     cancelled: 'Dibatalkan',
-    returns: 'Pengembalian barang',
+    returns: 'Pengembalian Barang',
 };
+const PERIODS = [['today', 'Hari ini'], ['yesterday', 'Kemarin'], ['week', '7 hari terakhir'], ['month', 'Bulan ini'], ['last_month', 'Bulan lalu'], ['custom', 'Rentang khusus']];
+const SEARCH_BY = [['order', 'Kode Pesanan'], ['sku', 'SKU'], ['product', 'Nama Produk'], ['tracking', 'Nomor Resi'], ['recipient', 'Nama Penerima']];
+const CONDITIONS = [['', 'Semua kondisi'], ['unpaid', 'Belum Dibayar'], ['cancel_request', 'Pengajuan Pembatalan'], ['partial', 'Dikirim Sebagian'], ['completed', 'Selesai'], ['return', 'Retur tercatat'], ['refund', 'Refund tercatat']];
+const RETURN_TYPES = [['', 'Semua kasus pengembalian'], ['goods', 'Barang & Dana'], ['refund', 'Dana Saja'], ['replacement', 'Penggantian/Penukaran']];
+const RETURN_DATES: Record<string, string> = { created: 'Tanggal pengajuan kasus', updated: 'Tanggal pembaruan kasus', order: 'Tanggal pesanan' };
+const money = (value: unknown) => formatValue(value, 'currency');
+const count = (value: unknown) => formatValue(value, 'count');
 
 const form = reactive({
     store: props.scope.store_id ?? '',
@@ -126,137 +131,173 @@ async function refreshFinance(): Promise<void> {
 }
 
 // ----- display -----
-const columns: Column[] = [
-    { key: 'select', label: '' },
-    { key: 'date', label: 'Tanggal', kind: 'date' },
-    { key: 'order', label: 'Kode & produk' },
-    { key: 'status', label: 'Status' },
-    { key: 'amount', label: 'Nilai', kind: 'currency', align: 'right' },
-    { key: 'payment', label: 'Pembayaran' },
-    { key: 'shipping', label: 'Kurir / resi' },
-];
-
-const payment = (order: Order): string => (order.is_cod === true ? 'COD' : order.is_cod === false ? (order.payment_method || 'Non-COD') : formatText(null));
-const counts = computed(() => Object.entries(props.orders?.counts ?? {}).map(([key, value]) => ({ key, label: TAB_LABELS[key] ?? key, value })));
+const returnUnavailable = computed(() => props.orders?.return_coverage?.available === false);
+const allSelected = computed(() => Boolean(props.orders?.rows.length) && props.orders!.rows.every((row) => selected.value.includes(String(row.id))));
+const toggleAll = (event: Event) => {
+    selected.value = (event.target as HTMLInputElement).checked ? (props.orders?.rows ?? []).map((row) => String(row.id)) : [];
+};
+const copied = ref('');
+async function copy(value: unknown): Promise<void> {
+    try {
+        await navigator.clipboard.writeText(String(value));
+        copied.value = 'Disalin ke papan klip.';
+    } catch {
+        copied.value = 'Gagal menyalin. Salin secara manual.';
+    }
+}
+function setTab(key: string): void {
+    form.order_tab = key;
+    loadOrders(1);
+}
+function resetFilters(): void {
+    Object.assign(form, { period: 'month', search: '', courier: '', condition: '', payment: '' });
+    loadOrders(1);
+}
+function changePerPage(event: Event): void {
+    form.per_page = Number((event.target as HTMLSelectElement).value);
+    loadOrders(1);
+}
 const presentation = computed(() => (detail.value?.presentation ?? null) as Record<string, any> | null);
 </script>
 
 <template>
-    <MarketplaceShell
-        active="orders"
-        title="Transaksi dan retur"
-        eyebrow="Marketplace / Pesanan"
-        subtitle="Daftar dan rincian pesanan dari data toko yang tersimpan."
-        :store-id="scope.store_id"
-        :company-key="scope.company_key"
-    >
-        <template #actions>
-            <button v-if="live && orders" class="button button-secondary" type="button" :disabled="selected.length === 0 || selected.length > 20" @click="printLabels(selected)">Cetak resi ({{ selected.length }})</button>
-            <a v-if="orders" class="button button-secondary" :href="exportUrl">Unduh CSV</a>
-        </template>
+    <MarketplaceShell active="orders" title="Pesanan" :store-id="scope.store_id" :company-key="scope.company_key">
+        <section v-if="!orders || !active_store" id="marketplace-orders" class="mp-orders">
+            <header class="mp-order-header"><div><p class="mp-order-eyebrow">Marketplace</p><h1>Pesanan</h1><p>Pantau pesanan, paket, dan kondisi pengiriman dari toko aktif.</p></div></header>
+            <div class="mp-order-notice"><JlIcon name="info" /><p>{{ message || 'Pilih toko terlebih dahulu.' }} <Link href="/marketplace/stores">Pilih Toko</Link></p></div>
+        </section>
 
-        <form class="panel filter-bar" @submit.prevent="loadOrders(1)">
-            <div class="field filter-store">
-                <label for="o-store">Toko</label>
-                <select id="o-store" v-model="form.store"><option value="" disabled>Pilih toko</option><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select>
-            </div>
-            <div class="field">
-                <label for="o-period">Periode</label>
-                <select id="o-period" v-model="form.period">
-                    <option value="today">Hari ini</option><option value="yesterday">Kemarin</option><option value="week">7 hari terakhir</option>
-                    <option value="month">Bulan ini</option><option value="last_month">Bulan lalu</option><option value="custom">Kustom</option>
-                </select>
-            </div>
-            <div v-if="form.period === 'custom'" class="field"><label for="o-start">Mulai</label><input id="o-start" v-model="form.date_start" type="date" required /></div>
-            <div v-if="form.period === 'custom'" class="field"><label for="o-end">Sampai</label><input id="o-end" v-model="form.date_end" type="date" required /></div>
-            <div class="field">
-                <label for="o-tab">Tab</label>
-                <select id="o-tab" v-model="form.order_tab"><option v-for="(label, key) in TAB_LABELS" :key="key" :value="key">{{ label }}</option></select>
-            </div>
-            <div class="field">
-                <label for="o-by">Cari berdasarkan</label>
-                <select id="o-by" v-model="form.search_by"><option value="order">Kode pesanan</option><option value="sku">SKU</option><option value="product">Produk</option><option value="tracking">Resi</option><option value="recipient">Penerima</option></select>
-            </div>
-            <div class="field"><label for="o-search">Pencarian</label><input id="o-search" v-model="form.search" type="search" maxlength="200" placeholder="Kode, SKU, produk, resi…" /></div>
-            <div class="field">
-                <label for="o-payment">Pembayaran</label>
-                <select id="o-payment" v-model="form.payment"><option value="">Semua</option><option value="cod">COD</option><option value="non_cod">Non-COD</option></select>
-            </div>
-            <div class="field">
-                <label for="o-rows">Baris</label>
-                <select id="o-rows" v-model="form.per_page"><option :value="25">25</option><option :value="50">50</option><option :value="100">100</option></select>
-            </div>
-            <button class="button button-primary" type="submit">Terapkan</button>
-        </form>
-
-        <section v-if="message" class="panel empty-state"><h2>Toko belum siap</h2><p class="muted">{{ message }}</p></section>
-
-        <template v-if="orders">
-            <section class="kpi-grid" aria-label="Jumlah pesanan per tab">
-                <KpiCard v-for="count in counts" :key="count.key" :label="count.label" :value="count.value" kind="count" />
-            </section>
-
-            <section class="panel">
-                <div class="section-heading compact">
-                    <div><span class="eyebrow">Periode {{ orders.period.start }} s/d {{ orders.period.end ?? orders.period.exclusive_end }}</span><h2>{{ formatValue(orders.total, 'count') }} pesanan</h2></div>
-                    <span class="muted">Halaman {{ orders.page }} dari {{ orders.pages }}</span>
+        <section v-else id="marketplace-orders" class="mp-orders" :data-store="scope.store_id ?? ''">
+            <header class="mp-order-header">
+                <div><p class="mp-order-eyebrow">{{ active_store.platform }} · {{ active_store.store_name }}</p><h1>Pesanan</h1><p>Pantau pesanan, paket, dan kondisi pengiriman dari toko aktif.</p></div>
+                <div class="mp-order-actions">
+                    <Link class="mp-order-button primary" :href="`/marketplace/sync?store=${scope.store_id}&store_id=${scope.store_id}`"><JlIcon name="refresh" /> Sinkronisasi Data</Link>
+                    <a class="mp-order-button" :href="exportUrl"><JlIcon name="download" /> Ekspor Pesanan</a>
                 </div>
+            </header>
+            <div class="mp-order-source"><span class="mp-order-badge">{{ active_store.authorization_label || 'Periksa koneksi' }}</span><span>Sinkronisasi berhasil terakhir: {{ active_store.last_successful_sync_at || 'Belum tersedia' }} WIB</span></div>
 
-                <DataTable :columns="columns" :rows="orders.rows" row-key="id" empty="Tidak ada pesanan pada filter ini.">
-                    <template #cell-select="{ row }"><input v-if="live" v-model="selected" type="checkbox" :value="String(row.id)" :aria-label="'Pilih pesanan ' + row.id" /></template>
-                    <template #cell-date="{ row }">{{ formatDate(row.date) }}</template>
-                    <template #cell-order="{ row }">
-                        <button class="link-button" type="button" @click="openDetail(row)">{{ row.id }}</button>
-                        <div v-for="item in row.items" :key="`${row.id}-${item.sku}-${item.name}`" class="muted cell-note">{{ item.name || 'Produk belum tersedia' }} · {{ item.sku || 'SKU belum tersedia' }}</div>
-                    </template>
-                    <template #cell-status="{ row }">
-                        <StatusBadge :label="formatText(row.status)" tone="info" />
-                        <div v-if="row.cancel_requested" class="cell-note warn-text">Pengajuan pembatalan</div>
-                    </template>
-                    <template #cell-payment="{ row }">{{ payment(row) }}</template>
-                    <template #cell-shipping="{ row }">{{ formatText(row.courier) }}<div class="muted cell-note">{{ row.tracking || 'Resi belum tersedia' }}</div></template>
-                    <template #actions="{ row }">
-                        <button class="button button-secondary button-small" type="button" @click="openDetail(row)">Lihat detail</button>
-                        <button v-if="live" class="button button-secondary button-small" type="button" @click="printLabels([String(row.id)])">Cetak resi</button>
-                    </template>
-                </DataTable>
+            <form class="mp-order-filter" @submit.prevent="loadOrders(1)">
+                <label>Periode<select v-model="form.period"><option v-for="[value, label] in PERIODS" :key="value" :value="value">{{ label }}</option></select></label>
+                <label>Mulai<input v-model="form.date_start" type="date" /></label>
+                <label>Sampai<input v-model="form.date_end" type="date" /></label>
+                <label>Cari berdasarkan<select v-model="form.search_by"><option v-for="[value, label] in SEARCH_BY" :key="value" :value="value">{{ label }}</option></select></label>
+                <label class="mp-search">Pencarian<input v-model="form.search" maxlength="200" placeholder="Cari pesanan, SKU, produk…" /></label>
+                <label>Kurir<input v-model="form.courier" placeholder="Semua kurir" /></label>
+                <label>Pembayaran<select v-model="form.payment"><option value="">Semua</option><option value="cod">COD</option><option value="non_cod">Non-COD terkonfirmasi</option></select></label>
+                <label>Kondisi tambahan<select v-model="form.condition"><option v-for="[value, label] in CONDITIONS" :key="value" :value="value">{{ label }}</option></select></label>
+                <div class="mp-filter-actions"><button type="submit" class="mp-order-button primary"><JlIcon name="filter" /> Terapkan</button><a href="#" @click.prevent="resetFilters">Reset</a></div>
+            </form>
 
-                <div class="form-actions page-controls">
-                    <button class="button button-secondary" type="button" :disabled="orders.page <= 1" @click="loadOrders(orders.page - 1)">Sebelumnya</button>
-                    <button class="button button-secondary" type="button" :disabled="orders.page >= orders.pages" @click="loadOrders(orders.page + 1)">Berikutnya</button>
+            <nav class="mp-order-tabs" aria-label="Status pesanan">
+                <a v-for="[key, label] in Object.entries(TAB_LABELS)" :key="key" href="#" :aria-current="form.order_tab === key ? 'page' : undefined" @click.prevent="setTab(key)"><span>{{ label }}</span><strong>{{ key === 'returns' && returnUnavailable ? `${orders.counts[key] ?? 0} tercatat · cakupan belum lengkap` : count(orders.counts[key] ?? 0) }}</strong></a>
+            </nav>
+            <div class="mp-order-notice"><JlIcon name="info" /><p>Permintaan pembatalan belum berarti pesanan dibatalkan. Resi dibuat belum berarti paket dikirim. Status pengembalian dan refund ditampilkan terpisah dari status pengiriman. Jumlah kartu adalah pesanan unik, bukan jumlah kasus.</p></div>
+
+            <template v-if="orders.tab === 'returns'">
+                <form class="mp-order-filter" @submit.prevent="loadOrders(1)">
+                    <label>Jenis kasus<select v-model="form.return_type"><option v-for="[value, label] in RETURN_TYPES" :key="value" :value="value">{{ label }}</option></select></label>
+                    <label>Basis tanggal<select v-model="form.return_date"><option value="created">Tanggal pengajuan kasus</option><option value="updated">Tanggal pembaruan kasus</option><option value="order">Tanggal pesanan</option></select></label>
+                    <button class="mp-order-button primary">Terapkan</button>
+                </form>
+                <p v-if="orders.return_coverage" class="mp-order-warning">Pengembalian: {{ orders.return_coverage.status }} · Terakhir berhasil: {{ orders.return_coverage.last_success ?? 'Belum tersedia' }}<template v-if="orders.return_coverage.error"> · {{ orders.return_coverage.error }}</template>. Barang kembali belum otomatis menambah stok atau membalik HPP.</p>
+            </template>
+
+            <article class="mp-order-list">
+                <div class="mp-order-toolbar">
+                    <div><strong>{{ count(orders.total) }} pesanan</strong><p>{{ orders.tab === 'returns' ? RETURN_DATES[orders.return_date ?? 'created'] : 'Tanggal dibuat' }} · {{ orders.period.start }} — {{ orders.period.end }} WIB</p></div>
+                    <div class="mp-order-actions">
+                        <button type="button" class="mp-order-button" :disabled="!live || selected.length === 0 || selected.length > 20" @click="printLabels(selected)"><JlIcon name="download" /> Cetak Resi Terpilih <span>{{ selected.length }}</span></button>
+                        <label>Baris <select :value="form.per_page" @change="changePerPage"><option v-for="n in [25, 50, 100]" :key="n" :value="n">{{ n }}</option></select></label>
+                    </div>
                 </div>
-            </section>
-        </template>
+                <div class="mp-order-table-wrap">
+                    <table>
+                        <thead><tr><th><input type="checkbox" aria-label="Pilih pesanan pada halaman ini" :disabled="!live" :checked="allSelected" @change="toggleAll" /></th><th>Tanggal</th><th>Kode &amp; Detail Produk</th><th>Penerima</th><th>Nilai Pesanan</th><th>Jumlah</th><th>Pembayaran</th><th>Kurir &amp; Resi</th><th>Status</th><th>Dokumen &amp; Aksi</th></tr></thead>
+                        <tbody>
+                            <tr v-for="row in orders.rows" :key="row.id">
+                                <td><input v-model="selected" type="checkbox" :value="String(row.id)" :disabled="!live" :aria-label="`Pilih pesanan ${row.id}`" /></td>
+                                <td class="mp-date">{{ row.date }}</td>
+                                <td>
+                                    <button type="button" class="mp-order-id" @click="openDetail(row)">{{ row.id }}</button><button type="button" class="mp-copy" aria-label="Salin nomor pesanan" @click="copy(row.id)"><JlIcon name="compare" /></button>
+                                    <div v-for="item in (row.items ?? []).slice(0, 2)" :key="`${row.id}-${item.sku}-${item.name}`" class="mp-order-product">
+                                        <img v-if="/^https:\/\//i.test(item.image_url ?? '')" :src="item.image_url" alt="" loading="lazy" referrerpolicy="no-referrer" />
+                                        <div><strong>{{ item.name }}</strong><small>{{ item.variant }} · SKU {{ item.sku }}</small></div>
+                                    </div>
+                                    <small v-if="(row.items ?? []).length > 2">+{{ row.items.length - 2 }} produk lainnya</small>
+                                </td>
+                                <td>{{ row.recipient || 'Belum tersedia' }}</td>
+                                <td class="mp-money">{{ money(row.amount) }}<small>Nilai dari sumber pesanan</small></td>
+                                <td>{{ row.quantity === null || row.quantity === undefined ? 'Belum tersedia' : `${row.quantity} unit` }}<small>{{ (row.packages ?? []).length ? `${row.packages.length} paket tercatat` : 'Paket belum tersedia' }}</small></td>
+                                <td><template v-if="row.is_cod !== true">{{ row.payment_method || 'Belum tersedia' }}</template><span v-else class="mp-order-badge">COD</span></td>
+                                <td>{{ row.courier || 'Kurir belum tersedia' }}<small>{{ row.tracking || 'Resi belum tersedia' }}</small><button v-if="row.tracking" type="button" class="mp-copy" aria-label="Salin resi" @click="copy(row.tracking)"><JlIcon name="compare" /></button></td>
+                                <td>
+                                    <span class="mp-order-badge" :class="`status-${row.group}`">{{ row.status || 'Belum Dipetakan' }}</span>
+                                    <small v-if="row.cancel_requested" class="mp-order-warning-text">Pengajuan Pembatalan</small>
+                                    <details v-for="returnCase in row.return_cases ?? []" :key="returnCase.id" class="mp-detail-item" style="min-width: 220px; max-width: 460px; white-space: normal; margin-top: 8px">
+                                        <summary><strong>{{ returnCase.type_label }}</strong> · {{ returnCase.status }}</summary>
+                                        <p>ID kasus: {{ returnCase.id }}</p><p>Status sumber: {{ returnCase.source_status }}</p>
+                                        <p>{{ returnCase.refund_status }} · Nominal sumber: {{ returnCase.currency ?? 'Mata uang belum tersedia' }} {{ returnCase.refund_amount ?? 'Belum tersedia' }}</p>
+                                        <p>Alasan: {{ returnCase.reason || 'Belum tersedia' }}</p>
+                                        <p>Pengiriman balik: {{ returnCase.courier || 'Belum tersedia' }} · {{ returnCase.tracking || 'Resi belum tersedia' }}</p>
+                                        <p>Arbitrase: {{ returnCase.arbitration || 'Belum tersedia' }}</p>
+                                        <p>Sumber: API marketplace · Disinkronkan {{ returnCase.synced_at }}</p>
+                                        <small>Nominal kasus tidak dikurangi lagi dari Untuk Dibayar yang sudah mencakup refund. Stok dan HPP tidak dibalik otomatis.</small>
+                                    </details>
+                                    <small v-if="row.complaint_active">Komplain aktif terkonfirmasi</small>
+                                </td>
+                                <td>
+                                    <small class="mp-order-warning-text">{{ active_store.platform === 'TikTok Shop' ? 'Resi + daftar pengemasan' : 'Label API belum tersedia' }}</small>
+                                    <button type="button" class="mp-small-button" :disabled="!live" @click="printLabels([String(row.id)])">Cetak Resi</button>
+                                    <button type="button" class="mp-small-button" @click="openDetail(row)">Lihat Detail</button>
+                                    <Link class="mp-small-button" :href="`/pilot/marketplace/orders?store=${scope.store_id}&store_id=${scope.store_id}&search=${encodeURIComponent(String(row.id))}&search_by=all`">Buka Transaksi</Link>
+                                </td>
+                            </tr>
+                            <tr v-if="!orders.rows.length"><td colspan="10" class="mp-order-empty">{{ orders.tab === 'returns' ? 'Tidak ada kasus pada filter ini. Periksa status akses dan periode sinkronisasi.' : 'Tidak ada pesanan sesuai filter. Ubah periode atau sinkronkan toko.' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="mp-order-pagination">
+                    <span>Halaman {{ orders.page }} / {{ orders.pages }} · {{ orders.rows.length }} pesanan ditampilkan</span>
+                    <div><a v-if="orders.page > 1" class="mp-order-button" href="#" @click.prevent="loadOrders(orders.page - 1)">Sebelumnya</a><a v-if="orders.page < orders.pages" class="mp-order-button" href="#" @click.prevent="loadOrders(orders.page + 1)">Berikutnya</a></div>
+                </footer>
+            </article>
+
+            <div class="mp-order-notice"><p><strong>Dokumen pengiriman:</strong> Untuk TikTok Shipping, gunakan Atur Pengiriman di dialog resi saat paket belum diatur. Pilihan pickup/drop-off dan jadwal mengikuti API. Resi dan daftar pengemasan dapat diunduh sesuai kesiapan paket. Konektor Shopee dan Seller Shipping belum mendukung alur ini.</p><a :href="provider?.seller_center ?? '#'" target="_blank" rel="noopener noreferrer" class="mp-order-button">Buka Seller Center</a></div>
+            <p v-if="copied" class="mp-order-live-status" role="status" aria-live="polite">{{ copied }}</p>
+        </section>
 
         <ShippingLabels :open="labelsOpen" :store-id="String(scope.store_id ?? '')" :order-ids="labelIds" :seller-center="provider?.seller_center ?? null" :can-fulfill="provider?.can_fulfill === true" @close="labelsOpen = false" />
 
-        <Modal :open="detailOpen" title="Rincian pesanan" :busy="detailBusy" @close="detailOpen = false">
-            <p v-if="detailBusy" class="muted">Memuat rincian…</p>
-            <p v-else-if="detailError" class="inline-error" role="alert">{{ detailError }}</p>
-            <div v-else-if="presentation" class="form-stack">
-                <div class="grid grid-3">
-                    <KpiCard label="Nilai" :value="presentation.gross_amount" />
-                    <KpiCard label="Net income" :value="presentation.net_income" />
-                    <KpiCard label="HPP" :value="presentation.total_cogs" />
-                    <KpiCard label="Laba bersih" :value="presentation.net_profit" />
+        <Modal :open="detailOpen" title="Detail Pesanan" :busy="detailBusy" @close="detailOpen = false">
+            <p v-if="detailBusy" class="p-4 text-xs text-gray-500">Memuat rincian…</p>
+            <p v-else-if="detailError" class="p-4 text-xs" style="color: #b42318" role="alert">{{ detailError }}</p>
+            <div v-else-if="presentation" class="p-4 bg-gray-50 text-xs space-y-4">
+                <p class="font-bold">No. Pesanan {{ presentation.order_id }} · {{ presentation.status }}</p>
+                <p class="text-gray-500">Resi: {{ presentation.tracking_number || 'Belum tersedia' }} · Pembayaran: {{ presentation.is_cod === true ? 'COD' : presentation.payment_method || 'Belum tersedia' }}<template v-if="presentation.is_estimated === true"> · Estimasi Penghasilan</template></p>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div v-for="[label, value] in [['Nilai', presentation.gross_amount], ['Net income', presentation.net_income], ['HPP', presentation.total_cogs], ['Laba bersih', presentation.net_profit]]" :key="label" class="bg-white rounded-lg border border-gray-100 p-3 min-w-0"><div class="text-gray-500 text-[11px]">{{ label }}</div><div class="font-semibold mt-1 break-words">{{ money(value) }}</div></div>
                 </div>
-                <p><strong>Status:</strong> {{ formatText(presentation.status) }} · <strong>Kode:</strong> {{ presentation.order_id }}</p>
-                <div v-if="live && presentation.platform === 'TikTok Shop'" class="form-actions">
-                    <button class="button button-secondary button-small" type="button" :disabled="financeBusy" @click="refreshFinance">{{ financeBusy ? 'Mengambil data resmi…' : 'Perbarui dari Finance API' }}</button>
-                    <span v-if="financeMessage" class="muted cell-note" role="status">{{ financeMessage }}</span>
+                <div v-if="live && presentation.platform === 'TikTok Shop'" class="flex items-center gap-3">
+                    <button class="mp-small-button" type="button" :disabled="financeBusy" @click="refreshFinance">{{ financeBusy ? 'Mengambil data resmi…' : 'Perbarui dari Finance API' }}</button>
+                    <span v-if="financeMessage" class="text-gray-500" role="status">{{ financeMessage }}</span>
                 </div>
-                <div>
-                    <h3>Produk</h3>
-                    <p v-for="item in presentation.items" :key="`${item.sku}-${item.name}`" class="cell-note">
-                        {{ item.name || 'Produk belum tersedia' }} · {{ item.variant || 'Varian belum tersedia' }} · {{ item.quantity }} unit · {{ formatValue(item.total_price) }}
-                    </p>
+                <h3 class="font-bold">Detail Produk</h3>
+                <div v-for="item in presentation.items" :key="`${item.sku}-${item.name}`" class="bg-white rounded-xl border border-gray-200 p-3">
+                    <div class="flex gap-3">
+                        <img v-if="/^https?:\/\//i.test(item.image_url ?? '')" :src="item.image_url" alt="" class="w-12 h-12 object-cover rounded" />
+                        <div><p class="font-semibold">{{ item.name || 'Produk belum tersedia' }}</p><p class="text-[11px] text-gray-400 mt-1">Varian: {{ item.variant || '—' }} · SKU: {{ item.sku || '—' }}</p></div>
+                    </div>
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                        <div v-for="[label, value] in [['Jumlah', item.quantity], ['Harga Satuan', money(item.unit_price)], ['Total Harga', money(item.total_price)], ['Total HPP', money(item.total_cogs)]]" :key="label" class="bg-white rounded-lg border border-gray-100 p-3 min-w-0"><div class="text-gray-500 text-[11px]">{{ label }}</div><div class="font-semibold mt-1 break-words">{{ value }}</div></div>
+                    </div>
                 </div>
-                <div>
-                    <h3>Paket dan retur</h3>
-                    <p v-for="pack in presentation.packages || []" :key="pack.id" class="cell-note">Paket {{ pack.id }} · {{ pack.courier || 'Kurir belum tersedia' }} · {{ pack.tracking || 'Resi belum tersedia' }}</p>
-                    <p v-for="item in presentation.return_cases || []" :key="item.id" class="cell-note warn-text">{{ item.type_label }} · {{ item.status }} · {{ item.refund_status }}</p>
-                    <p v-if="!(presentation.return_cases || []).length" class="muted cell-note">Tidak ada kasus retur.</p>
-                </div>
+                <p v-if="!(presentation.items ?? []).length" class="text-gray-400">Rincian produk belum tersedia.</p>
+                <template v-if="(presentation.packages ?? []).length || (presentation.return_cases ?? []).length">
+                    <h3 class="font-bold">Paket dan retur</h3>
+                    <p v-for="pack in presentation.packages || []" :key="pack.id">Paket {{ pack.id }} · {{ pack.courier || 'Kurir belum tersedia' }} · {{ pack.tracking || 'Resi belum tersedia' }}</p>
+                    <p v-for="item in presentation.return_cases || []" :key="item.id" class="mp-order-warning-text">{{ item.type_label }} · {{ item.status }} · {{ item.refund_status }}</p>
+                </template>
             </div>
         </Modal>
     </MarketplaceShell>

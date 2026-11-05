@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import DataTable, { type Column } from '../../Components/DataTable.vue';
 import FlashBanner from '../../Components/FlashBanner.vue';
+import JlIcon from '../../Components/JlIcon.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
+import PlatformLogo from '../../Components/PlatformLogo.vue';
 import Modal from '../../Components/Modal.vue';
 import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
@@ -281,33 +283,88 @@ const deletionLabel = (status: string): string =>
     ({ pending: 'Menunggu', running: 'Berjalan', completed: 'Selesai', failed: 'Gagal, akan dicoba ulang' })[status] ?? status;
 const fees = (store: Store): string =>
     [store.default_admin_fee_pct, store.default_free_shipping_pct, store.default_payment_fee_pct].map((value) => formatValue(value, 'percent')).join(' · ');
+
+const QUOTA = 15;
+const SECTION_PLATFORMS = ['TikTok Shop', 'Shopee'];
+const platformStores = (platform: string) => props.stores.filter((store) => store.platform === platform);
+const otherStores = computed(() => props.stores.filter((store) => !SECTION_PLATFORMS.includes(store.platform)));
+const connectedCount = (platform: string) => platformStores(platform).filter((store) => connection(store).tone === 'ok').length;
+function timeAgo(value: string | null | undefined): string {
+    if (!value) return 'Belum pernah disinkronkan';
+    const stamp = Date.parse(String(value).replace(' ', 'T') + '+07:00');
+    if (!Number.isFinite(stamp)) return 'Belum pernah disinkronkan';
+    const diff = Math.floor((Date.now() - stamp) / 1000);
+    if (diff < 60) return 'Baru saja';
+    if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+
+    return `${Math.floor(diff / 86400)} hari lalu`;
+}
+const badgeClass = (tone: string) => (tone === 'ok' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : tone === 'warn' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200');
+const dotClass = (tone: string) => (tone === 'ok' ? 'bg-emerald-500' : tone === 'warn' ? 'bg-amber-500' : 'bg-rose-500');
 </script>
 
 <template>
-    <MarketplaceShell active="stores" title="Toko" eyebrow="Marketplace / Pengaturan" subtitle="Kelola toko yang terhubung. Koneksi hanya dibuat lewat otorisasi resmi marketplace." :company-key="scope.company_key">
-        <template #actions>
-            <button v-if="can_manage" type="button" class="button button-primary" @click="openCreate">Tambah toko</button>
-        </template>
-
+    <MarketplaceShell active="stores" title="Toko" :company-key="scope.company_key">
         <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
-        <div class="section-stack">
-            <section class="panel">
-                <div class="section-heading compact"><div><span class="eyebrow">Aktif</span><h2>Toko aktif ({{ stores.length }})</h2></div></div>
-                <DataTable :columns="storeColumns" :rows="stores" row-key="id" empty="Belum ada toko. Tambahkan toko lalu hubungkan lewat otorisasi marketplace.">
-                    <template #cell-store_name="{ row }"><strong>{{ row.store_name }}</strong></template>
-                    <template #cell-connection="{ row }"><StatusBadge :label="connection(row).label" :tone="connection(row).tone" /></template>
-                    <template #cell-last_sync="{ row }">{{ formatDate(row.connection?.last_successful_sync_at ?? row.last_synced_at) }}</template>
-                    <template #cell-fees="{ row }">{{ fees(row) }}</template>
-                    <template v-if="can_manage || can_delete" #actions="{ row }">
-                        <button v-if="can_manage" type="button" class="button button-secondary button-small" @click="openEdit(row)">Ubah</button>
-                        <button v-if="can_manage && row.status !== 'Nonaktif'" type="button" class="button button-secondary button-small" @click="disable(row)">Nonaktifkan</button>
-                        <button v-if="can_manage" type="button" class="button button-secondary button-small" @click="archive(row)">Arsipkan</button>
-                        <button v-if="can_delete && deletion_ready" type="button" class="button button-danger button-small" @click="openErase(row.id, row.store_name)">Hapus permanen</button>
-                    </template>
-                </DataTable>
+        <section class="space-y-6" aria-labelledby="toko-heading">
+            <header class="flex flex-wrap items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                <div>
+                    <div class="flex items-center gap-2"><h1 id="toko-heading" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Toko</h1></div>
+                    <p class="mt-1 text-xs text-slate-500">Hubungkan toko marketplace Anda untuk sinkronisasi pesanan otomatis</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button v-if="can_manage" type="button" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700" @click="openCreate"><JlIcon name="plus" /> Tambah toko</button>
+                    <Link href="/marketplace/integrations" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition"><JlIcon name="plug" /> Pengaturan Integrasi API</Link>
+                </div>
+            </header>
+
+            <section v-for="platform in SECTION_PLATFORMS" :key="platform" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden" :aria-label="`Platform ${platform}`">
+                <div class="p-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                        <div class="w-12 h-12 rounded-xl border border-slate-100 bg-white p-1.5 shadow-sm flex items-center justify-center shrink-0"><PlatformLogo :platform="platform" :size="40" /></div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2"><h3 class="font-extrabold text-base text-slate-900">{{ platform }}</h3><span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">{{ connectedCount(platform) }}/{{ QUOTA }} toko</span></div>
+                            <p class="text-xs text-slate-500 mt-0.5">Sinkronisasi pesanan dan data penjualan dari {{ platform }}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <Link href="/marketplace/integrations" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white transition shadow-sm" :class="platform === 'TikTok Shop' ? 'bg-[#FE2C55] hover:bg-[#E11D48]' : 'bg-[#EE4D2D] hover:bg-[#D83E20]'"><JlIcon name="plus" /> Hubungkan {{ platform }}</Link>
+                    </div>
+                </div>
+                <div class="px-5 py-3 bg-slate-50/70 border-b border-slate-100 text-[11px] text-slate-600 flex items-center gap-2 leading-relaxed"><JlIcon name="info" /><span><strong>Catatan:</strong> {{ platform === 'TikTok Shop' ? 'Hanya akun utama TikTok dapat dihubungkan. Sub akun tidak dapat dihubungkan.' : 'Hanya akun utama (Main Account) Shopee dan akun SIP/Shop Account (Shopee International Platform) dapat dihubungkan. Sub akun tidak dapat dihubungkan.' }}</span></div>
+                <div class="divide-y divide-slate-100">
+                    <article v-for="store in platformStores(platform)" :key="store.id" class="p-5 space-y-3.5">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <h4 class="font-extrabold text-base text-slate-900 tracking-tight">{{ store.store_name }}</h4>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold" :class="badgeClass(connection(store).tone)"><span class="w-1.5 h-1.5 rounded-full" :class="dotClass(connection(store).tone)"></span>{{ connection(store).label }}</span>
+                            </div>
+                            <button v-if="can_delete && deletion_ready" type="button" class="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Integrasi &amp; Data Toko" aria-label="Hapus Integrasi Toko" @click="openErase(store.id, store.store_name)"><JlIcon name="close" /></button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                            <span><JlIcon name="history" /> {{ timeAgo(store.connection?.last_successful_sync_at ?? store.last_synced_at) }}</span>
+                            <span>ID Toko: {{ store.store_identifier || '—' }}</span>
+                            <span>Biaya bawaan: {{ fees(store) }}</span>
+                        </div>
+                        <div v-if="can_manage" class="flex flex-wrap gap-2">
+                            <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50" @click="openEdit(store)">Ubah</button>
+                            <button v-if="store.status !== 'Nonaktif'" type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50" @click="disable(store)">Nonaktifkan</button>
+                            <button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50" @click="archive(store)">Arsipkan</button>
+                        </div>
+                    </article>
+                    <p v-if="!platformStores(platform).length" class="p-8 text-center text-xs text-slate-500">Belum ada toko {{ platform }}. Hubungkan lewat otorisasi resmi marketplace.</p>
+                </div>
             </section>
 
+            <section v-if="otherStores.length" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100"><h3 class="font-extrabold text-base text-slate-900">Platform lain</h3></div>
+                <div class="divide-y divide-slate-100"><article v-for="store in otherStores" :key="store.id" class="p-5 flex flex-wrap items-center justify-between gap-3"><div><h4 class="font-extrabold text-slate-900">{{ store.store_name }}</h4><p class="text-xs text-slate-500 mt-1">{{ store.platform }} · {{ connection(store).label }}</p></div><div v-if="can_manage" class="flex gap-2"><button type="button" class="px-3 py-1.5 rounded-lg border text-xs font-bold" @click="openEdit(store)">Ubah</button><button type="button" class="px-3 py-1.5 rounded-lg border text-xs font-bold" @click="archive(store)">Arsipkan</button></div></article></div>
+            </section>
+        </section>
+
+        <div class="section-stack mt-6">
             <section class="panel">
                 <div class="section-heading compact"><div><span class="eyebrow">Arsip</span><h2>Toko diarsipkan ({{ archived.length }})</h2></div></div>
                 <DataTable :columns="archivedColumns" :rows="archived" row-key="id" empty="Tidak ada toko yang diarsipkan.">

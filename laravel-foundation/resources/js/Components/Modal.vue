@@ -29,11 +29,11 @@ function onCancel(event: Event) {
 </script>
 
 <template>
-    <dialog ref="dialog" class="modal" aria-labelledby="modal-title" @cancel="onCancel" @click.self="!busy && emit('close')">
-        <div v-if="open" class="modal-body">
-            <header class="modal-header">
+    <dialog ref="dialog" class="mp-order-dialog" aria-labelledby="modal-title" @cancel="onCancel" @click.self="!busy && emit('close')">
+        <div v-if="open">
+            <header>
                 <h2 id="modal-title">{{ title }}</h2>
-                <button type="button" class="modal-close" :disabled="busy" aria-label="Tutup" @click="emit('close')">×</button>
+                <button type="button" :disabled="busy" aria-label="Tutup" @click="emit('close')">×</button>
             </header>
             <slot />
         </div>

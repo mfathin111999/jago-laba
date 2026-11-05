@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplacePilotRequest;
 use App\Http\Responses\CsvDownload;
 use App\Pilots\Marketplace\MarketplacePilotReadService;
+use App\Pilots\Marketplace\OrderReadService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,7 +14,7 @@ use Throwable;
 
 final class MarketplacePilotController
 {
-    public function __construct(private readonly MarketplacePilotReadService $pilot) {}
+    public function __construct(private readonly MarketplacePilotReadService $pilot, private readonly OrderReadService $orders) {}
 
     public function __invoke(MarketplacePilotRequest $request): Response|RedirectResponse
     {
@@ -55,7 +56,34 @@ final class MarketplacePilotController
             throw $exception;
         }
 
+        $payload['order_summary'] = $this->orderSummary($companyKey, (string) ($payload['active_store']['id'] ?? ''), $payload['dashboard']['period'] ?? []);
+
         return Inertia::render('Pilot/Marketplace', $payload);
+    }
+
+    /**
+     * Counts for the "Pesanan Baru / Menunggu Pickup / ..." strip, as the legacy dashboard shows them.
+     * Never allowed to break the dashboard: null when the orders read fails.
+     *
+     * @param  array<string, mixed>  $period
+     * @return array<string, mixed>|null
+     */
+    private function orderSummary(string $companyKey, string $storeId, array $period): ?array
+    {
+        if ($storeId === '' || ! isset($period['start'], $period['end'])) {
+            return null;
+        }
+
+        try {
+            $overview = $this->orders->overview($companyKey, $storeId, ['period' => 'custom', 'date_start' => (string) $period['start'], 'date_end' => (string) $period['end'], 'per_page' => 1]);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return [
+            'counts' => $overview['orders']['counts'] ?? null,
+            'return_available' => (bool) ($overview['orders']['return_coverage']['available'] ?? false),
+        ];
     }
 
     public function export(MarketplacePilotRequest $request): SymfonyResponse

@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
-import DataTable, { type Column } from '../../Components/DataTable.vue';
 import FlashBanner from '../../Components/FlashBanner.vue';
-import KpiCard from '../../Components/KpiCard.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
-import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
-import { formatDate, formatText, formatValue } from '../../lib/format';
+import { formatValue } from '../../lib/format';
 
 type Row = Record<string, any>;
 
@@ -20,19 +17,18 @@ const props = defineProps<{
     can_import: boolean;
 }>();
 
-const INCOME_STATE: Record<string, { label: string; tone: 'ok' | 'warn' | 'muted' }> = {
-    final: { label: 'Final', tone: 'ok' },
-    estimated: { label: 'Estimasi', tone: 'warn' },
-    unknown: { label: 'Belum tersedia', tone: 'muted' },
-};
+const INCOME_STATE: Record<string, string> = { final: 'Final tercatat', estimated: 'Estimasi', unknown: 'Belum tersedia' };
 const PAYOUT_LABEL: Record<string, string> = {
-    succeeded: 'Berhasil di marketplace', processing: 'Diproses', failed: 'Gagal', cancelled: 'Dibatalkan', unknown: 'Status belum dikenal',
+    succeeded: 'Berhasil di marketplace', processing: 'Diproses', failed: 'Gagal / ditolak', cancelled: 'Dibatalkan', unknown: 'Status belum dipetakan',
 };
-const PAYOUT_TONE: Record<string, 'ok' | 'warn' | 'danger' | 'muted'> = { succeeded: 'ok', processing: 'warn', failed: 'danger', cancelled: 'muted', unknown: 'muted' };
+type Tab = 'pending' | 'settled' | 'payout' | 'bank';
+const TABS: Array<[Tab, string]> = [['pending', 'Untuk Dibayar'], ['settled', 'Penyelesaian Pembayaran'], ['payout', 'Penarikan Marketplace'], ['bank', 'Rekonsiliasi Bank']];
+const money = (value: unknown) => formatValue(value, 'currency');
+const count = (value: unknown) => formatValue(value, 'count');
 
 const flash = reactive<{ message: string | null; kind: 'success' | 'error' }>({ message: null, kind: 'success' });
 const busy = ref(false);
-const tab = ref<'income' | 'payout'>(props.filters.tab === 'payout' ? 'payout' : 'income');
+const tab = ref<Tab>(props.filters.tab === 'payout' ? 'payout' : props.filters.status === 'final' ? 'settled' : 'pending');
 
 const filter = reactive({
     store_id: props.scope.store_id ?? '',
@@ -46,37 +42,42 @@ const filter = reactive({
 });
 
 function go(extra: Record<string, string | number> = {}): void {
-    const query: Record<string, string | number> = { tab: tab.value, ...extra };
+    const query: Record<string, string | number> = { tab: tab.value === 'payout' ? 'payout' : 'income', ...extra };
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = value;
     });
     router.get('/marketplace/income', query, { preserveState: true, replace: true });
 }
 
+function setTab(next: Tab): void {
+    tab.value = next;
+    if (next === 'pending') filter.status = 'estimated';
+    if (next === 'settled') filter.status = 'final';
+    if (next === 'bank') return;
+    go();
+}
+function reset(): void {
+    Object.assign(filter, { platform: '', date_start: '', date_end: '', search: '', status: tab.value === 'settled' ? 'final' : tab.value === 'pending' ? 'estimated' : '' });
+    go();
+}
+
 // ----- income -----
-const incomeColumns: Column[] = [
-    { key: 'order_date', label: 'Tanggal', kind: 'date' },
-    { key: 'order_id', label: 'Pesanan' },
-    { key: 'store_name', label: 'Toko' },
-    { key: 'state', label: 'Status' },
-    { key: 'gross_amount', label: 'Nilai', kind: 'currency', align: 'right' },
-    { key: 'total_fees', label: 'Biaya', kind: 'currency', align: 'right' },
-    { key: 'net_income', label: 'Pemasukan bersih', kind: 'currency', align: 'right' },
-];
 const incomeSummary = computed(() => props.income.summary ?? {});
 
 // ----- withdrawals -----
-const payoutColumns: Column[] = [
-    { key: 'external_id', label: 'ID / toko' },
-    { key: 'requested_at', label: 'Pengajuan', kind: 'date' },
-    { key: 'completed_at', label: 'Selesai', kind: 'date' },
-    { key: 'amount', label: 'Nominal', kind: 'currency', align: 'right' },
-    { key: 'fee', label: 'Biaya', kind: 'currency', align: 'right' },
-    { key: 'net_amount', label: 'Bersih dikirim', kind: 'currency', align: 'right' },
-    { key: 'normalized_status', label: 'Status' },
-    { key: 'destination', label: 'Tujuan' },
-];
 const payoutSummary = computed(() => props.withdrawals.summary ?? {});
+const cards = computed<Array<[string, unknown, string]>>(() => [
+    ['Estimasi pendapatan belum cair', incomeSummary.value.estimated, 'Dari keuangan estimasi API, belum final.'],
+    ['Pendapatan final tercatat', incomeSummary.value.final, 'Penyelesaian pesanan; belum membuktikan pencairan.'],
+    ['Nominal penarikan berhasil · laporan', payoutSummary.value.paid_nominal, 'Total penarikan IDR; belum verifikasi masuk bank.'],
+    ['Terverifikasi masuk bank', null, 'Menunggu pencocokan mutasi rekening.'],
+]);
+const payoutCards = computed<Array<[string, string]>>(() => [
+    ['Penarikan dalam filter', count(payoutSummary.value.total ?? 0)],
+    ['Sedang diproses', count(payoutSummary.value.processing ?? 0)],
+    ['Penarikan gagal', count(payoutSummary.value.failed ?? 0)],
+    ['Berhasil · nominal IDR', money(payoutSummary.value.paid_nominal)],
+]);
 
 // ----- import -----
 const importer = reactive({ storeId: props.scope.store_id ?? '', file: null as File | null, key: '', count: 0, sample: [] as Row[], meta: {} as Row });
@@ -129,102 +130,112 @@ async function confirmImport(): Promise<void> {
 </script>
 
 <template>
-    <MarketplaceShell
-        active="income"
-        title="Pemasukan dan penarikan"
-        eyebrow="Marketplace / Keuangan"
-        subtitle="Pemasukan bersih per pesanan dan riwayat penarikan dana dari laporan resmi yang diimpor."
-        :store-id="scope.store_id"
-        :company-key="scope.company_key"
-    >
-        <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
+    <MarketplaceShell active="income" title="Pemasukan" :store-id="scope.store_id" :company-key="scope.company_key">
+        <section class="space-y-5" aria-labelledby="income-title">
+            <header class="flex flex-wrap items-start justify-between gap-3">
+                <div><p class="text-xs text-emerald-700 font-bold mb-2">KEUANGAN MARKETPLACE</p><h1 id="income-title" class="text-2xl font-extrabold text-slate-900">Pemasukan</h1><p class="text-sm text-slate-500 mt-2">Pantau pendapatan pesanan, pencairan marketplace, dan kecocokan dana masuk bank.</p></div>
+                <a href="#" class="rounded-xl border bg-white px-4 py-2 text-xs font-bold" @click.prevent="go()">↻ Muat ulang</a>
+            </header>
+            <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
-        <form class="panel filter-bar" @submit.prevent="go()">
-            <div class="field filter-store">
-                <label for="n-store">Toko</label>
-                <select id="n-store" v-model="filter.store_id"><option value="">Semua toko</option><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select>
+            <form data-income-filters class="rounded-2xl border border-slate-200 bg-white p-4 flex flex-wrap gap-3 items-end" @submit.prevent="go()">
+                <label class="text-xs text-slate-500">Platform<select v-model="filter.platform" class="block border rounded-lg p-2 mt-1"><option value="">Semua platform</option><option>TikTok Shop</option><option>Shopee</option></select></label>
+                <label class="text-xs text-slate-500">{{ tab === 'payout' ? 'Tanggal penarikan dari' : 'Tanggal pesanan dari' }}<input v-model="filter.date_start" type="date" class="block border rounded-lg p-2 mt-1" /></label>
+                <label class="text-xs text-slate-500">Sampai<input v-model="filter.date_end" type="date" class="block border rounded-lg p-2 mt-1" /></label>
+                <label v-if="tab === 'pending' || tab === 'settled'" class="text-xs text-slate-500">Data keuangan<select v-model="filter.status" class="block border rounded-lg p-2 mt-1"><option value="">Semua</option><option value="estimated">Estimasi</option><option value="final">Final tercatat</option><option value="unknown">Belum tersedia</option></select></label>
+                <label class="text-xs text-slate-500 flex-1">Pesanan / ID pencairan<input v-model="filter.search" maxlength="200" class="block w-full border rounded-lg p-2 mt-1" placeholder="Cari nomor referensi…" /></label>
+                <div data-income-filter-actions class="flex items-center gap-3"><button class="rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold">Terapkan</button><a class="text-xs p-2" href="#" @click.prevent="reset">Reset</a></div>
+            </form>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                <article v-for="[label, value, hint] in cards" :key="label" class="rounded-2xl border border-slate-200 bg-white p-5"><p class="text-xs text-slate-500">{{ label }}</p><p class="text-xl font-extrabold text-emerald-700 mt-3">{{ money(value) }}</p><p class="text-xs text-slate-400 mt-2">{{ hint }}</p></article>
             </div>
-            <div class="field"><label for="n-platform">Platform</label><select id="n-platform" v-model="filter.platform"><option value="">Semua</option><option>Shopee</option><option>TikTok Shop</option></select></div>
-            <div class="field"><label for="n-start">Dari</label><input id="n-start" v-model="filter.date_start" type="date" /></div>
-            <div class="field"><label for="n-end">Sampai</label><input id="n-end" v-model="filter.date_end" type="date" /></div>
-            <div class="field"><label for="n-search">Cari</label><input id="n-search" v-model="filter.search" type="search" maxlength="200" :placeholder="tab === 'income' ? 'Kode pesanan atau batch' : 'ID penarikan'" /></div>
-            <button class="button button-primary" type="submit">Terapkan</button>
-        </form>
 
-        <div class="tab-bar" role="tablist">
-            <button role="tab" type="button" :aria-selected="tab === 'income'" :class="{ active: tab === 'income' }" @click="tab = 'income'">Pemasukan pesanan</button>
-            <button role="tab" type="button" :aria-selected="tab === 'payout'" :class="{ active: tab === 'payout' }" @click="tab = 'payout'">Riwayat penarikan</button>
-        </div>
+            <nav aria-label="Tahapan pemasukan" class="flex flex-wrap gap-2">
+                <a v-for="[key, label] in TABS" :key="key" href="#" :aria-current="tab === key ? 'page' : 'false'" class="px-4 py-3 text-xs font-bold rounded-xl border" :class="tab === key ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600'" @click.prevent="setTab(key)">{{ label }}</a>
+            </nav>
 
-        <template v-if="tab === 'income'">
-            <section class="panel notice"><p class="muted">Pemasukan final hanya untuk pesanan yang sudah ada data penyelesaian dari marketplace. Selain itu angkanya estimasi, dan pesanan tanpa data keuangan ditandai belum tersedia, bukan dihitung nol.</p></section>
-            <section class="kpi-grid" aria-label="Ringkasan pemasukan">
-                <KpiCard label="Pemasukan final" :value="incomeSummary.final" />
-                <KpiCard label="Pemasukan estimasi" :value="incomeSummary.estimated" />
-                <KpiCard label="Pesanan belum ada data" :value="incomeSummary.unknown" kind="count" />
-                <KpiCard label="Jumlah pesanan" :value="incomeSummary.count" kind="count" />
-            </section>
-            <section class="panel">
-                <div class="field inline-field"><label for="n-state">Tampilkan</label><select id="n-state" v-model="filter.status" @change="go()"><option value="">Semua status</option><option value="final">Final</option><option value="estimated">Estimasi</option><option value="unknown">Belum tersedia</option></select></div>
-                <DataTable :columns="incomeColumns" :rows="income.rows" row-key="order_id" empty="Tidak ada pesanan pada filter ini.">
-                    <template #cell-state="{ row }"><StatusBadge :label="INCOME_STATE[row.state]?.label ?? row.state" :tone="INCOME_STATE[row.state]?.tone ?? 'muted'" /></template>
-                    <template #cell-store_name="{ row }">{{ formatText(row.store_name) }}<div class="muted cell-note">{{ formatText(row.platform) }}</div></template>
-                </DataTable>
-                <div class="form-actions page-controls">
-                    <span class="muted">Halaman {{ income.page }} dari {{ income.pages }} · {{ formatValue(income.total, 'count') }} pesanan</span>
-                    <button class="button button-secondary" type="button" :disabled="income.page <= 1" @click="go({ page: income.page - 1 })">Sebelumnya</button>
-                    <button class="button button-secondary" type="button" :disabled="income.page >= income.pages" @click="go({ page: income.page + 1 })">Berikutnya</button>
-                </div>
-            </section>
-        </template>
-
-        <template v-else>
-            <section class="panel notice"><p class="muted">Sumber riwayat adalah laporan penarikan resmi yang Anda impor. Status berhasil pada laporan belum membuktikan dana masuk ke bank. Penarikan tidak dicatat sebagai pendapatan atau jurnal baru.</p></section>
-            <section class="kpi-grid" aria-label="Ringkasan penarikan">
-                <KpiCard label="Penarikan dalam filter" :value="payoutSummary.total" kind="count" />
-                <KpiCard label="Sedang diproses" :value="payoutSummary.processing" kind="count" />
-                <KpiCard label="Penarikan gagal" :value="payoutSummary.failed" kind="count" />
-                <KpiCard label="Berhasil · nominal IDR" :value="payoutSummary.paid_nominal" />
-            </section>
-
-            <section v-if="can_import" class="panel">
-                <h2>Impor laporan penarikan</h2>
-                <p class="muted">XLSX income asli TikTok Shop (sheet dan kolom tidak diubah), atau CSV sesuai <a href="/api/marketplace-withdrawals.php?action=template">template</a>. Pratinjau dulu, baru konfirmasi.</p>
-                <div class="form-grid">
-                    <div class="field"><label for="i-store">Toko</label><select id="i-store" v-model="importer.storeId"><option value="" disabled>Pilih toko</option><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name || store.id }}</option></select></div>
-                    <div class="field field-wide"><label for="i-file">Berkas laporan (maks 10 MB)</label><input id="i-file" type="file" accept=".xlsx,.csv" @change="onFile" /></div>
-                </div>
-                <p v-if="importError" class="inline-error" role="alert">{{ importError }}</p>
-                <div class="form-actions"><button class="button button-secondary" type="button" :disabled="busy || !importer.file" @click="preview">Pratinjau</button></div>
-
-                <div v-if="importer.key" class="form-stack">
-                    <p><strong>{{ importer.count }} baris</strong> siap diimpor. Contoh {{ importer.sample.length }} baris pertama:</p>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>ID</th><th>Pengajuan</th><th class="num">Nominal</th><th>Mata uang</th><th>Status</th></tr></thead>
-                            <tbody><tr v-for="row in importer.sample" :key="row.external_id"><td>{{ row.external_id }}</td><td>{{ formatDate(row.requested_at) }}</td><td class="num">{{ row.amount }}</td><td>{{ row.currency }}</td><td>{{ row.source_status }}</td></tr></tbody>
+            <template v-if="tab === 'pending' || tab === 'settled'">
+                <div class="rounded-xl border p-4 text-xs" :class="tab === 'settled' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-blue-200 bg-blue-50 text-blue-900'">{{ tab === 'settled' ? 'Nominal penyelesaian pembayaran final yang dicatat marketplace. Telah selesai dan memiliki bukti pernyataan resmi (statement).' : `Data dari pesanan API toko. Estimasi dapat berubah. Pendapatan final tidak otomatis berarti dana masuk bank. HPP mengurangi laba, bukan nominal pencairan. ${incomeSummary.unknown ?? 0} pesanan masih menunggu data keuangan.` }}</div>
+                <div class="bg-white border rounded-2xl overflow-hidden">
+                    <div class="p-4 border-b"><h2 class="font-bold">{{ tab === 'settled' ? 'Penyelesaian Pembayaran Final' : 'Pendapatan Pesanan (Untuk Dibayar)' }}</h2><p class="text-xs text-slate-500 mt-1">{{ count(income.total) }} pesanan · maksimum 50 per halaman · tanggal menggunakan tanggal pesanan</p></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500"><tr><th v-for="h in ['Pesanan / toko', 'Tanggal', 'Data keuangan', 'Penjualan', 'Potongan', 'Untuk Dibayar', 'Referensi payout']" :key="h" class="p-3">{{ h }}</th></tr></thead>
+                            <tbody class="divide-y">
+                                <tr v-for="row in income.rows" :key="row.order_id">
+                                    <td class="p-3"><span class="font-bold text-blue-700">{{ row.order_id }}</span><small class="block text-slate-500 mt-1">{{ row.store_name }} · {{ row.platform }}</small></td>
+                                    <td class="p-3">{{ String(row.order_date ?? '').slice(0, 10) }}</td>
+                                    <td class="p-3"><span class="rounded-full bg-slate-100 px-2 py-1">{{ INCOME_STATE[row.state] ?? row.state }}</span></td>
+                                    <td class="p-3">{{ money(row.gross_amount) }}</td>
+                                    <td class="p-3">{{ money(row.total_fees) }}</td>
+                                    <td class="p-3">{{ money(row.net_income) }}</td>
+                                    <td class="p-3 text-slate-500">{{ row.payout_batch_id || 'Belum tersedia' }}</td>
+                                </tr>
+                                <tr v-if="!income.rows.length"><td colspan="7" class="p-10 text-center text-slate-500">Belum ada pesanan API yang sesuai filter. Sinkronkan toko atau ubah periode.</td></tr>
+                            </tbody>
                         </table>
                     </div>
-                    <div class="form-actions"><button class="button button-primary" type="button" :disabled="busy" @click="confirmImport">Konfirmasi impor {{ importer.count }} baris</button></div>
+                    <footer class="p-4 border-t flex justify-between text-xs"><span>Halaman {{ income.page }} / {{ income.pages }}</span><div class="flex gap-3"><a v-if="income.page > 1" href="#" @click.prevent="go({ page: income.page - 1 })">Sebelumnya</a><a v-if="income.page < income.pages" href="#" @click.prevent="go({ page: income.page + 1 })">Berikutnya</a></div></footer>
                 </div>
-            </section>
+            </template>
 
-            <section class="panel">
-                <div class="filter-bar">
-                    <div class="field"><label for="p-status">Status</label><select id="p-status" v-model="filter.payout_status" @change="go()"><option value="">Semua</option><option v-for="(label, key) in PAYOUT_LABEL" :key="key" :value="key">{{ label }}</option></select></div>
-                    <div class="field"><label for="p-basis">Tanggal berdasarkan</label><select id="p-basis" v-model="filter.payout_date_basis" @change="go()"><option value="requested">Pengajuan</option><option value="completed">Selesai</option></select></div>
+            <template v-else-if="tab === 'payout'">
+                <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs text-blue-900 leading-6">Sumber riwayat: laporan penarikan resmi yang Anda impor. API Payments TikTok belum tersedia untuk pasar SEA. Status berhasil pada laporan belum membuktikan dana masuk bank. Penarikan tidak dicatat sebagai pendapatan atau jurnal baru.</div>
+                <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                    <div v-for="[label, value] in payoutCards" :key="label" class="bg-white border rounded-2xl p-5"><p class="text-xs text-slate-500">{{ label }}</p><p class="font-extrabold text-xl mt-2">{{ value }}</p></div>
                 </div>
-                <DataTable :columns="payoutColumns" :rows="withdrawals.rows" row-key="id" empty="Belum ada penarikan yang diimpor pada filter ini.">
-                    <template #cell-external_id="{ row }">{{ row.external_id }}<div class="muted cell-note">{{ formatText(row.store_name) }} · {{ formatText(row.platform) }}</div></template>
-                    <template #cell-normalized_status="{ row }"><StatusBadge :label="PAYOUT_LABEL[row.normalized_status] ?? row.source_status" :tone="PAYOUT_TONE[row.normalized_status] ?? 'muted'" /><div v-if="row.failure_reason" class="cell-note warn-text">{{ row.failure_reason }}</div></template>
-                    <template #cell-destination="{ row }">{{ formatText(row.bank_name) }}<div class="muted cell-note">{{ formatText(row.account_mask) }}</div></template>
-                </DataTable>
-                <div class="form-actions page-controls">
-                    <span class="muted">Halaman {{ withdrawals.page }} dari {{ withdrawals.pages }}</span>
-                    <button class="button button-secondary" type="button" :disabled="withdrawals.page <= 1" @click="go({ payout_page: withdrawals.page - 1 })">Sebelumnya</button>
-                    <button class="button button-secondary" type="button" :disabled="withdrawals.page >= withdrawals.pages" @click="go({ payout_page: withdrawals.page + 1 })">Berikutnya</button>
+                <form class="bg-white border rounded-xl p-4 flex flex-wrap gap-3 items-end" @submit.prevent="go()">
+                    <label class="text-xs">Status penarikan<select v-model="filter.payout_status" class="block border rounded-lg p-2 mt-1"><option value="">Semua status</option><option v-for="(label, key) in PAYOUT_LABEL" :key="key" :value="key">{{ label }}</option></select></label>
+                    <label class="text-xs">Dasar tanggal<select v-model="filter.payout_date_basis" class="block border rounded-lg p-2 mt-1"><option value="requested">Tanggal pengajuan</option><option value="completed">Tanggal selesai</option></select></label>
+                    <button class="bg-emerald-600 text-white text-xs font-bold p-2 rounded-lg">Terapkan</button>
+                </form>
+
+                <details v-if="can_import" class="bg-white border rounded-2xl p-5">
+                    <summary class="font-bold cursor-pointer">Impor laporan penarikan (XLSX toko)</summary>
+                    <p class="text-xs text-slate-500 mt-3 leading-6">Unggah file income XLSX asli TikTok Shop tanpa mengubah sheet atau kolom. Sistem membaca hanya baris Withdrawal di sheet Riwayat penarikan; Earnings dan GMV Pay Deduction dikecualikan. Alternatif CSV tetap tersedia dengan <a class="text-blue-700 underline" href="/api/marketplace-withdrawals.php?action=template">template CSV</a>. Rekening disimpan tersamarkan.</p>
+                    <form class="flex flex-wrap gap-3 items-end mt-4" @submit.prevent="preview">
+                        <label class="text-xs">Toko sumber<select v-model="importer.storeId" required class="block border rounded-lg p-2 mt-1"><option v-for="store in stores" :key="store.id" :value="store.id">{{ store.store_name }} · {{ store.platform }}</option></select></label>
+                        <input type="file" accept=".xlsx,.csv" required class="text-xs" @change="onFile" />
+                        <button class="rounded-lg bg-emerald-600 text-white px-4 py-2 text-xs font-bold" :disabled="busy || !importer.file">Pratinjau impor</button>
+                    </form>
+                    <p v-if="importError" class="text-xs text-amber-800 mt-3" role="alert">{{ importError }}</p>
+                    <div v-if="importer.key" class="mt-4 text-xs space-y-3">
+                        <p><strong>{{ importer.count }} baris</strong> siap diimpor. Contoh {{ importer.sample.length }} baris pertama:</p>
+                        <div class="overflow-auto"><table class="w-full text-xs text-left"><thead class="bg-slate-50 text-slate-500"><tr><th class="p-2">ID</th><th class="p-2">Pengajuan</th><th class="p-2">Nominal</th><th class="p-2">Mata uang</th><th class="p-2">Status</th></tr></thead><tbody class="divide-y"><tr v-for="row in importer.sample" :key="row.external_id"><td class="p-2">{{ row.external_id }}</td><td class="p-2">{{ row.requested_at }}</td><td class="p-2">{{ row.amount }}</td><td class="p-2">{{ row.currency }}</td><td class="p-2">{{ row.source_status }}</td></tr></tbody></table></div>
+                        <button class="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold" type="button" :disabled="busy" @click="confirmImport">Konfirmasi impor {{ importer.count }} baris</button>
+                    </div>
+                </details>
+
+                <div class="bg-white border rounded-2xl overflow-hidden">
+                    <div class="p-5 border-b"><h2 class="font-bold">Riwayat penarikan dana</h2><p class="text-xs text-slate-500 mt-1">Tidak menghubungkan pesanan secara perkiraan.</p></div>
+                    <div class="overflow-auto">
+                        <table class="w-full text-xs text-left whitespace-nowrap">
+                            <thead class="bg-slate-50 text-slate-500"><tr><th v-for="h in ['ID / toko', 'Pengajuan', 'Selesai', 'Nominal', 'Biaya', 'Bersih dikirim', 'Status', 'Tujuan', 'Sumber']" :key="h" class="p-3">{{ h }}</th></tr></thead>
+                            <tbody class="divide-y">
+                                <tr v-for="w in withdrawals.rows" :key="w.id ?? w.external_id">
+                                    <td class="p-3 font-bold">{{ w.external_id }}<small class="block font-normal text-slate-500 mt-1">{{ w.store_name }} · {{ w.platform }}</small></td>
+                                    <td class="p-3">{{ w.requested_at }} WIB</td>
+                                    <td class="p-3">{{ w.completed_at ? `${w.completed_at} WIB` : 'Belum tersedia' }}</td>
+                                    <td v-for="k in ['amount', 'fee', 'net_amount']" :key="k" class="p-3">{{ w[k] === null || w[k] === undefined ? 'Belum tersedia' : `${w.currency} ${new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(w[k]))}` }}</td>
+                                    <td class="p-3"><span class="rounded-full px-2 py-1" :class="w.normalized_status === 'succeeded' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'">{{ PAYOUT_LABEL[w.normalized_status] ?? w.source_status }}</span></td>
+                                    <td class="p-3">{{ w.bank_name ?? '' }} {{ w.account_mask ?? 'Belum tersedia' }}</td>
+                                    <td class="p-3">Impor Laporan</td>
+                                </tr>
+                                <tr v-if="!withdrawals.rows.length"><td colspan="9" class="p-10 text-center text-slate-500">Belum ada penarikan yang diimpor pada filter ini.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <footer class="p-4 border-t flex justify-between text-xs"><span>Halaman {{ withdrawals.page }} / {{ withdrawals.pages }}</span><div class="flex gap-3"><a v-if="withdrawals.page > 1" href="#" @click.prevent="go({ payout_page: withdrawals.page - 1 })">Sebelumnya</a><a v-if="withdrawals.page < withdrawals.pages" href="#" @click.prevent="go({ payout_page: withdrawals.page + 1 })">Berikutnya</a></div></footer>
                 </div>
-            </section>
-        </template>
+            </template>
+
+            <article v-else class="rounded-2xl border bg-white p-6">
+                <h2 class="font-bold text-lg">Rekonsiliasi Bank Marketplace</h2>
+                <p class="text-sm text-slate-500 mt-3 leading-6">Pencocokan memerlukan data penarikan resmi dan mutasi bank yang memiliki nominal, tanggal, dan nomor referensi unik. Status penarikan berhasil dari marketplace belum otomatis membuktikan dana telah masuk dan terverifikasi di rekening bank.</p>
+                <div class="mt-4 p-4 rounded-xl bg-slate-50 border text-xs text-slate-600 space-y-2"><p><b>Prinsip Pencocokan Rekonsiliasi:</b></p><ul class="list-disc list-inside space-y-1"><li>Penarikan dana tidak dicatat ulang sebagai pendapatan penjualan.</li><li>HPP mengurangi laba perusahaan, bukan mengurangi nilai transfer marketplace ke bank.</li><li>Setiap selisih biaya kliring atau selisih nominal harus dicatat sebagai beban administrasi bank.</li></ul></div>
+                <p class="text-xs text-amber-700 mt-4">Status: menunggu sumber data mutasi bank. Tidak ada pencatatan pemasukan atau jurnal baru dari halaman ini.</p>
+            </article>
+        </section>
     </MarketplaceShell>
 </template>
