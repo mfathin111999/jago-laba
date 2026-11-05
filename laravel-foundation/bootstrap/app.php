@@ -43,13 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'legacy.session' => LegacySessionBridge::class,
             'company.context' => EnsureCompanyContext::class,
-            'company' => EnsureCompanyContext::class,
             'store.context' => EnsureStoreContext::class,
-            'store' => EnsureStoreContext::class,
             'workspace.context' => EnsureWorkspace::class,
-            'workspace' => EnsureWorkspace::class,
             'role.action' => EnsureRoleAction::class,
-            'role' => EnsureRoleAction::class,
             'legacy.marketplace.ajax' => EnsureLegacyMarketplaceAjaxContract::class,
             'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,

@@ -544,7 +544,7 @@
         ],
         "uri": "marketplace.php",
         "name": "legacy.marketplace.page",
-        "action": "\\App\\Http\\Controllers\\LegacyPilotPageController@marketplace",
+        "action": "App\\Http\\Controllers\\LegacyPilotPageController@marketplace",
         "defaults": [],
         "middleware": [
             "auth",

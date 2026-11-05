@@ -58,7 +58,7 @@ final class RouteContractTest extends TestCase
                 'methods' => $methods,
                 'uri' => $uri,
                 'name' => $route->getName(),
-                'action' => is_string($route->getActionName()) ? $route->getActionName() : 'Closure',
+                'action' => is_string($route->getActionName()) ? ltrim($route->getActionName(), '\\') : 'Closure',
                 'defaults' => $route->defaults,
                 'middleware' => $middleware,
             ];
