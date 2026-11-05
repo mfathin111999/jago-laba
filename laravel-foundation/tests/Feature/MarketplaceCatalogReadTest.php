@@ -179,6 +179,36 @@ final class MarketplaceCatalogReadTest extends TestCase
         $this->assertSame(75000.0, $this->hppOn('2026-11-01'));
     }
 
+    public function test_hpp_refusals_keep_their_codes_statuses_and_request_id(): void
+    {
+        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        session(['_token' => 'test-csrf-token', 'workspace' => 'marketplace']);
+        $post = fn (string $url, array $payload) => $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')->postJson($url, $payload);
+
+        // An SKU that is not in the active store is refused as a domain error (403).
+        $unknown = $post('/pilot/marketplace/hpp/global', ['store_id' => 'a', 'sku' => 'NO-SUCH-SKU', 'hpp' => '1000', 'apply_all_variants' => false, 'recalculate_history' => false])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'STORE_FORBIDDEN')
+            ->assertJsonPath('message', 'SKU tidak ditemukan di toko aktif.');
+        $this->assertSame($unknown->headers->get('X-Request-Id'), $unknown->json('request_id'));
+
+        // Applying to all variants without a product id is an input error (422).
+        $post('/pilot/marketplace/hpp/global', ['store_id' => 'a', 'hpp' => '1000', 'apply_all_variants' => true, 'recalculate_history' => false])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'HPP_INPUT_INVALID');
+
+        // Batch: unknown SKU is HPP_FORBIDDEN (403); the same SKU twice is HPP_BATCH_INVALID (422).
+        $post('/pilot/marketplace/hpp/batch', ['changes' => [['store_id' => 'a', 'sku' => 'NO-SUCH-SKU', 'hpp' => '1000']]])
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'HPP_FORBIDDEN');
+        $post('/pilot/marketplace/hpp/batch', ['changes' => [['store_id' => 'a', 'sku' => 'SKU-1', 'hpp' => '1000'], ['store_id' => 'a', 'sku' => 'SKU-1', 'hpp' => '2000']]])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'HPP_BATCH_INVALID')
+            ->assertJsonPath('message', 'SKU yang sama dikirim lebih dari sekali.');
+    }
+
     private function hppOn(string $effectiveFrom): float
     {
         return (float) DB::table('marketplace_hpp_history')

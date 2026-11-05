@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplaceGlobalHppUpdateRequest;
 use App\Http\Requests\MarketplaceHppBatchRequest;
 use App\Http\Requests\MarketplaceSkuHppUpdateRequest;
+use App\Http\Responses\ApiResponse;
 use App\Pilots\Marketplace\MarketplaceHppService;
 use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use Throwable;
 
 final class MarketplaceHppWriteController
 {
@@ -19,151 +18,77 @@ final class MarketplaceHppWriteController
 
     public function updateSku(MarketplaceSkuHppUpdateRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-
-        try {
-            $result = $this->service->updateSkuHpp(
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->updateSkuHpp(
                 $request->user('web'),
                 (string) $request->attributes->get('company_key'),
                 (string) $request->validated('store_id'),
                 (string) $request->validated('sku'),
                 (float) $request->validated('hpp'),
                 $request->validated('product_variant_id'),
-            );
-        } catch (DomainException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], 403)->header('X-Request-Id', $requestId);
-        } catch (InvalidArgumentException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'HPP_INPUT_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Update SKU HPP failed.', ['request_id' => $requestId, 'exception' => $exception::class, 'message' => $exception->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui HPP SKU.',
-                'code' => 'UPDATE_HPP_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+            ),
+            'UPDATE_HPP_FAILED',
+            'Gagal memperbarui HPP SKU.',
+            'Update SKU HPP failed.',
+            logExceptionMessage: true,
+            refusals: [DomainException::class => [403, 'STORE_FORBIDDEN'], InvalidArgumentException::class => [422, 'HPP_INPUT_INVALID']],
+        ));
     }
 
     public function updateGlobal(MarketplaceGlobalHppUpdateRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
         $applyAll = (bool) $request->validated('apply_all_variants');
         $storeId = (string) $request->validated('store_id');
         $amount = (string) $request->validated('hpp');
         $recalculate = (bool) $request->validated('recalculate_history');
         $effective = $request->validated('effective_from');
+        $companyKey = (string) $request->attributes->get('company_key');
 
-        try {
-            if ($applyAll) {
-                $productId = (string) $request->validated('product_id');
-                if ($productId === '') {
-                    throw new InvalidArgumentException('Product ID wajib diisi jika menerapkan ke semua varian.');
+        return $this->respond(ApiResponse::guard(
+            function () use ($request, $applyAll, $storeId, $amount, $recalculate, $effective, $companyKey): array {
+                if ($applyAll) {
+                    $productId = (string) $request->validated('product_id');
+                    if ($productId === '') {
+                        throw new InvalidArgumentException('Product ID wajib diisi jika menerapkan ke semua varian.');
+                    }
+                    $affected = $this->service->updateProductHpp($request->user('web'), $companyKey, $storeId, $productId, $amount, $recalculate, $effective);
+                } else {
+                    $sku = (string) $request->validated('sku');
+                    if ($sku === '') {
+                        throw new InvalidArgumentException('SKU wajib diisi.');
+                    }
+                    $affected = $this->service->updateHpp($request->user('web'), $companyKey, $storeId, $sku, $amount, $recalculate, $effective);
                 }
-                $affected = $this->service->updateProductHpp(
-                    $request->user('web'),
-                    (string) $request->attributes->get('company_key'),
-                    $storeId,
-                    $productId,
-                    $amount,
-                    $recalculate,
-                    $effective,
-                );
-            } else {
-                $sku = (string) $request->validated('sku');
-                if ($sku === '') {
-                    throw new InvalidArgumentException('SKU wajib diisi.');
-                }
-                $affected = $this->service->updateHpp(
-                    $request->user('web'),
-                    (string) $request->attributes->get('company_key'),
-                    $storeId,
-                    $sku,
-                    $amount,
-                    $recalculate,
-                    $effective,
-                );
-            }
 
-            $result = [
-                'success' => true,
-                'affected_orders' => $affected,
-                'message' => "HPP tersimpan. {$affected} transaksi diperbarui. ".($recalculate ? 'Histori dihitung ulang sesuai pilihan Anda.' : 'Transaksi sebelum tanggal berlaku dipertahankan.'),
-            ];
-        } catch (DomainException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], 403)->header('X-Request-Id', $requestId);
-        } catch (InvalidArgumentException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'HPP_INPUT_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Update global HPP failed.', ['request_id' => $requestId, 'exception' => $exception::class, 'message' => $exception->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui HPP produk.',
-                'code' => 'UPDATE_GLOBAL_HPP_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+                return [
+                    'success' => true,
+                    'affected_orders' => $affected,
+                    'message' => "HPP tersimpan. {$affected} transaksi diperbarui. ".($recalculate ? 'Histori dihitung ulang sesuai pilihan Anda.' : 'Transaksi sebelum tanggal berlaku dipertahankan.'),
+                ];
+            },
+            'UPDATE_GLOBAL_HPP_FAILED',
+            'Gagal memperbarui HPP produk.',
+            'Update global HPP failed.',
+            logExceptionMessage: true,
+            refusals: [DomainException::class => [403, 'STORE_FORBIDDEN'], InvalidArgumentException::class => [422, 'HPP_INPUT_INVALID']],
+        ));
     }
 
     public function saveBatch(MarketplaceHppBatchRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-
-        try {
-            $result = $this->service->updateHppBatch(
+        $result = ApiResponse::guard(
+            fn (): array => $this->service->updateHppBatch(
                 $request->user('web'),
                 (string) $request->attributes->get('company_key'),
                 (array) $request->validated('changes'),
-            );
-        } catch (DomainException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'HPP_FORBIDDEN',
-                'request_id' => $requestId,
-            ], 403)->header('X-Request-Id', $requestId);
-        } catch (InvalidArgumentException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'HPP_BATCH_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Save HPP batch failed.', ['request_id' => $requestId, 'exception' => $exception::class]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan batch HPP.',
-                'code' => 'SAVE_HPP_BATCH_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
+            ),
+            'SAVE_HPP_BATCH_FAILED',
+            'Gagal menyimpan batch HPP.',
+            'Save HPP batch failed.',
+            refusals: [DomainException::class => [403, 'HPP_FORBIDDEN'], InvalidArgumentException::class => [422, 'HPP_BATCH_INVALID']],
+        );
+        if ($result instanceof JsonResponse) {
+            return $result;
         }
 
         $skuCount = (int) ($result['sku_count'] ?? count((array) $request->validated('changes')));
@@ -172,6 +97,14 @@ final class MarketplaceHppWriteController
             'success' => true,
             'data' => $result,
             'message' => "{$skuCount} SKU tersimpan. HPP dan laba transaksi terkait sudah diperbarui.",
-        ])->header('X-Request-Id', $requestId);
+        ])->header('X-Request-Id', RequestId::current());
+    }
+
+    /**
+     * @param  array<string, mixed>|JsonResponse  $result
+     */
+    private function respond(array|JsonResponse $result): JsonResponse
+    {
+        return $result instanceof JsonResponse ? $result : response()->json($result)->header('X-Request-Id', RequestId::current());
     }
 }

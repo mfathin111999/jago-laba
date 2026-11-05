@@ -34,15 +34,23 @@ final class ApiResponse
      * @template T
      *
      * @param  callable(): T  $action
+     * @param  array<class-string<Throwable>, array{0: int, 1: string}>  $refusals  exceptions the endpoint answers with their own
+     *                                                                              message, as [status, code]; checked in order
      * @return T|JsonResponse
      */
-    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage, bool $logExceptionMessage = false): mixed
+    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage, bool $logExceptionMessage = false, array $refusals = []): mixed
     {
         try {
             return $action();
         } catch (ApiException|IdempotencyConflict $exception) {
             throw $exception;
         } catch (Throwable $exception) {
+            foreach ($refusals as $class => [$status, $code]) {
+                if ($exception instanceof $class) {
+                    return self::error($exception->getMessage(), $code, $status);
+                }
+            }
+
             Log::error($logMessage, [
                 'request_id' => RequestId::current(),
                 'exception' => $exception::class,
