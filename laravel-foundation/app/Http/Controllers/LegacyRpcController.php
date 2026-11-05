@@ -102,9 +102,48 @@ final class LegacyRpcController
         }
     }
 
+    /**
+     * RPC methods that take one array argument (args[0], already an array or a JSON string) and return the service
+     * result as-is: each is [user, company key, data] -> result. They all answer {ok: true, result}.
+     *
+     * @return array<string, \Closure(LegacyUser, string, array<string, mixed>): mixed>
+     */
+    private function dataHandlers(): array
+    {
+        return [
+            'createHutangKonveksiManual' => $this->hutang->createManual(...),
+            'bayarHutangKonveksi' => $this->hutang->pay(...),
+            'saveMaterialMasterServerRpc' => $this->purchase->saveMaterial(...),
+            'savePurchaseInvoiceServerRpc' => $this->purchase->saveInvoice(...),
+            'correctPenjualanProduksiServer' => $this->salesWrite->correct(...),
+            'voidPenjualanProduksiServer' => $this->salesWrite->void(...),
+            'activateHppProductionServerRpc' => $this->syncAndHpp->activateHpp(...),
+            'saveDocumentTemplate' => $this->docsAndAi->saveTemplate(...),
+            'retryBackupPenjualanProduksiServer' => $this->salesWrite->retryBackup(...),
+            'retryUploadPurchaseDocumentServerRpc' => $this->purchase->retryDocument(...),
+        ];
+    }
+
+    /**
+     * @param  \Closure(LegacyUser, string, array<string, mixed>): mixed  $handler
+     * @param  array<int, mixed>  $args
+     */
+    private function callWithData(\Closure $handler, array $args): JsonResponse
+    {
+        $user = Auth::guard('web')->user();
+        $companyKey = $this->company->key($user);
+        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
+
+        return response()->json(['ok' => true, 'result' => $handler($user, (string) $companyKey, (array) $data)]);
+    }
+
     /** @param array<int, mixed> $args */
     private function dispatch(Request $request, string $method, array $args): JsonResponse
     {
+        if ($handler = ($this->dataHandlers()[$method] ?? null)) {
+            return $this->callWithData($handler, $args);
+        }
+
         if ($method === 'loadSemuaData') {
             return $this->loadKonveksiData($request);
         }
@@ -117,44 +156,12 @@ final class LegacyRpcController
             return $this->postSale($request, $args);
         }
 
-        if ($method === 'createHutangKonveksiManual') {
-            return $this->createHutang($request, $args);
-        }
-
-        if ($method === 'bayarHutangKonveksi') {
-            return $this->bayarHutang($request, $args);
-        }
-
-        if ($method === 'saveMaterialMasterServerRpc') {
-            return $this->saveMaterial($request, $args);
-        }
-
-        if ($method === 'savePurchaseInvoiceServerRpc') {
-            return $this->savePurchaseInvoice($request, $args);
-        }
-
-        if ($method === 'correctPenjualanProduksiServer') {
-            return $this->correctSale($request, $args);
-        }
-
-        if ($method === 'voidPenjualanProduksiServer') {
-            return $this->voidSale($request, $args);
-        }
-
         if (in_array($method, ['backupSekarangJagoLaba', 'buatBackupManualSekarang'], true)) {
             return $this->backupNow($request, $args);
         }
 
         if ($method === 'jadwalkanSnapshotRinganJagoLaba') {
             return $this->scheduleSnapshot();
-        }
-
-        if ($method === 'retryBackupPenjualanProduksiServer') {
-            return $this->retrySaleBackup($args);
-        }
-
-        if ($method === 'retryUploadPurchaseDocumentServerRpc') {
-            return $this->retryPurchaseDocument($args);
         }
 
         if ($method === 'getRiwayatBackupJagoLaba') {
@@ -169,20 +176,12 @@ final class LegacyRpcController
             return $this->syncMultipleTabs($request, $args);
         }
 
-        if ($method === 'activateHppProductionServerRpc') {
-            return $this->activateHpp($request, $args);
-        }
-
         if ($method === 'syncBahanHppFromPurchasesServerRpc') {
             return $this->syncPurchasesHpp($request);
         }
 
         if ($method === 'saveDocumentFileServer') {
             return $this->saveDocument($request, $args);
-        }
-
-        if ($method === 'saveDocumentTemplate') {
-            return $this->saveTemplate($request, $args);
         }
 
         if ($method === 'getGeminiApiKeyStatusServerRpc') {
@@ -239,16 +238,6 @@ final class LegacyRpcController
         return response()->json(['ok' => true, 'result' => $res]);
     }
 
-    private function saveTemplate(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->docsAndAi->saveTemplate($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
     private function geminiStatus(): JsonResponse
     {
         $res = $this->docsAndAi->geminiStatus();
@@ -294,41 +283,11 @@ final class LegacyRpcController
         return response()->json(['ok' => true, 'result' => $res]);
     }
 
-    private function activateHpp(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->syncAndHpp->activateHpp($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
     private function syncPurchasesHpp(Request $request): JsonResponse
     {
         $user = Auth::guard('web')->user();
         $companyKey = $this->company->key($user);
         $res = $this->syncAndHpp->syncFromPurchases($user, (string) $companyKey);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function correctSale(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->salesWrite->correct($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function voidSale(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->salesWrite->void($user, (string) $companyKey, (array) $data);
 
         return response()->json(['ok' => true, 'result' => $res]);
     }
@@ -380,26 +339,6 @@ final class LegacyRpcController
         return response()->json(['ok' => true, 'result' => $res]);
     }
 
-    /** @param array<int, mixed> $args */
-    private function retrySaleBackup(array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->salesWrite->retryBackup($user, (string) $this->company->key($user), (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    /** @param array<int, mixed> $args */
-    private function retryPurchaseDocument(array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->purchase->retryDocument($user, (string) $this->company->key($user), (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
     /**
      * Backup rows keep full server paths in the database for operators; the browser only gets file names, so a
      * signed-in user never learns the server's directory layout. The screen's download link falls back to '#'.
@@ -434,46 +373,6 @@ final class LegacyRpcController
     private function backupHistory(Request $request): JsonResponse
     {
         $res = array_map(fn (array $row): array => $this->publicBackup($row), $this->backup->history());
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function createHutang(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->hutang->createManual($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function bayarHutang(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->hutang->pay($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function saveMaterial(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->purchase->saveMaterial($user, (string) $companyKey, (array) $data);
-
-        return response()->json(['ok' => true, 'result' => $res]);
-    }
-
-    private function savePurchaseInvoice(Request $request, array $args): JsonResponse
-    {
-        $user = Auth::guard('web')->user();
-        $companyKey = $this->company->key($user);
-        $data = is_array($args[0] ?? null) ? $args[0] : (is_string($args[0] ?? null) ? json_decode($args[0], true) : []);
-        $res = $this->purchase->saveInvoice($user, (string) $companyKey, (array) $data);
 
         return response()->json(['ok' => true, 'result' => $res]);
     }
