@@ -110,17 +110,17 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
                 ->middleware(['can:sync.trigger', 'store.context:store_id', 'browser.csrf'])
                 ->name('pilot.marketplace.sync');
             Route::post('/withdrawals/preview', MarketplaceWithdrawalPreviewController::class)
-                ->middleware(['can:withdrawal.manage', 'store.context:store_id', 'browser.csrf'])
+                ->middleware(['can:withdrawal.manage', 'store.context:store_id', 'browser.csrf', 'throttle:imports'])
                 ->name('pilot.marketplace.withdrawals.preview');
 
             // OAuth: one invokable controller, the action comes from the route default.
             Route::prefix('oauth')->group(function (): void {
                 Route::get('/status', MarketplaceOAuthController::class)->defaults('oauth_action', 'status')->name('pilot.marketplace.oauth.status');
-                Route::post('/start', MarketplaceOAuthController::class)->defaults('oauth_action', 'start')->middleware('browser.csrf')->name('pilot.marketplace.oauth.start');
+                Route::post('/start', MarketplaceOAuthController::class)->defaults('oauth_action', 'start')->middleware(['browser.csrf', 'throttle:oauth'])->name('pilot.marketplace.oauth.start');
                 Route::get('/callback', MarketplaceOAuthController::class)->defaults('oauth_action', 'callback')->name('pilot.marketplace.oauth.callback');
                 Route::get('/pending', MarketplaceOAuthController::class)->defaults('oauth_action', 'pending')->name('pilot.marketplace.oauth.pending');
-                Route::post('/select', MarketplaceOAuthController::class)->defaults('oauth_action', 'select')->middleware('browser.csrf')->name('pilot.marketplace.oauth.select');
-                Route::post('/refresh', MarketplaceOAuthController::class)->defaults('oauth_action', 'refresh')->middleware('browser.csrf')->name('pilot.marketplace.oauth.refresh');
+                Route::post('/select', MarketplaceOAuthController::class)->defaults('oauth_action', 'select')->middleware(['browser.csrf', 'throttle:oauth'])->name('pilot.marketplace.oauth.select');
+                Route::post('/refresh', MarketplaceOAuthController::class)->defaults('oauth_action', 'refresh')->middleware(['browser.csrf', 'throttle:oauth'])->name('pilot.marketplace.oauth.refresh');
             });
         });
     });
@@ -163,7 +163,7 @@ Route::middleware('legacy.session')->group(function (): void {
                 ->middleware('can:integration.manage')
                 ->name('legacy.marketplace.sync');
             Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
-                ->middleware('can:withdrawal.manage')
+                ->middleware(['can:withdrawal.manage', 'throttle:imports'])
                 ->name('legacy.marketplace.withdrawals');
             Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
                 ->middleware('can:price.manage')

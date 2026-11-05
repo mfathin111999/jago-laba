@@ -7,8 +7,11 @@ use App\Authorization\RequestContext;
 use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Marketplace\MarketplaceBrandingService;
 use App\Policies\RolePolicy;
+use App\Http\Responses\ApiResponse;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
@@ -43,6 +46,14 @@ class AppServiceProvider extends ServiceProvider
             /** @var Request $this */
             return (string) (app(RequestContext::class)->companyKey() ?? $this->attributes->get('company_key', ''));
         });
+
+        // Limits for actions that are expensive or call a provider; per signed-in user (IP when anonymous).
+        // Login has its own limiter (LegacyAuthenticationService). Callbacks from a provider are never limited.
+        foreach (['imports' => [10, 'Terlalu banyak impor dalam satu menit.'], 'oauth' => [20, 'Terlalu banyak permintaan koneksi toko dalam satu menit.']] as $name => [$perMinute, $message]) {
+            RateLimiter::for($name, static fn (Request $request): Limit => Limit::perMinute($perMinute)
+                ->by($name.'|'.($request->user('web')?->getAuthIdentifier() ?: $request->ip()))
+                ->response(static fn (Request $request, array $headers) => ApiResponse::error($message.' Coba lagi sebentar lagi.', 'RATE_LIMITED', 429)->withHeaders($headers)));
+        }
 
         Auth::provider('legacy', function ($app, array $config): LegacyUserProvider {
             return new LegacyUserProvider($app['db'], $config['connection'] ?? null);

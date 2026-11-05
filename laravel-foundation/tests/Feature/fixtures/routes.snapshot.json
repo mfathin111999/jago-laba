@@ -399,6 +399,7 @@
             "can:withdrawal.manage",
             "company.context",
             "legacy.session",
+            "throttle:imports",
             "web",
             "workspace.context:marketplace"
         ]
@@ -912,6 +913,7 @@
             "auth",
             "browser.csrf",
             "company.context",
+            "throttle:oauth",
             "web",
             "workspace.context:marketplace"
         ]
@@ -930,6 +932,7 @@
             "auth",
             "browser.csrf",
             "company.context",
+            "throttle:oauth",
             "web",
             "workspace.context:marketplace"
         ]
@@ -948,6 +951,7 @@
             "auth",
             "browser.csrf",
             "company.context",
+            "throttle:oauth",
             "web",
             "workspace.context:marketplace"
         ]
@@ -1135,6 +1139,7 @@
             "can:withdrawal.manage",
             "company.context",
             "store.context:store_id",
+            "throttle:imports",
             "web",
             "workspace.context:marketplace"
         ]

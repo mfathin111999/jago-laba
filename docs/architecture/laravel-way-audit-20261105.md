@@ -204,7 +204,7 @@ Diperbarui setelah pengerjaan fase 0–5. Setiap langkah dikerjakan dengan test 
 | E3 `env()` di luar config | Selesai | `f221b21` |
 | F1 Berkas / CSV | **Sebagian** | `45167e9` dokumen via `Storage`; `2d32b06` CSV via `CsvDownload`. Backup tidak dipindah (gzip/mysqldump butuh path nyata) |
 | F2 Waktu | Belum | |
-| F3 Cache / event / rate limit | Belum | Rate limit menunggu keputusan batas |
+| F3 Cache / event / rate limit | **Sebagian** | Rate limit: login sudah dibatasi sejak awal (`LegacyAuthenticationService`, 5 percobaan/60 dtk per username+IP; audit awal keliru menyebutnya belum ada). Ditambah `throttle:imports` (10/menit) dan `throttle:oauth` (20/menit) per pengguna pada 5 route impor dan OAuth. Cache dan event belum |
 | F4 Audit via event | Belum | |
 | G1 Frontend URL | Selesai (path statis) | `7fe39c4`: `lib/routes.ts` + test terhadap snapshot route. `useForm` belum dipakai |
 | H1 Skema test | **Sebagian** | `e450b96`: dua helper menggantikan 39 blok; tabel yang berbeda per test tetap lokal |
