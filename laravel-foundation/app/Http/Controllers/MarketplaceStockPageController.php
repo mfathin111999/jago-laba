@@ -13,7 +13,7 @@ final class MarketplaceStockPageController
 {
     public function __invoke(MarketplaceStockRequest $request, StockReadService $stock, MarketplaceStoreReadService $stores, RolePolicy $policy): mixed
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $overview = $stores->overview($companyKey);
         $filters = $request->validated();
         $storeId = (string) ($filters['store_id'] ?? $overview['stores'][0]['id'] ?? '');

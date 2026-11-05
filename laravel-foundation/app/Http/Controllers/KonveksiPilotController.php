@@ -13,7 +13,7 @@ final class KonveksiPilotController
 
     public function __invoke(KonveksiPilotRequest $request): Response
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         return Inertia::render('Pilot/Konveksi', $this->pilot->overview($companyKey, $request->tab()));
     }

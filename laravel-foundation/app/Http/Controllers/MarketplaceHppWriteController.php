@@ -21,7 +21,7 @@ final class MarketplaceHppWriteController
         return $this->respond(ApiResponse::guard(
             fn (): array => $this->service->updateSkuHpp(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 (string) $request->validated('store_id'),
                 (string) $request->validated('sku'),
                 (float) $request->validated('hpp'),
@@ -42,7 +42,7 @@ final class MarketplaceHppWriteController
         $amount = (string) $request->validated('hpp');
         $recalculate = (bool) $request->validated('recalculate_history');
         $effective = $request->validated('effective_from');
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         return $this->respond(ApiResponse::guard(
             function () use ($request, $applyAll, $storeId, $amount, $recalculate, $effective, $companyKey): array {
@@ -79,7 +79,7 @@ final class MarketplaceHppWriteController
         $result = ApiResponse::guard(
             fn (): array => $this->service->updateHppBatch(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 (array) $request->validated('changes'),
             ),
             'SAVE_HPP_BATCH_FAILED',

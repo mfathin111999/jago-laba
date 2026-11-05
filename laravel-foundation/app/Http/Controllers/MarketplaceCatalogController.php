@@ -15,11 +15,11 @@ final class MarketplaceCatalogController
     public function __invoke(MarketplaceCatalogRequest $request, CatalogReadService $catalog, MarketplaceStoreReadService $stores, RolePolicy $policy, LiveGateway $live): mixed
     {
         $filters = $request->validated();
-        $overview = $stores->overview((string) $request->attributes->get('company_key'));
+        $overview = $stores->overview($request->companyKey());
         $filters['store_id'] = (string) ($filters['store_id'] ?? $overview['stores'][0]['id'] ?? '');
         abort_if($filters['store_id'] === '', 422, 'Pilih toko terlebih dahulu.');
         try {
-            $data = $catalog->listing((string) $request->attributes->get('company_key'), $filters['store_id'], $filters);
+            $data = $catalog->listing($request->companyKey(), $filters['store_id'], $filters);
         } catch (\DomainException $exception) {
             abort(403, $exception->getMessage());
         }
@@ -44,7 +44,7 @@ final class MarketplaceCatalogController
 
         return Inertia::render('Marketplace/Catalog', $props + [
             'stores' => $overview['stores'],
-            'scope' => ['company_key' => (string) $request->attributes->get('company_key'), 'store_id' => $filters['store_id']],
+            'scope' => ['company_key' => $request->companyKey(), 'store_id' => $filters['store_id']],
             'can_edit_hpp' => $policy->allows($request->user('web'), 'hpp.edit'),
             'provider' => ['live' => $live->enabled(), 'can_edit_price' => $policy->allows($request->user('web'), 'price.manage')],
         ]);

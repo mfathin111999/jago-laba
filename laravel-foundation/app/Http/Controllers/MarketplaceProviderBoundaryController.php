@@ -44,7 +44,7 @@ final class MarketplaceProviderBoundaryController
             if ($storeId === '' || ! $this->stores->canAccess($request->user('web'), $storeId)) {
                 throw new DomainException('Store tidak diizinkan.');
             }
-            $detail = $this->orders->detail((string) $request->attributes->get('company_key'), $storeId, $orderId);
+            $detail = $this->orders->detail($request->companyKey(), $storeId, $orderId);
             if ($detail === null) {
                 throw new DomainException('Pesanan tidak ditemukan.');
             }
@@ -77,7 +77,7 @@ final class MarketplaceProviderBoundaryController
      */
     private function liveFinance(Request $request, string $storeId, string $orderId, array $detail): JsonResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         try {
             $snapshot = (array) ($detail['presentation'] ?? []);
             $fresh = ! empty($snapshot['finance_updated_at']) && strtotime((string) $snapshot['finance_updated_at']) > time() - 30;

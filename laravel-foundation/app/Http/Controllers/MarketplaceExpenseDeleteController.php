@@ -18,7 +18,7 @@ final class MarketplaceExpenseDeleteController
         $result = ApiResponse::guard(
             fn (): array => $this->expenses->delete(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 (string) $request->validated('store_id'),
                 (int) $request->validated('id'),
             ),

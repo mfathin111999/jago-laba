@@ -29,7 +29,7 @@ final class MarketplaceExpenseController
         $result = ApiResponse::guard(
             fn (): array => $this->expenses->create(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $request->validated(),
                 $idempotencyKey,
             ),

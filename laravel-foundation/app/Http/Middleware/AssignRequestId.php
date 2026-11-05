@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Authorization\RequestContext;
 use App\Support\RequestId;
 use Closure;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ final class AssignRequestId
         $incoming = trim((string) $request->headers->get('X-Request-Id', ''));
         $id = RequestId::isValid($incoming) ? $incoming : RequestId::generate();
 
+        app(RequestContext::class)->reset();
         Context::add('request_id', $id);
         $request->attributes->set('request_id', $id);
 

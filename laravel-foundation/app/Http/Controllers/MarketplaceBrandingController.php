@@ -31,7 +31,7 @@ final class MarketplaceBrandingController
 
     public function __invoke(Request $request): SymfonyResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         try {
             if ($request->isMethod('GET') && $request->query('image') === '1') {

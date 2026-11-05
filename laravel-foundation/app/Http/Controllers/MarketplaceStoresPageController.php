@@ -20,7 +20,7 @@ final class MarketplaceStoresPageController
 
     public function __invoke(Request $request): Response
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $user = $request->user('web');
         $canDelete = $this->policy->allows($user, 'store.delete');
 

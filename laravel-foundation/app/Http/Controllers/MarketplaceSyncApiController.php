@@ -33,7 +33,7 @@ final class MarketplaceSyncApiController
 
     public function __invoke(Request $request): JsonResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $action = (string) ($request->input('action') ?: 'status');
         $storeId = trim((string) $request->input('store_id', ''));
 

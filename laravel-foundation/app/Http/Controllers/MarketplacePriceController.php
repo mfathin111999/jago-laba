@@ -55,7 +55,7 @@ final class MarketplacePriceController
     {
         $productId = (string) $request->input('product_id', '');
         try {
-            $data = $this->live->run($request->user('web'), (string) $request->attributes->get('company_key'), ['MarketplacePriceService.php'], static function (\PDO $pdo) use ($action, $storeId, $productId, $request): mixed {
+            $data = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplacePriceService.php'], static function (\PDO $pdo) use ($action, $storeId, $productId, $request): mixed {
                 $service = new \MarketplacePriceService($pdo);
 
                 return $action === 'prepare' ? $service->prepare($storeId, $productId) : $service->save($storeId, $productId, (array) $request->input('payload', []));

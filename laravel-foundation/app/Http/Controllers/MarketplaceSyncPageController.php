@@ -26,7 +26,7 @@ final class MarketplaceSyncPageController
 
     public function __invoke(Request $request): Response
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $user = $request->user('web');
         $overview = $this->stores->overview($companyKey);
         $requested = trim((string) ($request->query('store_id') ?: $request->query('store', '')));

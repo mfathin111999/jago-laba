@@ -73,7 +73,7 @@ final class MarketplaceShippingDocumentController
             throw new DomainException('Store tidak diizinkan.');
         }
 
-        $detail = $this->orders->detail((string) $request->attributes->get('company_key'), $storeId, $orderId);
+        $detail = $this->orders->detail($request->companyKey(), $storeId, $orderId);
         $order = $detail['order'] ?? null;
         if ($order === null || ! in_array($order['internal_state'] ?? null, [null, 'active'], true)) {
             throw new DomainException('Pesanan tidak ditemukan di toko aktif.');
@@ -86,7 +86,7 @@ final class MarketplaceShippingDocumentController
         }
 
         if ($this->live->enabled()) {
-            $documents = $this->live->run($request->user('web'), (string) $request->attributes->get('company_key'), ['MarketplaceShippingDocumentService.php'], static function (\PDO $pdo) use ($storeId, $orderId): array {
+            $documents = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplaceShippingDocumentService.php'], static function (\PDO $pdo) use ($storeId, $orderId): array {
                 $documents = (new \MarketplaceShippingDocumentService($pdo))->prepare($storeId, $orderId);
                 foreach ($documents as &$document) {
                     if (! empty($document['success'])) {
@@ -113,7 +113,7 @@ final class MarketplaceShippingDocumentController
     private function liveDownload(Request $request): Response
     {
         $preview = (string) $request->query('preview', '') === '1';
-        $document = $this->live->run($request->user('web'), (string) $request->attributes->get('company_key'), ['MarketplaceShippingDocumentService.php'], static fn (\PDO $pdo): array => (new \MarketplaceShippingDocumentService($pdo))->read((string) $request->query('id', ''), $preview));
+        $document = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplaceShippingDocumentService.php'], static fn (\PDO $pdo): array => (new \MarketplaceShippingDocumentService($pdo))->read((string) $request->query('id', ''), $preview));
 
         return response((string) $document['pdf'], 200, [
             'Content-Type' => 'application/pdf',

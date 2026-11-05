@@ -20,7 +20,7 @@ final class MarketplaceOrderController
 
     public function index(MarketplaceOrderRequest $request): Response
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         try {
             $payload = $this->orders->overview($companyKey, $request->storeId(), $request->filters());
@@ -59,7 +59,7 @@ final class MarketplaceOrderController
 
     public function detail(Request $request, string $order): JsonResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $storeId = trim((string) $request->query('store_id', $request->query('store', '')));
         if ($storeId === '') {
             return response()->json(['success' => false, 'message' => 'Toko aktif wajib dipilih.'], 422);
@@ -84,7 +84,7 @@ final class MarketplaceOrderController
     {
         try {
             $payload = $this->orders->overview(
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $request->storeId(),
                 $request->filters() + ['export' => true],
             );

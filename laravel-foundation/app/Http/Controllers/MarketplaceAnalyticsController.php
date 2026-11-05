@@ -17,7 +17,7 @@ final class MarketplaceAnalyticsController
 
     public function __invoke(MarketplaceAnalyticsRequest $request): Response|RedirectResponse|SymfonyResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         try {
             $payload = $this->analytics->overview(

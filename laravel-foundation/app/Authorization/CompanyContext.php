@@ -26,6 +26,7 @@ final class CompanyContext
         $context = $this->key($user);
 
         $request->attributes->set('company_key', $context);
+        app(RequestContext::class)->setCompanyKey($context);
 
         if ($context === null) {
             return false;

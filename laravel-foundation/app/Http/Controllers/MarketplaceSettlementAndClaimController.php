@@ -24,7 +24,7 @@ final class MarketplaceSettlementAndClaimController
         try {
             $res = $this->service->updateReturnClaimStatus(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $claimId,
                 $storeId,
                 $status,
@@ -49,7 +49,7 @@ final class MarketplaceSettlementAndClaimController
         try {
             $count = $this->service->importProductAdReport(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $storeId,
                 $file->getRealPath(),
             );
@@ -74,7 +74,7 @@ final class MarketplaceSettlementAndClaimController
         try {
             $res = $this->service->importSettlementCSV(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $storeId,
                 $file->getRealPath(),
                 $file->getClientOriginalName(),

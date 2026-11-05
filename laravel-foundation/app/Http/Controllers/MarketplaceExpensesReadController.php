@@ -13,7 +13,7 @@ final class MarketplaceExpensesReadController
 {
     public function __invoke(MarketplaceExpensesPageRequest $request, ExpensesReadService $expenses, MarketplaceStoreReadService $stores, RolePolicy $policy): mixed
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $overview = $stores->overview($companyKey);
         $storeId = (string) ($request->validated('store_id') ?: ($overview['stores'][0]['id'] ?? ''));
         $filters = array_merge($request->validated(), ['store_id' => $storeId]);
@@ -51,7 +51,7 @@ final class MarketplaceExpensesReadController
     {
         return [
             'stores' => $overview['stores'],
-            'scope' => ['company_key' => (string) $request->attributes->get('company_key'), 'store_id' => $storeId],
+            'scope' => ['company_key' => $request->companyKey(), 'store_id' => $storeId],
             'filters' => array_intersect_key($filters, array_flip(['category', 'search', 'date'])),
             'summary' => array_diff_key($data, ['expenses' => 1]),
             'expenses' => $data['expenses'] ?? [],

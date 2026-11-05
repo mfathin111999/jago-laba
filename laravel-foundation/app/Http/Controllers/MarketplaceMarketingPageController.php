@@ -25,7 +25,7 @@ final class MarketplaceMarketingPageController
             'date_end' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_start'],
         ])->validate();
 
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $overview = $stores->overview($companyKey);
         $storeId = (string) ($filters['store_id'] ?? $overview['stores'][0]['id'] ?? '');
         abort_if($storeId === '', 422, 'Pilih toko terlebih dahulu.');

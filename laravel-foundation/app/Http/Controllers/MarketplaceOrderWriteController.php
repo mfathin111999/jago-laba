@@ -21,7 +21,7 @@ final class MarketplaceOrderWriteController
         try {
             $orderId = $this->service->recordManualOrder(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $request->all(),
             );
 
@@ -46,7 +46,7 @@ final class MarketplaceOrderWriteController
         try {
             $res = $this->service->updateManualOrder(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $orderId,
                 $storeId,
                 $request->all(),
@@ -70,7 +70,7 @@ final class MarketplaceOrderWriteController
         try {
             $res = $this->service->archiveOrder(
                 $request->user('web'),
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $orderId,
                 $storeId,
                 $reason,
@@ -88,7 +88,7 @@ final class MarketplaceOrderWriteController
     {
         $storeId = trim((string) ($request->input('store_id') ?? $request->query('store_id') ?? ''));
         $res = $this->service->getJournalEntries(
-            (string) $request->attributes->get('company_key'),
+            $request->companyKey(),
             $storeId,
             $request->query('date_from'),
             $request->query('date_to'),

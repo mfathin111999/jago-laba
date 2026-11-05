@@ -79,6 +79,6 @@ final class MarketplaceStoreWriteController
 
     private function companyKey(MarketplaceStoreUpdateRequest|MarketplaceStoreCreateRequest|MarketplaceStoreToggleRequest $request): string
     {
-        return (string) $request->attributes->get('company_key');
+        return $request->companyKey();
     }
 }

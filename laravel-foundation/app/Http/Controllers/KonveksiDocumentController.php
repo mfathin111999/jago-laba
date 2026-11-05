@@ -28,7 +28,7 @@ final class KonveksiDocumentController
     public function __invoke(Request $request): Response
     {
         try {
-            $this->konveksi->assertCompany((string) $request->attributes->get('company_key'));
+            $this->konveksi->assertCompany($request->companyKey());
             $located = $this->documents->locate((string) $request->query('id', ''));
         } catch (InvalidArgumentException) {
             return $this->text(422);

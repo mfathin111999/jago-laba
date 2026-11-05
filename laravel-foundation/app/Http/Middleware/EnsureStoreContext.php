@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Authorization\RequestContext;
 use App\Authorization\StoreContext;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -29,6 +30,7 @@ final class EnsureStoreContext
         }
 
         $request->attributes->set('store_id', $storeId);
+        app(RequestContext::class)->setStoreId($storeId);
         $request->session()->put('store_id', $storeId);
 
         return $next($request);

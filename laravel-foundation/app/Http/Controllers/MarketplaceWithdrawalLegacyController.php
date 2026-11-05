@@ -75,7 +75,7 @@ final class MarketplaceWithdrawalLegacyController
         $data = $this->import->confirm(
             $request->session(),
             $user,
-            (string) $request->attributes->get('company_key'),
+            $request->companyKey(),
             (string) $request->input('key', ''),
         );
 

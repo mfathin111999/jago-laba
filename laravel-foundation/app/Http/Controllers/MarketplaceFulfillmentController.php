@@ -29,7 +29,7 @@ final class MarketplaceFulfillmentController
         }
 
         try {
-            $companyKey = (string) $request->attributes->get('company_key');
+            $companyKey = $request->companyKey();
 
             if ($this->live->enabled() && in_array($action, ['options', 'confirm'], true)) {
                 return $this->live($request, $action, $companyKey, $storeId, $orderId);

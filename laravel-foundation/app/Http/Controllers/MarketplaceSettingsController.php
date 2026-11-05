@@ -36,7 +36,7 @@ final class MarketplaceSettingsController
             return response()->json(['success' => false, 'message' => 'ID Toko wajib diisi.'], 422);
         }
 
-        $detail = $this->service->getStoreDetail((string) $request->attributes->get('company_key'), $storeId);
+        $detail = $this->service->getStoreDetail($request->companyKey(), $storeId);
 
         return response()->json(['success' => true, 'data' => $detail]);
     }
@@ -65,7 +65,7 @@ final class MarketplaceSettingsController
             return response()->json(['success' => false, 'message' => 'ID Toko wajib diisi.'], 422);
         }
 
-        if ($this->service->getStoreDetail((string) $request->attributes->get('company_key'), $storeId) === null) {
+        if ($this->service->getStoreDetail($request->companyKey(), $storeId) === null) {
             return response()->json(['success' => false, 'message' => 'Toko tidak ditemukan.'], 404);
         }
 

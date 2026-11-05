@@ -30,7 +30,7 @@ final class MarketplaceAutoSyncController
 
     public function states(Request $request): JsonResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $storeId = trim((string) $request->input('store_id', ''));
 
         try {
@@ -72,7 +72,7 @@ final class MarketplaceAutoSyncController
         }
 
         try {
-            $this->service->tick((string) $request->attributes->get('company_key'), null, self::PULSE_LIMIT);
+            $this->service->tick($request->companyKey(), null, self::PULSE_LIMIT);
 
             return $this->json(['success' => true, 'mode' => 'browser']);
         } catch (Throwable $exception) {

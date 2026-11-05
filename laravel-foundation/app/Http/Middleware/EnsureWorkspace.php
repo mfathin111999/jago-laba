@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Authorization\RequestContext;
 use App\Authorization\WorkspaceContext;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -32,6 +33,7 @@ final class EnsureWorkspace
         }
 
         $request->attributes->set('workspace', $required);
+        app(RequestContext::class)->setWorkspace($required);
 
         return $next($request);
     }

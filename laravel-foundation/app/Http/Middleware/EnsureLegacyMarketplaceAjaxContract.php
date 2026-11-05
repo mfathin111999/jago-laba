@@ -89,6 +89,7 @@ final class EnsureLegacyMarketplaceAjaxContract
             }
 
             $request->attributes->set('store_id', $storeId);
+            app(\App\Authorization\RequestContext::class)->setStoreId($storeId);
             $request->session()->put('store_id', $storeId);
         }
 

@@ -21,7 +21,7 @@ final class MarketplaceStoreDeletionController
 
     public function __invoke(Request $request): JsonResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $action = (string) $request->input('action', '');
         $storeId = trim((string) $request->input('store_id', ''));
 

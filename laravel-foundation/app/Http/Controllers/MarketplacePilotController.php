@@ -18,7 +18,7 @@ final class MarketplacePilotController
 
     public function __invoke(MarketplacePilotRequest $request): Response|RedirectResponse
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
 
         try {
             $payload = $this->pilot->overview($companyKey, $request->storeId(), $request->filters());
@@ -89,7 +89,7 @@ final class MarketplacePilotController
     public function export(MarketplacePilotRequest $request): SymfonyResponse
     {
         try {
-            $payload = $this->pilot->overview((string) $request->attributes->get('company_key'), $request->storeId(), $request->filters());
+            $payload = $this->pilot->overview($request->companyKey(), $request->storeId(), $request->filters());
         } catch (\InvalidArgumentException $exception) {
             return response($exception->getMessage(), 422);
         } catch (\DomainException $exception) {

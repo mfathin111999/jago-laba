@@ -35,7 +35,7 @@ final class MarketplaceIntegrationStatusController
     public function __invoke(Request $request): JsonResponse
     {
         $user = $request->user('web');
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $storeId = trim((string) $request->input('store_id', ''));
 
         try {

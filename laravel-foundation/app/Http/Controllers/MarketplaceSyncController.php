@@ -21,7 +21,7 @@ final class MarketplaceSyncController
 
         $result = ApiResponse::guard(
             fn (): array => $this->dispatcher->dispatchForStore(
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 (string) $request->validated('store_id'),
                 'browser',
                 (string) ($request->validated('run_key') ?: $request->header('X-Idempotency-Key') ?: ''),

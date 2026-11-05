@@ -21,7 +21,7 @@ final class MarketplaceWithdrawalPreviewController
         }
 
         try {
-            $companyKey = (string) $request->attributes->get('company_key');
+            $companyKey = $request->companyKey();
             $result = $this->preview->preview(
                 $user,
                 $companyKey,

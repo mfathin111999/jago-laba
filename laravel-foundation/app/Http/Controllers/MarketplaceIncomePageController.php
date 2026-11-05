@@ -13,7 +13,7 @@ final class MarketplaceIncomePageController
 {
     public function __invoke(MarketplaceIncomeRequest $request, IncomeReadService $reader, MarketplaceStoreReadService $stores, RolePolicy $policy): mixed
     {
-        $companyKey = (string) $request->attributes->get('company_key');
+        $companyKey = $request->companyKey();
         $filters = $request->validated();
         $filters['date_start'] = $filters['date_start'] ?? now('Asia/Jakarta')->startOfMonth()->format('Y-m-d');
         $filters['date_end'] = $filters['date_end'] ?? now('Asia/Jakarta')->format('Y-m-d');

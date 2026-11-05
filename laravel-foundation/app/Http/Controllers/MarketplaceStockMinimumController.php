@@ -42,7 +42,7 @@ final class MarketplaceStockMinimumController
 
             $this->service->setMinimum(
                 $user,
-                (string) $request->attributes->get('company_key'),
+                $request->companyKey(),
                 $storeId,
                 (string) $request->input('product_id', ''),
                 (string) $request->input('variant_id', ''),
