@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceCatalogRequest;
+use App\Http\Responses\CsvDownload;
 use App\Marketplace\CatalogReadService;
 use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\MarketplaceStoreReadService;
@@ -23,17 +24,18 @@ final class MarketplaceCatalogController
             abort(403, $exception->getMessage());
         }
         if (($filters['format'] ?? '') === 'csv') {
-            return response()->streamDownload(function () use ($data): void {
-                $out = fopen('php://output', 'w');
-                fputcsv($out, ['Produk', 'SKU', 'Varian', 'Harga', 'Stok', 'HPP', 'Terjual'], ',', '"', '');
-                foreach ($data['products'] as $product) {
-                    foreach ($product['variants'] as $variant) {
-                        $text = static fn ($value): string => preg_match('/^[=+@\-\t\r]/', (string) $value) ? "'".$value : (string) $value;
-                        fputcsv($out, [$text($product['name']), $text($variant['sku']), $text($variant['variant_name']), $variant['price'] ?? '', $variant['stock_qty'] ?? '', $variant['hpp'] ?? '', $variant['sold']], ',', '"', '');
+            return CsvDownload::stream(
+                'katalog-marketplace.csv',
+                ['Produk', 'SKU', 'Varian', 'Harga', 'Stok', 'HPP', 'Terjual'],
+                (static function () use ($data): \Generator {
+                    foreach ($data['products'] as $product) {
+                        foreach ($product['variants'] as $variant) {
+                            yield [$product['name'], $variant['sku'], $variant['variant_name'], $variant['price'] ?? '', $variant['stock_qty'] ?? '', $variant['hpp'] ?? '', $variant['sold']];
+                        }
                     }
-                }
-                fclose($out);
-            }, 'katalog-marketplace.csv', ['Content-Type' => 'text/csv; charset=utf-8', 'Cache-Control' => 'no-store, private']);
+                })(),
+                bom: false,
+            );
         }
         $props = ['catalog' => $data, 'filters' => $filters, 'read_only' => true];
         if ($request->expectsJson() || ($filters['format'] ?? '') === 'json') {

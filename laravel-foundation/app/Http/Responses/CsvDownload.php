@@ -18,10 +18,11 @@ final class CsvDownload
     /**
      * @param  list<string>  $header
      * @param  iterable<list<mixed>>  $rows
+     * @param  bool  $bom  UTF-8 byte-order mark so spreadsheets detect the encoding
      */
-    public static function stream(string $filename, array $header, iterable $rows): StreamedResponse
+    public static function stream(string $filename, array $header, iterable $rows, bool $bom = true): StreamedResponse
     {
-        return response()->streamDownload(function () use ($header, $rows): void {
+        return response()->streamDownload(function () use ($header, $rows, $bom): void {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, $header, ',', '"', '');
