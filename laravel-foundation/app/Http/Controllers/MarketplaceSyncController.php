@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceSyncRequest;
 use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
+use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -47,7 +48,7 @@ final class MarketplaceSyncController
     {
         $value = trim((string) $value);
 
-        return preg_match('/^[A-Za-z0-9._:-]{1,100}$/', $value) ? $value : bin2hex(random_bytes(8));
+        return RequestId::isValid($value) ? $value : RequestId::current();
     }
 
     private function error(string $message, string $code, int $status, string $requestId): JsonResponse

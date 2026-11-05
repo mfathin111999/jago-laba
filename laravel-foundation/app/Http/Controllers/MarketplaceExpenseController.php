@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\IdempotencyConflict;
 use App\Http\Requests\MarketplaceExpenseRequest;
 use App\Pilots\Marketplace\MarketplaceExpenseWriteService;
+use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ final class MarketplaceExpenseController
 
     public function __invoke(MarketplaceExpenseRequest $request): JsonResponse|RedirectResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $idempotencyKey = trim((string) ($request->header('X-Idempotency-Key') ?: $request->input('idempotency_key')));
         if ($idempotencyKey === '') {
             if ($request->routeIs('pilot.marketplace.expenses')) {

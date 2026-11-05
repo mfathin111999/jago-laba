@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Pilots\Marketplace\MarketplaceOrderWriteService;
+use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ final class MarketplaceOrderWriteController
 
     public function addManual(Request $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
 
         try {
             $orderId = $this->service->recordManualOrder(
@@ -38,7 +39,7 @@ final class MarketplaceOrderWriteController
 
     public function updateManual(Request $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $orderId = trim((string) ($request->input('order_id') ?? $request->route('order') ?? ''));
         $storeId = trim((string) ($request->input('store_id') ?? $request->query('store_id') ?? ''));
 
@@ -61,7 +62,7 @@ final class MarketplaceOrderWriteController
 
     public function archive(Request $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $orderId = trim((string) ($request->input('order_id') ?? $request->route('order') ?? ''));
         $storeId = trim((string) ($request->input('store_id') ?? $request->query('store_id') ?? ''));
         $reason = trim((string) ($request->input('reason') ?? ''));

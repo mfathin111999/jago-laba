@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceExpenseDeleteRequest;
 use App\Pilots\Marketplace\MarketplaceExpenseWriteService;
+use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -14,7 +15,7 @@ final class MarketplaceExpenseDeleteController
 
     public function __invoke(MarketplaceExpenseDeleteRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
 
         try {
             $result = $this->expenses->delete(

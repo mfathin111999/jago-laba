@@ -20,6 +20,7 @@ use App\Pilots\Konveksi\KonveksiSalesWriteService;
 use App\Pilots\Konveksi\KonveksiSyncAndHppService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
+use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -503,7 +504,7 @@ final class LegacyRpcController
             'result' => $res,
         ])->withHeaders([
             'Cache-Control' => 'no-store, private',
-            'X-Request-Id' => bin2hex(random_bytes(8)),
+            'X-Request-Id' => RequestId::current(),
         ]);
     }
 
@@ -533,7 +534,7 @@ final class LegacyRpcController
             'result' => $res,
         ])->withHeaders([
             'Cache-Control' => 'no-store, private',
-            'X-Request-Id' => bin2hex(random_bytes(8)),
+            'X-Request-Id' => RequestId::current(),
         ]);
     }
 
@@ -560,7 +561,7 @@ final class LegacyRpcController
             'result' => $this->konveksi->allKnown(),
         ])->withHeaders([
             'Cache-Control' => 'no-store, private',
-            'X-Request-Id' => bin2hex(random_bytes(8)),
+            'X-Request-Id' => RequestId::current(),
         ]);
     }
 
@@ -659,7 +660,7 @@ final class LegacyRpcController
             return $this->error($exception->getMessage(), 'OPERATION_FAILED', 400);
         }
 
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         Log::error('Konveksi RPC failed.', ['request_id' => $requestId, 'exception' => $exception::class, 'message' => $exception->getMessage()]);
 
         return $this->error('Penyimpanan belum berhasil. Hubungi administrator dengan ID permintaan '.$requestId, 'STORAGE_FAILURE', 500, $requestId);
@@ -667,7 +668,7 @@ final class LegacyRpcController
 
     private function error(string $message, string $code, int $status, ?string $requestId = null): JsonResponse
     {
-        $requestId ??= bin2hex(random_bytes(8));
+        $requestId ??= RequestId::current();
 
         return response()->json([
             'ok' => false,

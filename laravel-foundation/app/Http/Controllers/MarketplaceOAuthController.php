@@ -13,6 +13,7 @@ use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
 use App\Pilots\Marketplace\MarketplaceSyncStatusService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
+use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -104,7 +105,7 @@ final class MarketplaceOAuthController
             return $this->error($this->safeMessage($exception->errorCode), $exception->errorCode, $this->statusFor($exception->errorCode), $request);
         } catch (Throwable $exception) {
             Log::error('Marketplace OAuth sandbox boundary failed.', [
-                'request_id' => $request->attributes->get('request_id', bin2hex(random_bytes(8))),
+                'request_id' => $request->attributes->get('request_id', RequestId::current()),
                 'exception' => $exception::class,
             ]);
 
@@ -215,7 +216,7 @@ final class MarketplaceOAuthController
     {
         $id = (string) $request->attributes->get('request_id', '');
         if ($id === '') {
-            $id = bin2hex(random_bytes(8));
+            $id = RequestId::current();
             $request->attributes->set('request_id', $id);
         }
 

@@ -6,6 +6,7 @@ use App\Http\Requests\MarketplaceGlobalHppUpdateRequest;
 use App\Http\Requests\MarketplaceHppBatchRequest;
 use App\Http\Requests\MarketplaceSkuHppUpdateRequest;
 use App\Pilots\Marketplace\MarketplaceHppService;
+use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +19,7 @@ final class MarketplaceHppWriteController
 
     public function updateSku(MarketplaceSkuHppUpdateRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
 
         try {
             $result = $this->service->updateSkuHpp(
@@ -59,7 +60,7 @@ final class MarketplaceHppWriteController
 
     public function updateGlobal(MarketplaceGlobalHppUpdateRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $applyAll = (bool) $request->validated('apply_all_variants');
         $storeId = (string) $request->validated('store_id');
         $amount = (string) $request->validated('hpp');
@@ -132,7 +133,7 @@ final class MarketplaceHppWriteController
 
     public function saveBatch(MarketplaceHppBatchRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
 
         try {
             $result = $this->service->updateHppBatch(

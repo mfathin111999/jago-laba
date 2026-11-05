@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureBrowserCsrf;
 use App\Http\Middleware\EnsureCompanyContext;
 use App\Http\Middleware\EnsureLegacyMarketplaceAjaxContract;
@@ -50,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,
         ]);
-        $middleware->web(append: [LegacySessionBridge::class, InertiaMiddleware::class]);
+        $middleware->web(prepend: [AssignRequestId::class], append: [LegacySessionBridge::class, InertiaMiddleware::class]);
         $middleware->preventRequestForgery(except: ['api/rpc.php']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

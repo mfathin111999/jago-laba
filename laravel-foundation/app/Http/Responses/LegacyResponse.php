@@ -2,13 +2,14 @@
 
 namespace App\Http\Responses;
 
+use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 
 final class LegacyResponse
 {
     public static function unavailable(string $contract): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $body = $contract === 'rpc'
             ? ['ok' => false, 'error' => ['message' => 'Endpoint belum dialihkan ke Laravel.', 'request_id' => $requestId]]
             : ['success' => false, 'message' => 'Endpoint belum dialihkan ke Laravel.', 'request_id' => $requestId];

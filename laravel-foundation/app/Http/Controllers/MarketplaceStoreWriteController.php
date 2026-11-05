@@ -6,6 +6,7 @@ use App\Http\Requests\MarketplaceStoreCreateRequest;
 use App\Http\Requests\MarketplaceStoreToggleRequest;
 use App\Http\Requests\MarketplaceStoreUpdateRequest;
 use App\Pilots\Marketplace\MarketplaceStoreWriteService;
+use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,7 @@ final class MarketplaceStoreWriteController
 
     public function create(MarketplaceStoreCreateRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
 
         try {
             $result = $this->service->create(
@@ -50,7 +51,7 @@ final class MarketplaceStoreWriteController
 
     public function update(MarketplaceStoreUpdateRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $storeId = (string) $request->validated('store_id');
 
         try {
@@ -90,7 +91,7 @@ final class MarketplaceStoreWriteController
 
     public function toggleStatus(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $storeId = (string) $request->validated('store_id');
         $status = (string) $request->validated('status');
 
@@ -131,7 +132,7 @@ final class MarketplaceStoreWriteController
 
     public function archive(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $storeId = (string) $request->validated('store_id');
 
         try {
@@ -165,7 +166,7 @@ final class MarketplaceStoreWriteController
 
     public function restore(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = bin2hex(random_bytes(8));
+        $requestId = RequestId::current();
         $storeId = (string) $request->validated('store_id');
 
         try {
