@@ -6,7 +6,7 @@ use App\Http\Requests\MarketplaceStoreCreateRequest;
 use App\Http\Requests\MarketplaceStoreToggleRequest;
 use App\Http\Requests\MarketplaceStoreUpdateRequest;
 use App\Http\Responses\ApiResponse;
-use App\Pilots\Marketplace\MarketplaceStoreWriteService;
+use App\Services\Marketplace\MarketplaceStoreWriteService;
 use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 

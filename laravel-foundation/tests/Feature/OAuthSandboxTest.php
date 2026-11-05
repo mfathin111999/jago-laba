@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

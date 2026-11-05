@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Konveksi\KonveksiDocumentAndAiService;
-use App\Pilots\Konveksi\KonveksiPilotReadService;
+use App\Services\Konveksi\KonveksiDocumentAndAiService;
+use App\Services\Konveksi\KonveksiPilotReadService;
 use DomainException;
 use Illuminate\Http\Request;
 use InvalidArgumentException;

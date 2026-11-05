@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
 use App\Http\Requests\MarketplaceWithdrawalPreviewRequest;
-use App\Pilots\Marketplace\MarketplaceWithdrawalPreviewService;
+use App\Services\Marketplace\MarketplaceWithdrawalPreviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Throwable;

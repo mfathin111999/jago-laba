@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Auth\LegacyUserProvider;
 use App\Authorization\RequestContext;
-use App\Pilots\Konveksi\KonveksiConnection;
-use App\Pilots\Marketplace\MarketplaceBrandingService;
+use App\Services\Konveksi\KonveksiConnection;
+use App\Services\Marketplace\MarketplaceBrandingService;
 use App\Policies\RolePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(KonveksiConnection::class);
         // One instance per request (and per queued job): the company/store/workspace the context middleware decided.
         $this->app->scoped(RequestContext::class);
+
+        // Jobs that were queued before the move to App\Jobs are stored with the old class name; keep them runnable.
+        foreach (['MarketplaceSyncJob', 'MarketplaceLiveSyncJob'] as $job) {
+            if (! class_exists('App\\Pilots\\Marketplace\\'.$job, false)) {
+                class_alias('App\\Jobs\\'.$job, 'App\\Pilots\\Marketplace\\'.$job);
+            }
+        }
     }
 
     /**

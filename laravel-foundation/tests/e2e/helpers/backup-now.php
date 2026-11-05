@@ -6,7 +6,7 @@
  */
 
 use App\Auth\LegacyUser;
-use App\Pilots\Konveksi\KonveksiBackupService;
+use App\Services\Konveksi\KonveksiBackupService;
 use Illuminate\Contracts\Console\Kernel;
 
 require __DIR__.'/../../../vendor/autoload.php';

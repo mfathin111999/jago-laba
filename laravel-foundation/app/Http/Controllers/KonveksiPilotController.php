@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\KonveksiPilotRequest;
-use App\Pilots\Konveksi\KonveksiPilotReadService;
+use App\Services\Konveksi\KonveksiPilotReadService;
 use Inertia\Inertia;
 use Inertia\Response;
 

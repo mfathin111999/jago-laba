@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
 use App\Authorization\StoreContext;
-use App\Pilots\Marketplace\MarketplaceStockMinimumService;
+use App\Services\Marketplace\MarketplaceStockMinimumService;
 use App\Security\CsrfTokenValidator;
 use DomainException;
 use Illuminate\Http\JsonResponse;

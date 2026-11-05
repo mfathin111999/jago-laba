@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceSyncRequest;
 use App\Http\Responses\ApiResponse;
-use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
+use App\Services\Marketplace\MarketplaceSyncDispatchService;
 use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;

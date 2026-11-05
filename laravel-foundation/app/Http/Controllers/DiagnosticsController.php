@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Konveksi\KonveksiConnection;
+use App\Services\Konveksi\KonveksiConnection;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

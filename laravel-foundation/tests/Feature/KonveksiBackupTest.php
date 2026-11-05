@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
 use App\Http\Controllers\LegacyRpcController;
-use App\Pilots\Konveksi\KonveksiBackupService;
+use App\Services\Konveksi\KonveksiBackupService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;

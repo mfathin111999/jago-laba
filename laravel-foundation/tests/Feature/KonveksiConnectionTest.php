@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Pilots\Konveksi\KonveksiBackupService;
-use App\Pilots\Konveksi\KonveksiConnection;
-use App\Pilots\Konveksi\KonveksiDocumentAndAiService;
-use App\Pilots\Konveksi\KonveksiHutangService;
-use App\Pilots\Konveksi\KonveksiInventoryService;
-use App\Pilots\Konveksi\KonveksiPilotReadService;
-use App\Pilots\Konveksi\KonveksiPurchaseWriteService;
-use App\Pilots\Konveksi\KonveksiSalesWriteService;
-use App\Pilots\Konveksi\KonveksiSyncAndHppService;
+use App\Services\Konveksi\KonveksiBackupService;
+use App\Services\Konveksi\KonveksiConnection;
+use App\Services\Konveksi\KonveksiDocumentAndAiService;
+use App\Services\Konveksi\KonveksiHutangService;
+use App\Services\Konveksi\KonveksiInventoryService;
+use App\Services\Konveksi\KonveksiPilotReadService;
+use App\Services\Konveksi\KonveksiPurchaseWriteService;
+use App\Services\Konveksi\KonveksiSalesWriteService;
+use App\Services\Konveksi\KonveksiSyncAndHppService;
 use ReflectionProperty;
 use RuntimeException;
 use Tests\TestCase;

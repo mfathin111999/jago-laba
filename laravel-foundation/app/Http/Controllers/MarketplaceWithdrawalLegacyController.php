@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Marketplace\MarketplaceWithdrawalImportService;
+use App\Services\Marketplace\MarketplaceWithdrawalImportService;
 use App\Security\CsrfTokenValidator;
 use DomainException;
 use Illuminate\Http\JsonResponse;

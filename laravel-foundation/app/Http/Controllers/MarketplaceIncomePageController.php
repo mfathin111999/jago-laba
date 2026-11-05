@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceIncomeRequest;
 use App\Marketplace\IncomeReadService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Inertia\Inertia;
 

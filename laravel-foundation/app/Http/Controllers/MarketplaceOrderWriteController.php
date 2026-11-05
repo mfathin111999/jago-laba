@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Marketplace\MarketplaceOrderWriteService;
+use App\Services\Marketplace\MarketplaceOrderWriteService;
 use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;

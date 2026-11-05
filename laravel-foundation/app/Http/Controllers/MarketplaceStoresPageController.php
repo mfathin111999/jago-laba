@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

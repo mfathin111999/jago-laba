@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Marketplace\MarketplaceSettlementAndClaimService;
+use App\Services\Marketplace\MarketplaceSettlementAndClaimService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
 use App\Exceptions\MarketplaceOAuthException;
-use App\Pilots\Marketplace\MarketplaceBrandingService;
-use App\Pilots\Marketplace\MarketplaceIntegrationHealthService;
-use App\Pilots\Marketplace\MarketplaceOAuthService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
-use App\Pilots\Marketplace\MarketplaceSyncStatusService;
+use App\Services\Marketplace\MarketplaceBrandingService;
+use App\Services\Marketplace\MarketplaceIntegrationHealthService;
+use App\Services\Marketplace\MarketplaceOAuthService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceSyncStatusService;
 use App\Policies\RolePolicy;
 use DomainException;
 use Illuminate\Http\Request;

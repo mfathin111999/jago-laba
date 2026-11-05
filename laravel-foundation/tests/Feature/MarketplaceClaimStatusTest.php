@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Marketplace\MarketplaceSettlementAndClaimService;
+use App\Services\Marketplace\MarketplaceSettlementAndClaimService;
 use InvalidArgumentException;
 use Tests\TestCase;
 

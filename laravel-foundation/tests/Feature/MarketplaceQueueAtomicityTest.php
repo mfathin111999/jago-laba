@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Pilots\Marketplace\MarketplaceSyncCheckpointService;
-use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
-use App\Pilots\Marketplace\MarketplaceSyncQueuePublisher;
+use App\Services\Marketplace\MarketplaceSyncCheckpointService;
+use App\Services\Marketplace\MarketplaceSyncDispatchService;
+use App\Services\Marketplace\MarketplaceSyncQueuePublisher;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;

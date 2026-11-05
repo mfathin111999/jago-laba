@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Console\Command;
 use Throwable;
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Marketplace\MarketplaceBrandingService;
+use App\Services\Marketplace\MarketplaceBrandingService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use DomainException;

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplaceOrderRequest;
 use App\Http\Responses\CsvDownload;
 use App\Marketplace\LiveGateway;
-use App\Pilots\Marketplace\OrderReadService;
+use App\Services\Marketplace\OrderReadService;
 use App\Policies\RolePolicy;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

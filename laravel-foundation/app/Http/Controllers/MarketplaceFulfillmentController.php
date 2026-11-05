@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Marketplace\LegacyRuntime;
 use App\Exceptions\ProviderConnectorInactive;
 use App\Marketplace\LiveGateway;
-use App\Pilots\Marketplace\MarketplaceFulfillmentWriteService;
+use App\Services\Marketplace\MarketplaceFulfillmentWriteService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

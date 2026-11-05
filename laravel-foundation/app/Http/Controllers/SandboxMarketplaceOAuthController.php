@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\MarketplaceOAuthException;
-use App\Pilots\Marketplace\MarketplaceOAuthService;
+use App\Services\Marketplace\MarketplaceOAuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

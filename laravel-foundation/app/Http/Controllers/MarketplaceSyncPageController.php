@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
 use App\Marketplace\LiveGateway;
-use App\Pilots\Marketplace\MarketplaceAutoSyncService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
-use App\Pilots\Marketplace\MarketplaceSyncStatusService;
+use App\Services\Marketplace\MarketplaceAutoSyncService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceSyncStatusService;
 use App\Policies\RolePolicy;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

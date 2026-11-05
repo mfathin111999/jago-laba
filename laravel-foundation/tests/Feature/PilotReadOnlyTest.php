@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Pilots\Konveksi\KonveksiPilotReadService;
-use App\Pilots\Marketplace\MarketplacePilotReadService;
+use App\Services\Konveksi\KonveksiPilotReadService;
+use App\Services\Marketplace\MarketplacePilotReadService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;

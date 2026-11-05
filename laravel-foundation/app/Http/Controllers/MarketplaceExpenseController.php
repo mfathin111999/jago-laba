@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceExpenseRequest;
 use App\Http\Responses\ApiResponse;
-use App\Pilots\Marketplace\MarketplaceExpenseWriteService;
+use App\Services\Marketplace\MarketplaceExpenseWriteService;
 use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;

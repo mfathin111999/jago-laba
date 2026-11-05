@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Konveksi\KonveksiBackupService;
-use App\Pilots\Konveksi\KonveksiPurchaseWriteService;
-use App\Pilots\Konveksi\KonveksiSalesWriteService;
+use App\Services\Konveksi\KonveksiBackupService;
+use App\Services\Konveksi\KonveksiPurchaseWriteService;
+use App\Services\Konveksi\KonveksiSalesWriteService;
 use DomainException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;

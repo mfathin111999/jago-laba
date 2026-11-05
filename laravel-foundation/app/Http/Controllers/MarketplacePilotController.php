@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplacePilotRequest;
 use App\Http\Responses\CsvDownload;
-use App\Pilots\Marketplace\MarketplacePilotReadService;
-use App\Pilots\Marketplace\OrderReadService;
+use App\Services\Marketplace\MarketplacePilotReadService;
+use App\Services\Marketplace\OrderReadService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;

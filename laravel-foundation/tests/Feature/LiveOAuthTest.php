@@ -4,8 +4,8 @@ namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
 use App\Marketplace\OAuth\LegacyClientOAuthProvider;
-use App\Pilots\Marketplace\MarketplaceOAuthService;
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceOAuthService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;

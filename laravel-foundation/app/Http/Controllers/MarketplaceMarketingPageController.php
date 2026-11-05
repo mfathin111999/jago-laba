@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Marketplace\MarketingReadService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;

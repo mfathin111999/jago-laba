@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Konveksi\KonveksiSyncAndHppService;
+use App\Services\Konveksi\KonveksiSyncAndHppService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;

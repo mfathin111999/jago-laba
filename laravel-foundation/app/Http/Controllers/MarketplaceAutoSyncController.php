@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
-use App\Pilots\Marketplace\MarketplaceAutoSyncService;
+use App\Services\Marketplace\MarketplaceAutoSyncService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use DomainException;

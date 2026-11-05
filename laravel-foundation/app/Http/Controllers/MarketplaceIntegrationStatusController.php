@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
-use App\Pilots\Marketplace\MarketplaceIntegrationHealthService;
-use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
-use App\Pilots\Marketplace\MarketplaceSyncStatusService;
+use App\Services\Marketplace\MarketplaceIntegrationHealthService;
+use App\Services\Marketplace\MarketplaceSyncDispatchService;
+use App\Services\Marketplace\MarketplaceSyncStatusService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use DomainException;

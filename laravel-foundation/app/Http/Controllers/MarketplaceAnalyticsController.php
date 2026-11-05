@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Marketplace\LegacyRuntime;
 use App\Http\Requests\MarketplaceAnalyticsRequest;
-use App\Pilots\Marketplace\MarketplaceAnalyticsReadService;
+use App\Services\Marketplace\MarketplaceAnalyticsReadService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;

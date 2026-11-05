@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Marketplace\MarketplaceHppService;
+use App\Services\Marketplace\MarketplaceHppService;
 use DomainException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;

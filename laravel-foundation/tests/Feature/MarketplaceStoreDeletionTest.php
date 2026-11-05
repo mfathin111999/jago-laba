@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;

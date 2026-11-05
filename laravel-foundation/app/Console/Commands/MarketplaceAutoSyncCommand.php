@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Pilots\Marketplace\MarketplaceAutoSyncService;
+use App\Services\Marketplace\MarketplaceAutoSyncService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
 use Throwable;

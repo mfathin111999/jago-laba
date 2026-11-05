@@ -6,7 +6,7 @@ use App\Http\Requests\MarketplaceGlobalHppUpdateRequest;
 use App\Http\Requests\MarketplaceHppBatchRequest;
 use App\Http\Requests\MarketplaceSkuHppUpdateRequest;
 use App\Http\Responses\ApiResponse;
-use App\Pilots\Marketplace\MarketplaceHppService;
+use App\Services\Marketplace\MarketplaceHppService;
 use App\Support\RequestId;
 use DomainException;
 use Illuminate\Http\JsonResponse;

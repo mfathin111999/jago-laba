@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplaceExpensesPageRequest;
 use App\Http\Responses\MarketplaceReportResponse;
 use App\Marketplace\ExpensesReadService;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Inertia\Inertia;
 

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Marketplace\MarketplaceStoreDeletionService;
+use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

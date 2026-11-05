@@ -6,7 +6,7 @@ use App\Http\Requests\MarketplaceCatalogRequest;
 use App\Http\Responses\CsvDownload;
 use App\Marketplace\CatalogReadService;
 use App\Marketplace\LiveGateway;
-use App\Pilots\Marketplace\MarketplaceStoreReadService;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
 use Inertia\Inertia;
 

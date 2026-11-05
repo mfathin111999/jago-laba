@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Pilots\Marketplace\MarketplaceSettingsService;
+use App\Services\Marketplace\MarketplaceSettingsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;

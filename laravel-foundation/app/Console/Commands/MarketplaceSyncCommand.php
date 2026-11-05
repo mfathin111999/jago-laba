@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
+use App\Services\Marketplace\MarketplaceSyncDispatchService;
 use Illuminate\Console\Command;
 use Throwable;
 
