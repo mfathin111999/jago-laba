@@ -6,6 +6,7 @@ import JlIcon from '../../Components/JlIcon.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -71,7 +72,7 @@ function apply(): void {
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = String(value);
     });
-    router.get('/marketplace/marketing', query, { preserveState: true, replace: true });
+    router.get(ROUTES.marketing, query, { preserveState: true, replace: true });
 }
 
 function pick(key: string): void {
@@ -145,7 +146,7 @@ async function importReport(): Promise<void> {
 
             <details v-if="can_import" class="rounded-2xl border border-slate-200 bg-white p-4 text-xs">
                 <summary class="cursor-pointer font-bold text-brand-700">Impor rincian iklan produk Shopee / TikTok</summary>
-                <p class="mt-3 text-slate-500 leading-6">Siapkan laporan produk marketplace dengan <a href="/marketplace/marketing/template" download class="text-blue-600 underline">template CSV</a>. Isi angka tanpa Rp/pemisah ribuan, desimal memakai titik, tanggal YYYY-MM-DD. Gunakan biaya iklan sebelum PPN tambahan dan komisi affiliate terpisah dari biaya platform. Impor ulang produk/campaign pada periode yang sama mengganti nilai sebelumnya; periode tumpang tindih ditolak.</p>
+                <p class="mt-3 text-slate-500 leading-6">Siapkan laporan produk marketplace dengan <a :href="ROUTES.marketingTemplate" download class="text-blue-600 underline">template CSV</a>. Isi angka tanpa Rp/pemisah ribuan, desimal memakai titik, tanggal YYYY-MM-DD. Gunakan biaya iklan sebelum PPN tambahan dan komisi affiliate terpisah dari biaya platform. Impor ulang produk/campaign pada periode yang sama mengganti nilai sebelumnya; periode tumpang tindih ditolak.</p>
                 <form class="flex flex-wrap items-end gap-3 mt-3" @submit.prevent="importReport">
                     <label class="grid gap-1">Laporan CSV (maks. 2 MB)<input type="file" accept=".csv,text/csv" required class="border rounded-lg p-2" @change="onFile" /></label>
                     <button class="rounded-lg bg-brand-600 text-white px-4 py-2 font-bold" type="submit" :disabled="busy || !file">{{ busy ? 'Mengimpor…' : 'Impor laporan' }}</button>

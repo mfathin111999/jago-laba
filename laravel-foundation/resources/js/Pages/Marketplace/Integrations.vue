@@ -8,6 +8,7 @@ import Modal from '../../Components/Modal.vue';
 import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatDate, formatText } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -57,7 +58,7 @@ async function run(action: () => Promise<string>, reload: string[] = ['health', 
 
 function chooseStore(event: Event): void {
     const id = (event.target as HTMLSelectElement).value;
-    router.get('/marketplace/integrations', { store_id: id });
+    router.get(ROUTES.integrations, { store_id: id });
 }
 
 // ----- connection -----
@@ -71,7 +72,7 @@ const connectionTone = computed(() => (connected.value ? 'ok' : props.health?.co
 
 async function connect(): Promise<void> {
     await run(async () => {
-        const result = await apiRequest('/pilot/marketplace/oauth/start', { platform: platform.value, return_path: 'marketplace/integrations' });
+        const result = await apiRequest(ROUTES.oauthStart, { platform: platform.value, return_path: 'marketplace/integrations' });
         const url = result.data?.authorization_url;
         if (typeof url !== 'string' || url === '') throw new ApiError('Alamat otorisasi tidak tersedia.', 502);
         window.location.href = url;
@@ -80,20 +81,20 @@ async function connect(): Promise<void> {
     }, []);
 }
 
-const refreshToken = () => run(async () => (await apiRequest('/pilot/marketplace/oauth/refresh', { store_id: storeId.value })).message ?? 'Token disegarkan.');
-const syncNow = () => run(async () => (await apiRequest('/api/marketplace-oauth.php', { action: 'sync', store_id: storeId.value })).message ?? 'Sinkronisasi masuk antrean.');
-const retryJob = (jobId: number) => run(async () => (await apiRequest('/api/marketplace-integration-status.php', { action: 'retry', store_id: storeId.value, job_id: jobId })).message ?? 'Pekerjaan dijadwalkan ulang.');
+const refreshToken = () => run(async () => (await apiRequest(ROUTES.oauthRefresh, { store_id: storeId.value })).message ?? 'Token disegarkan.');
+const syncNow = () => run(async () => (await apiRequest(ROUTES.api.oauth, { action: 'sync', store_id: storeId.value })).message ?? 'Sinkronisasi masuk antrean.');
+const retryJob = (jobId: number) => run(async () => (await apiRequest(ROUTES.api.integrationStatus, { action: 'retry', store_id: storeId.value, job_id: jobId })).message ?? 'Pekerjaan dijadwalkan ulang.');
 
 const confirmDisconnect = ref(false);
 async function disconnect(): Promise<void> {
-    await run(async () => (await apiRequest('/api/marketplace-oauth.php', { action: 'disconnect', store_id: storeId.value })).message ?? 'Koneksi diputus.');
+    await run(async () => (await apiRequest(ROUTES.api.oauth, { action: 'disconnect', store_id: storeId.value })).message ?? 'Koneksi diputus.');
     confirmDisconnect.value = false;
 }
 
 async function pickShop(externalId: string): Promise<void> {
     if (!props.oauth?.pending_id) return;
-    const ok = await run(async () => (await apiRequest('/api/marketplace-oauth.php', { action: 'select', pending_id: props.oauth!.pending_id, external_store_id: externalId })).message ?? 'Toko dihubungkan.');
-    if (ok) router.get('/marketplace/integrations', { store_id: storeId.value }, { replace: true });
+    const ok = await run(async () => (await apiRequest(ROUTES.api.oauth, { action: 'select', pending_id: props.oauth!.pending_id, external_store_id: externalId })).message ?? 'Toko dihubungkan.');
+    if (ok) router.get(ROUTES.integrations, { store_id: storeId.value }, { replace: true });
 }
 
 // ----- display -----
@@ -133,7 +134,7 @@ async function saveBranding(reset = false): Promise<void> {
     body.set('logo_fit', brand.logo_fit);
     if (reset) body.set('reset_logo', '1');
     else if (logoFile.value) body.set('logo', logoFile.value);
-    const ok = await run(async () => (await apiRequest('/api/marketplace-branding.php', body)).message ?? 'Identitas tersimpan.', ['branding']);
+    const ok = await run(async () => (await apiRequest(ROUTES.api.branding, body)).message ?? 'Identitas tersimpan.', ['branding']);
     if (ok) logoFile.value = null;
 }
 const logoUrl = computed(() => (props.branding.has_logo ? `/api/marketplace-branding.php?image=1&v=${encodeURIComponent(props.branding.updated_at ?? '')}` : null));

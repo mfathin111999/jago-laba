@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import JlIcon from '../../Components/JlIcon.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -53,13 +54,13 @@ const periodOptions = [
 const orderCards: Array<[string, string]> = [['new', 'Pesanan Baru'], ['pickup', 'Menunggu Pickup'], ['shipped', 'Dikirim'], ['cancelled', 'Dibatalkan'], ['returns', 'Pengembalian Barang']];
 
 const link = (path: string, extra: Record<string, string> = {}) => `${path}?${new URLSearchParams({ store: storeId.value, store_id: storeId.value, ...extra }).toString()}`;
-const modeLink = (key: string) => link('/pilot/marketplace', { period: period.value.preset, date_start: period.value.start, date_end: period.value.end, finance_mode: key });
-const exportLink = computed(() => link('/pilot/marketplace/export', { period: period.value.preset, date_start: period.value.start, date_end: period.value.end, finance_mode: mode.value }));
-const orderLink = (tab: string) => link('/pilot/marketplace/orders', { period: 'custom', date_start: period.value.start, date_end: period.value.end, order_tab: tab });
+const modeLink = (key: string) => link(ROUTES.dashboard, { period: period.value.preset, date_start: period.value.start, date_end: period.value.end, finance_mode: key });
+const exportLink = computed(() => link(ROUTES.dashboardExport, { period: period.value.preset, date_start: period.value.start, date_end: period.value.end, finance_mode: mode.value }));
+const orderLink = (tab: string) => link(ROUTES.orders, { period: 'custom', date_start: period.value.start, date_end: period.value.end, order_tab: tab });
 
 function applyFilters(event: Event) {
     const values = new FormData(event.target as HTMLFormElement);
-    router.get('/pilot/marketplace', {
+    router.get(ROUTES.dashboard, {
         store: storeId.value,
         period: String(values.get('period') ?? 'month'),
         date_start: String(values.get('date_start') ?? ''),
@@ -96,12 +97,12 @@ const flow = computed(() => [
 ] as Array<[string, unknown, string, string]>);
 
 const attentionItems = computed(() => [
-    ['Keuangan belum tersedia', attention.value.missing_finance, '/pilot/marketplace/orders'],
-    ['Selisih rekonsiliasi', attention.value.unreconciled, '/pilot/marketplace/orders'],
-    ['HPP belum lengkap', attention.value.missing_hpp, '/marketplace/catalog'],
-    ['Laba setelah HPP negatif', attention.value.loss, '/pilot/marketplace/orders'],
-    ['Pengembalian tercatat', attention.value.returns, '/pilot/marketplace/orders'],
-    ['Batal dengan dampak keuangan', attention.value.cancel_finance, '/pilot/marketplace/orders'],
+    ['Keuangan belum tersedia', attention.value.missing_finance, ROUTES.orders],
+    ['Selisih rekonsiliasi', attention.value.unreconciled, ROUTES.orders],
+    ['HPP belum lengkap', attention.value.missing_hpp, ROUTES.catalog],
+    ['Laba setelah HPP negatif', attention.value.loss, ROUTES.orders],
+    ['Pengembalian tercatat', attention.value.returns, ROUTES.orders],
+    ['Batal dengan dampak keuangan', attention.value.cancel_finance, ROUTES.orders],
 ] as Array<[string, unknown, string]>);
 </script>
 
@@ -109,21 +110,21 @@ const attentionItems = computed(() => [
     <MarketplaceShell active="dashboard" title="Dashboard toko" :store-id="scope.store_id" :company-key="scope.company_key">
         <section v-if="!dashboard || !active_store" class="sd-dashboard" aria-label="Dashboard Toko">
             <header class="sd-header"><div><p class="sd-eyebrow">PERFORMA TOKO</p><h1>Dashboard Toko</h1><p>Keuangan pesanan yang dapat ditelusuri hingga sumbernya.</p></div></header>
-            <div class="sd-card"><h2>Hubungkan toko Marketplace terlebih dahulu</h2><p>{{ message }}</p><p><Link class="sd-button sd-primary" href="/marketplace/stores">Pilih Toko</Link></p></div>
+            <div class="sd-card"><h2>Hubungkan toko Marketplace terlebih dahulu</h2><p>{{ message }}</p><p><Link class="sd-button sd-primary" :href="ROUTES.stores">Pilih Toko</Link></p></div>
         </section>
 
         <section v-else id="store-dashboard" class="sd-dashboard" :data-store="storeId" aria-label="Dashboard Toko">
             <header class="sd-header">
                 <div><p class="sd-eyebrow">PERFORMA TOKO · {{ active_store.platform }}</p><h1>{{ active_store.store_name }}</h1><p>Keuangan pesanan yang dapat ditelusuri hingga sumbernya.</p></div>
                 <div class="sd-actions">
-                    <Link class="sd-button sd-primary" :href="link('/marketplace/sync')"><JlIcon name="refresh" /> Sinkronisasi Data</Link>
+                    <Link class="sd-button sd-primary" :href="link(ROUTES.sync)"><JlIcon name="refresh" /> Sinkronisasi Data</Link>
                     <a class="sd-button" :href="exportLink"><JlIcon name="download" /> Ekspor rincian</a>
                 </div>
             </header>
             <div class="sd-source">
                 <span class="sd-badge" :class="active_store.is_connection_verified ? 'sd-positive' : 'sd-warning'">{{ active_store.authorization_label || 'Periksa otorisasi' }}</span>
                 <span>Sinkronisasi berhasil terakhir: <strong>{{ lastSync }}</strong> WIB</span>
-                <Link :href="link('/marketplace/integrations')">Detail koneksi <JlIcon name="arrow-right" /></Link>
+                <Link :href="link(ROUTES.integrations)">Detail koneksi <JlIcon name="arrow-right" /></Link>
             </div>
             <form class="sd-filters" @submit.prevent="applyFilters">
                 <label>Periode<select name="period" :value="period.preset"><option v-for="[value, label] in periodOptions" :key="value" :value="value">{{ label }}</option></select></label>
@@ -191,7 +192,7 @@ const attentionItems = computed(() => [
                 <div class="sd-table-wrap">
                     <table>
                         <thead><tr><th>Pesanan</th><th>Keuangan</th><th>Penjualan</th><th>Untuk Dibayar</th><th>HPP Produk</th><th>Laba setelah HPP</th></tr></thead>
-                        <tbody><tr v-for="row in pageRows" :key="row.id"><td><Link :href="link('/pilot/marketplace/orders', { search: row.id, search_by: 'all' })">{{ row.id }}</Link></td><td>{{ stateLabel[row.state] ?? row.state }}</td><td>{{ money(row.sales) }}</td><td>{{ money(row.net) }}</td><td>{{ money(row.hpp) }}</td><td>{{ money(row.profit) }}</td></tr></tbody>
+                        <tbody><tr v-for="row in pageRows" :key="row.id"><td><Link :href="link(ROUTES.orders, { search: row.id, search_by: 'all' })">{{ row.id }}</Link></td><td>{{ stateLabel[row.state] ?? row.state }}</td><td>{{ money(row.sales) }}</td><td>{{ money(row.net) }}</td><td>{{ money(row.hpp) }}</td><td>{{ money(row.profit) }}</td></tr></tbody>
                     </table>
                 </div>
                 <div class="sd-pagination"><a v-if="page > 1" href="#" @click.prevent="page--">Sebelumnya</a><span>Halaman {{ page }} · 50 per halaman</span><a v-if="page * 50 < rows.length" href="#" @click.prevent="page++">Berikutnya</a></div>
@@ -199,7 +200,7 @@ const attentionItems = computed(() => [
 
             <div class="sd-card sd-payout">
                 <div><h2>Laba dan pencairan memiliki arti berbeda</h2><p>Untuk Dibayar adalah nilai keuangan pesanan. Penarikan dan dana masuk bank diperiksa pada Pemasukan.</p></div>
-                <Link class="sd-button" :href="link('/marketplace/income')"><JlIcon name="bank" /> Lihat pencairan</Link>
+                <Link class="sd-button" :href="link(ROUTES.income)"><JlIcon name="bank" /> Lihat pencairan</Link>
             </div>
 
             <dialog ref="formula" class="sd-dialog">

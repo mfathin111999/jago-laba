@@ -7,6 +7,7 @@ import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -41,7 +42,7 @@ function applyFilters(): void {
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = String(value);
     });
-    router.get('/marketplace/stock', query, { preserveState: true, replace: true });
+    router.get(ROUTES.stock, query, { preserveState: true, replace: true });
 }
 
 const rows = computed<Row[]>(() => props.stock.rows ?? []);
@@ -89,7 +90,7 @@ async function saveMinimum(): Promise<void> {
     busy.value = true;
     formError.value = null;
     try {
-        const result = await apiRequest('/api/marketplace-stock.php', {
+        const result = await apiRequest(ROUTES.api.stock, {
             store_id: props.scope.store_id,
             product_id: row.external_product_id,
             variant_id: row.external_variant_id,

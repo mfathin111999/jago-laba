@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import JlIcon from './JlIcon.vue';
 import PlatformLogo from './PlatformLogo.vue';
 import { MARKETPLACE_NAV, navHref } from '../lib/marketplaceNav';
+import { ROUTES } from '../lib/routes';
 
 const props = defineProps<{
     /** Key of the active menu item. */
@@ -84,7 +85,7 @@ onBeforeUnmount(() => document.body.classList.remove(...bodyClasses));
 <template>
     <Head :title="`${title} · Marketplace`" />
     <div class="jl-mobile-topbar">
-        <Link href="/marketplace/stores" class="font-extrabold">
+        <Link :href="ROUTES.stores" class="font-extrabold">
             <span class="jl-brand-lockup" style="display: inline-flex; align-items: center; gap: 10px">
                 <span class="jl-rotating-logo-frame" style="width: 28px; height: 28px; border-radius: 12px; flex-shrink: 0"><span class="jl-rotating-logo-inner" style="border-radius: 10px; padding: 2px"><img v-if="logoSrc" :src="logoSrc" alt="Logo Jago Laba" :style="{ width: '100%', height: '100%', borderRadius: '8px', objectFit: logoFit }" /><span v-else class="jl-brand-default" aria-hidden="true" style="font-weight: 900; color: #fbbf24; background: transparent; font-size: 13px">JL</span></span></span>
                 <span class="jl-brand-words"><strong style="font-size: 15px; font-weight: 900; letter-spacing: -0.4px; color: #172744; line-height: 1.2">Jago Laba</strong></span>
@@ -96,7 +97,7 @@ onBeforeUnmount(() => document.body.classList.remove(...bodyClasses));
 
     <aside id="jl-navigation" class="jl-sidebar w-64 bg-white border-r flex flex-col fixed inset-y-0 z-30" :class="{ 'jl-nav-open': open }">
         <div class="jl-sidebar-brand">
-            <Link href="/marketplace/stores" class="flex items-center gap-3">
+            <Link :href="ROUTES.stores" class="flex items-center gap-3">
                 <span class="jl-brand-lockup" style="display: inline-flex; align-items: center; gap: 10px">
                     <span class="jl-rotating-logo-frame" :style="{ width: `${logoSize}px`, height: `${logoSize}px`, borderRadius: '12px', flexShrink: 0 }"><span class="jl-rotating-logo-inner" style="border-radius: 10px; padding: 2px"><img v-if="logoSrc" :src="logoSrc" alt="Logo Jago Laba" :style="{ width: '100%', height: '100%', borderRadius: '8px', objectFit: logoFit }" /><span v-else class="jl-brand-default" aria-hidden="true" style="font-weight: 900; color: #fbbf24; background: transparent; font-size: 13px">JL</span></span></span>
                     <span class="jl-brand-words"><strong style="font-size: 15px; font-weight: 900; letter-spacing: -0.4px; color: #172744; line-height: 1.2">Jago Laba</strong><small style="display: flex; align-items: center; gap: 4px; font-size: 8px; font-weight: 800; letter-spacing: 1px; color: #d97706; margin-top: 2px; white-space: nowrap"><span style="width: 5px; height: 5px; border-radius: 50%; background: #f59e0b; display: inline-block"></span>MARKETPLACE OS</small></span>
@@ -104,7 +105,7 @@ onBeforeUnmount(() => document.body.classList.remove(...bodyClasses));
             </Link>
             <button type="button" class="jl-mobile-close" aria-label="Tutup navigasi" @click="open = false"><JlIcon name="close" /></button>
         </div>
-        <Link class="jl-scope-label" href="/marketplace/stores"><JlIcon name="arrow-left" /> Pilih Toko</Link>
+        <Link class="jl-scope-label" :href="ROUTES.stores"><JlIcon name="arrow-left" /> Pilih Toko</Link>
         <details v-if="activeStore" class="jl-store-picker">
             <summary>
                 <PlatformLogo :platform="activeStore.platform" />
@@ -132,7 +133,7 @@ onBeforeUnmount(() => document.body.classList.remove(...bodyClasses));
         </nav>
         <footer class="jl-sidebar-footer">
             <div class="jl-scope-note"><strong>{{ userName }}</strong><p>Ruang kerja toko marketplace</p></div>
-            <a href="/workspace.php"><JlIcon name="compare" /> Ganti Ruang Kerja</a>
+            <a :href="ROUTES.workspacePage"><JlIcon name="compare" /> Ganti Ruang Kerja</a>
         </footer>
     </aside>
 

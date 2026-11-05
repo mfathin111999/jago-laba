@@ -7,6 +7,7 @@ import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import Modal from '../../Components/Modal.vue';
 import { ApiError, apiRequest, newIdempotencyKey } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Expense = Record<string, any>;
 
@@ -38,7 +39,7 @@ function applyFilters(): void {
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = String(value);
     });
-    router.get('/marketplace/expenses', query, { preserveState: true, replace: true });
+    router.get(ROUTES.expenses, query, { preserveState: true, replace: true });
 }
 
 const exportUrl = computed(() => {
@@ -68,7 +69,7 @@ async function save(): Promise<void> {
     busy.value = true;
     formError.value = null;
     try {
-        const result = await apiRequest('/pilot/marketplace/expenses', { ...form, store_id: props.scope.store_id }, { headers: { 'X-Idempotency-Key': attemptKey } });
+        const result = await apiRequest(ROUTES.expensesWrite, { ...form, store_id: props.scope.store_id }, { headers: { 'X-Idempotency-Key': attemptKey } });
         flash.message = result.message ?? 'Pengeluaran tersimpan.';
         flash.kind = 'success';
         creating.value = false;

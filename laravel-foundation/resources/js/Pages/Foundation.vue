@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import JlIcon from '../Components/JlIcon.vue';
 import { Head } from '@inertiajs/vue3';
+import { ROUTES } from '../lib/routes';
 
 type User = { name?: string; username?: string } | null;
 
@@ -42,7 +43,7 @@ function csrfToken(): string {
 }
 
 async function refreshSession() {
-    const response = await fetch('/auth/me', { headers: { Accept: 'application/json' } });
+    const response = await fetch(ROUTES.auth.me, { headers: { Accept: 'application/json' } });
     const payload = await readJson(response);
     if (!response.ok) throw new Error(payload.message || 'Sesi tidak dapat dibaca.');
     authenticated.value = true;
@@ -55,7 +56,7 @@ async function login() {
     loading.value = true;
 
     try {
-        const response = await fetch('/auth/login', {
+        const response = await fetch(ROUTES.auth.login, {
             method: 'POST',
             headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
             body: JSON.stringify({ username: username.value, password: password.value }),
@@ -76,14 +77,14 @@ async function selectWorkspace(workspace: string) {
     selecting.value = workspace;
 
     try {
-        const response = await fetch('/auth/workspace', {
+        const response = await fetch(ROUTES.auth.workspace, {
             method: 'POST',
             headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
             body: JSON.stringify({ workspace }),
         });
         const payload = await readJson(response);
         if (!response.ok || payload.success !== true) throw new Error(payload.message || 'Workspace tidak dapat dipilih.');
-        window.location.href = workspace === 'marketplace' ? '/pilot/marketplace' : '/konveksi';
+        window.location.href = workspace === 'marketplace' ? ROUTES.dashboard : ROUTES.konveksi;
     } catch (exception) {
         error.value = exception instanceof Error ? exception.message : 'Workspace tidak dapat dipilih.';
         selecting.value = null;
@@ -93,7 +94,7 @@ async function selectWorkspace(workspace: string) {
 async function logout() {
     error.value = '';
     try {
-        const response = await fetch('/auth/logout', { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken() } });
+        const response = await fetch(ROUTES.auth.logout, { method: 'POST', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrfToken() } });
         if (!response.ok) throw new Error('Belum berhasil keluar. Silakan coba lagi.');
         window.location.reload();
     } catch (exception) {

@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import PlatformLogo from '../../Components/PlatformLogo.vue';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -78,7 +79,7 @@ const exportLink = computed(() => `/marketplace/analytics/export?${new URLSearch
 const link = (path: string) => `${path}?store=${encodeURIComponent(storeId.value)}&store_id=${encodeURIComponent(storeId.value)}`;
 
 function apply(): void {
-    router.get('/pilot/marketplace/analytics', { store: storeId.value, period: form.period, date_start: form.date_start, date_end: form.date_end, date_basis: form.date_basis, analytics_mode: mode.value }, { preserveScroll: true });
+    router.get(ROUTES.analytics, { store: storeId.value, period: form.period, date_start: form.date_start, date_end: form.date_end, date_basis: form.date_basis, analytics_mode: mode.value }, { preserveScroll: true });
 }
 const refresh = () => router.reload();
 let timer: number | undefined;
@@ -130,7 +131,7 @@ const dayLabel = (date: string) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
     <MarketplaceShell active="analytics" title="Analitik & Laporan" :store-id="scope.store_id" :company-key="scope.company_key">
         <section v-if="!analytics || !active_store" id="global-analytics" class="ma-page">
             <header class="ma-header"><div><h1>Analitik &amp; Laporan</h1><p>Penjualan, keuangan, dan keuntungan toko dalam satu sumber perhitungan.</p></div></header>
-            <div class="ma-notice" role="status"><b>Toko belum siap</b><p>{{ message || 'Pilih toko terlebih dahulu.' }} <Link href="/marketplace/stores">Pilih Toko</Link></p></div>
+            <div class="ma-notice" role="status"><b>Toko belum siap</b><p>{{ message || 'Pilih toko terlebih dahulu.' }} <Link :href="ROUTES.stores">Pilih Toko</Link></p></div>
         </section>
 
         <section v-else id="global-analytics" class="ma-page">
@@ -160,7 +161,7 @@ const dayLabel = (date: string) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
             </div>
 
             <section id="ma-ringkasan">
-                <div class="ma-section-title"><h2>Kelengkapan data</h2><Link :href="link('/pilot/marketplace/orders')">Lihat transaksi →</Link></div>
+                <div class="ma-section-title"><h2>Kelengkapan data</h2><Link :href="link(ROUTES.orders)">Lihat transaksi →</Link></div>
                 <div class="ma-coverage"><article v-for="[key, label] in coverageItems" :key="key"><strong>{{ value(current.all?.[key], 'count') }}</strong><span>{{ label }}</span></article></div>
                 <p v-if="current.missing_release_dates" class="ma-warning">{{ current.missing_release_dates }} catatan tanpa tanggal settlement sumber tidak dimasukkan pada dasar tanggal ini.</p>
             </section>
@@ -230,13 +231,13 @@ const dayLabel = (date: string) => `${date.slice(8, 10)}/${date.slice(5, 7)}`;
                 <h2>Iklan &amp; atribusi</h2>
                 <p>Pengeluaran iklan tercatat: <b>{{ value(chosen.ads) }}</b>. Laporan advertiser, pendapatan teratribusi, dan ROAS kampanye belum terhubung pada modul ini.</p>
                 <p>Rasio penjualan toko ÷ iklan tercatat: {{ chosen.roas === null || chosen.roas === undefined ? 'Belum tersedia' : `${new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(chosen.roas)}x` }}. Ini bukan ROAS atribusi kampanye.</p>
-                <Link href="/marketplace/integrations">Periksa Integrasi API →</Link>
+                <Link :href="ROUTES.integrations">Periksa Integrasi API →</Link>
             </section>
 
             <section id="ma-laporan" class="ma-card">
                 <h2>Laporan &amp; penelusuran</h2>
                 <p>Ekspor XLSX memuat metadata, KPI, data harian, komponen biaya, dan produk. Perbandingan: {{ report.previous_start }} — {{ report.previous_end }}. Maksimal 45 hari per laporan.</p>
-                <div class="ma-actions"><a :href="exportLink">↓ Unduh laporan XLSX</a><Link :href="link('/marketplace/income')">Settlement, penarikan &amp; bank →</Link><Link :href="link('/marketplace/sync')">Riwayat sinkronisasi →</Link></div>
+                <div class="ma-actions"><a :href="exportLink">↓ Unduh laporan XLSX</a><Link :href="link(ROUTES.income)">Settlement, penarikan &amp; bank →</Link><Link :href="link(ROUTES.sync)">Riwayat sinkronisasi →</Link></div>
             </section>
         </section>
     </MarketplaceShell>

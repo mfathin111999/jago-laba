@@ -8,6 +8,7 @@ import Modal from '../../Components/Modal.vue';
 import PriceEditor from '../../Components/PriceEditor.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -35,7 +36,7 @@ function applyFilters(): void {
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = String(value);
     });
-    router.get('/marketplace/catalog', query, { preserveState: true, replace: true });
+    router.get(ROUTES.catalog, query, { preserveState: true, replace: true });
 }
 
 const exportUrl = computed(() => {
@@ -105,7 +106,7 @@ async function saveHpp(): Promise<void> {
     busy.value = true;
     formError.value = null;
     try {
-        const result = await apiRequest('/pilot/marketplace/hpp/global', {
+        const result = await apiRequest(ROUTES.hppGlobal, {
             store_id: props.scope.store_id,
             hpp: form.hpp,
             sku: editor.variant.sku,
@@ -140,7 +141,7 @@ async function saveHpp(): Promise<void> {
                     <a href="#" class="border rounded-xl bg-white px-4 py-2 text-xs font-bold" @click.prevent="applyFilters">↻ Muat ulang</a>
                 </div>
             </header>
-            <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-900">Sumber: API {{ activeStore?.platform }} · {{ updatedAt ? `Pembaruan data sumber: ${updatedAt} WIB` : 'Katalog API belum tersedia.' }} <span class="block mt-1">Halaman menampilkan katalog terakhir yang tersimpan dari toko ini.</span><p v-if="activeStore && !activeStore.is_connection_verified" class="mt-2 text-amber-800">Koneksi API toko belum terverifikasi. <Link class="font-bold underline" href="/marketplace/integrations">Buka Integrasi API</Link> untuk menghubungkan toko {{ activeStore?.platform }}.</p></div>
+            <div class="rounded-xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-900">Sumber: API {{ activeStore?.platform }} · {{ updatedAt ? `Pembaruan data sumber: ${updatedAt} WIB` : 'Katalog API belum tersedia.' }} <span class="block mt-1">Halaman menampilkan katalog terakhir yang tersimpan dari toko ini.</span><p v-if="activeStore && !activeStore.is_connection_verified" class="mt-2 text-amber-800">Koneksi API toko belum terverifikasi. <Link class="font-bold underline" :href="ROUTES.integrations">Buka Integrasi API</Link> untuk menghubungkan toko {{ activeStore?.platform }}.</p></div>
             <FlashBanner :message="flash.message" :kind="flash.kind" @dismiss="flash.message = null" />
 
             <form class="flex flex-wrap gap-3 bg-white rounded-2xl border p-4 items-end" @submit.prevent="applyFilters">

@@ -7,6 +7,7 @@ import Modal from '../../Components/Modal.vue';
 import ShippingLabels from '../../Components/ShippingLabels.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Store = Record<string, any>;
 type Order = Record<string, any>;
@@ -71,7 +72,7 @@ function params(page = 1): Record<string, any> {
 }
 
 function loadOrders(page = 1): void {
-    router.get('/pilot/marketplace/orders', params(page), { preserveState: true, preserveScroll: true, replace: true });
+    router.get(ROUTES.orders, params(page), { preserveState: true, preserveScroll: true, replace: true });
 }
 
 // ----- shipping labels and shipment arrangement (live mode) -----
@@ -120,7 +121,7 @@ async function refreshFinance(): Promise<void> {
     financeBusy.value = true;
     financeMessage.value = null;
     try {
-        const result = await apiRequest('/api/marketplace-order-finance.php', { store_id: props.scope.store_id, order_id: id });
+        const result = await apiRequest(ROUTES.api.orderFinance, { store_id: props.scope.store_id, order_id: id });
         if (result.presentation && detail.value) detail.value = { ...detail.value, presentation: result.presentation };
         financeMessage.value = result.message ?? null;
     } catch (error) {
@@ -164,7 +165,7 @@ const presentation = computed(() => (detail.value?.presentation ?? null) as Reco
     <MarketplaceShell active="orders" title="Pesanan" :store-id="scope.store_id" :company-key="scope.company_key">
         <section v-if="!orders || !active_store" id="marketplace-orders" class="mp-orders">
             <header class="mp-order-header"><div><p class="mp-order-eyebrow">Marketplace</p><h1>Pesanan</h1><p>Pantau pesanan, paket, dan kondisi pengiriman dari toko aktif.</p></div></header>
-            <div class="mp-order-notice"><JlIcon name="info" /><p>{{ message || 'Pilih toko terlebih dahulu.' }} <Link href="/marketplace/stores">Pilih Toko</Link></p></div>
+            <div class="mp-order-notice"><JlIcon name="info" /><p>{{ message || 'Pilih toko terlebih dahulu.' }} <Link :href="ROUTES.stores">Pilih Toko</Link></p></div>
         </section>
 
         <section v-else id="marketplace-orders" class="mp-orders" :data-store="scope.store_id ?? ''">

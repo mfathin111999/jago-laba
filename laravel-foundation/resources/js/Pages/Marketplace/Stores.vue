@@ -10,6 +10,7 @@ import Modal from '../../Components/Modal.vue';
 import StatusBadge from '../../Components/StatusBadge.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatDate, formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 interface Connection {
     status: string | null;
@@ -130,7 +131,7 @@ function saveStore() {
     void run(async () => {
         const result =
             editor.mode === 'create'
-                ? await apiRequest('/pilot/marketplace/stores', payload)
+                ? await apiRequest(ROUTES.storesWrite, payload)
                 : await apiRequest(`/pilot/marketplace/stores/${encodeURIComponent(editor.id)}`, payload, { method: 'PUT' });
 
         return result.message ?? 'Toko tersimpan.';
@@ -192,7 +193,7 @@ const erase = reactive<{ open: boolean; storeId: string; storeName: string; prev
 });
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-const deletionCall = (body: Record<string, unknown>) => apiRequest('/api/marketplace-store-deletion.php', body);
+const deletionCall = (body: Record<string, unknown>) => apiRequest(ROUTES.api.storeDeletion, body);
 const confirmationMatches = computed(() => erase.preview !== null && erase.typed.trim() === erase.preview.name);
 
 async function openErase(id: string, name: string) {
@@ -316,7 +317,7 @@ const dotClass = (tone: string) => (tone === 'ok' ? 'bg-emerald-500' : tone === 
                 </div>
                 <div class="flex items-center gap-2">
                     <button v-if="can_manage" type="button" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-brand-600 hover:bg-brand-700" @click="openCreate"><JlIcon name="plus" /> Tambah toko</button>
-                    <Link href="/marketplace/integrations" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition"><JlIcon name="plug" /> Pengaturan Integrasi API</Link>
+                    <Link :href="ROUTES.integrations" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition"><JlIcon name="plug" /> Pengaturan Integrasi API</Link>
                 </div>
             </header>
 
@@ -330,7 +331,7 @@ const dotClass = (tone: string) => (tone === 'ok' ? 'bg-emerald-500' : tone === 
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2.5">
-                        <Link href="/marketplace/integrations" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white transition shadow-sm" :class="platform === 'TikTok Shop' ? 'bg-[#FE2C55] hover:bg-[#E11D48]' : 'bg-[#EE4D2D] hover:bg-[#D83E20]'"><JlIcon name="plus" /> Hubungkan {{ platform }}</Link>
+                        <Link :href="ROUTES.integrations" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white transition shadow-sm" :class="platform === 'TikTok Shop' ? 'bg-[#FE2C55] hover:bg-[#E11D48]' : 'bg-[#EE4D2D] hover:bg-[#D83E20]'"><JlIcon name="plus" /> Hubungkan {{ platform }}</Link>
                     </div>
                 </div>
                 <div class="px-5 py-3 bg-slate-50/70 border-b border-slate-100 text-[11px] text-slate-600 flex items-center gap-2 leading-relaxed"><JlIcon name="info" /><span><strong>Catatan:</strong> {{ platform === 'TikTok Shop' ? 'Hanya akun utama TikTok dapat dihubungkan. Sub akun tidak dapat dihubungkan.' : 'Hanya akun utama (Main Account) Shopee dan akun SIP/Shop Account (Shopee International Platform) dapat dihubungkan. Sub akun tidak dapat dihubungkan.' }}</span></div>

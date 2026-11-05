@@ -1,3 +1,4 @@
+import { ROUTES } from './routes';
 export interface NavItem {
     key: string;
     label: string;
@@ -11,17 +12,17 @@ export interface NavItem {
  * adds its route, so the menu never links to something that is not there.
  */
 export const MARKETPLACE_NAV: NavItem[] = [
-    { key: 'dashboard', label: 'Dashboard toko', path: '/pilot/marketplace', needsStore: false },
-    { key: 'orders', label: 'Transaksi', path: '/pilot/marketplace/orders', needsStore: false },
-    { key: 'analytics', label: 'Analitik & laporan', path: '/pilot/marketplace/analytics', needsStore: false },
-    { key: 'catalog', label: 'Produk & HPP', path: '/marketplace/catalog', needsStore: true },
-    { key: 'stock', label: 'Stok', path: '/marketplace/stock', needsStore: true },
-    { key: 'marketing', label: 'Iklan', path: '/marketplace/marketing', needsStore: true },
-    { key: 'income', label: 'Pemasukan dan penarikan', path: '/marketplace/income', needsStore: false },
-    { key: 'expenses', label: 'Pengeluaran', path: '/marketplace/expenses', needsStore: true },
-    { key: 'sync', label: 'Sinkronisasi', path: '/marketplace/sync', needsStore: true },
-    { key: 'integrations', label: 'Integrasi', path: '/marketplace/integrations', needsStore: false },
-    { key: 'stores', label: 'Toko', path: '/marketplace/stores', needsStore: false },
+    { key: 'dashboard', label: 'Dashboard toko', path: ROUTES.dashboard, needsStore: false },
+    { key: 'orders', label: 'Transaksi', path: ROUTES.orders, needsStore: false },
+    { key: 'analytics', label: 'Analitik & laporan', path: ROUTES.analytics, needsStore: false },
+    { key: 'catalog', label: 'Produk & HPP', path: ROUTES.catalog, needsStore: true },
+    { key: 'stock', label: 'Stok', path: ROUTES.stock, needsStore: true },
+    { key: 'marketing', label: 'Iklan', path: ROUTES.marketing, needsStore: true },
+    { key: 'income', label: 'Pemasukan dan penarikan', path: ROUTES.income, needsStore: false },
+    { key: 'expenses', label: 'Pengeluaran', path: ROUTES.expenses, needsStore: true },
+    { key: 'sync', label: 'Sinkronisasi', path: ROUTES.sync, needsStore: true },
+    { key: 'integrations', label: 'Integrasi', path: ROUTES.integrations, needsStore: false },
+    { key: 'stores', label: 'Toko', path: ROUTES.stores, needsStore: false },
 ];
 
 export function navHref(item: NavItem, storeId?: string | null): string {

@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { ApiError, apiRequest, newIdempotencyKey } from '../lib/api';
 import { formatValue } from '../lib/format';
 import Modal from './Modal.vue';
+import { ROUTES } from '../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -51,7 +52,7 @@ function netOf(row: Row): string {
 
 async function call(action: 'prepare' | 'save', payload?: Record<string, unknown>): Promise<Row> {
     try {
-        return (await apiRequest('/api/marketplace-price.php', { action, store_id: props.storeId, product_id: props.productId, payload })).data ?? {};
+        return (await apiRequest(ROUTES.api.price, { action, store_id: props.storeId, product_id: props.productId, payload })).data ?? {};
     } catch (error) {
         throw error instanceof ApiError ? new Error(error.message + (error.code ? ` (${error.code})` : '')) : error;
     }

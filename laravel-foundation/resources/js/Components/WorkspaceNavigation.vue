@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { ROUTES } from '../lib/routes';
 const props = defineProps<{ workspace: 'marketplace' | 'konveksi'; storeId?: string | null }>();
 const href = (path: string) => props.storeId ? `${path}?store=${encodeURIComponent(props.storeId)}&store_id=${encodeURIComponent(props.storeId)}` : path;
 </script>
@@ -7,14 +8,14 @@ const href = (path: string) => props.storeId ? `${path}?store=${encodeURICompone
     <nav class="workspace-navigation" aria-label="Navigasi ruang kerja">
         <Link href="/">JAGO LABA · Ruang kerja</Link>
         <template v-if="workspace === 'marketplace'">
-            <Link :href="href('/pilot/marketplace')">Dashboard</Link>
-            <Link :href="href('/pilot/marketplace/orders')">Pesanan</Link>
-            <Link :href="href('/pilot/marketplace/analytics')">Analitik</Link>
-            <Link v-if="storeId" :href="href('/marketplace/catalog')">Katalog &amp; HPP</Link>
-            <Link v-if="storeId" :href="href('/marketplace/expenses')">Pengeluaran</Link>
-            <Link href="/marketplace/stores">Toko</Link>
+            <Link :href="href(ROUTES.dashboard)">Dashboard</Link>
+            <Link :href="href(ROUTES.orders)">Pesanan</Link>
+            <Link :href="href(ROUTES.analytics)">Analitik</Link>
+            <Link v-if="storeId" :href="href(ROUTES.catalog)">Katalog &amp; HPP</Link>
+            <Link v-if="storeId" :href="href(ROUTES.expenses)">Pengeluaran</Link>
+            <Link :href="ROUTES.stores">Toko</Link>
         </template>
-        <a v-else href="/konveksi">Konveksi</a>
+        <a v-else :href="ROUTES.konveksi">Konveksi</a>
     </nav>
 </template>
 <style scoped>

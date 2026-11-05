@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { ApiError, apiRequest } from '../lib/api';
 import Modal from './Modal.vue';
+import { ROUTES } from '../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -29,10 +30,10 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const messageOf = (error: unknown, fallback: string): string => (error instanceof ApiError ? error.message : fallback);
 
 async function fetchDocuments(orderId: string): Promise<Row[]> {
-    let result = await apiRequest('/api/marketplace-shipping-document.php', { store_id: props.storeId, order_id: orderId });
+    let result = await apiRequest(ROUTES.api.shippingDocument, { store_id: props.storeId, order_id: orderId });
     for (let attempt = 0; attempt < 3 && (result.documents ?? []).some((doc: Row) => !doc.success && NOT_READY.includes(doc.code)); attempt += 1) {
         await wait(2000 * (attempt + 1));
-        result = await apiRequest('/api/marketplace-shipping-document.php', { store_id: props.storeId, order_id: orderId });
+        result = await apiRequest(ROUTES.api.shippingDocument, { store_id: props.storeId, order_id: orderId });
     }
 
     return result.documents ?? [];
@@ -73,7 +74,7 @@ async function loadOptions(orderId: string, packageId: string): Promise<void> {
     arrangeState.value = { loading: true, error: null };
     packages.value = [];
     try {
-        const result = await apiRequest('/api/marketplace-fulfillment.php', { action: 'options', store_id: props.storeId, order_id: orderId, package_id: packageId });
+        const result = await apiRequest(ROUTES.api.fulfillment, { action: 'options', store_id: props.storeId, order_id: orderId, package_id: packageId });
         packages.value = result.data?.packages ?? [];
         packages.value.forEach((pack) => {
             forms[pack.package_id] ??= { method: '', slot: '', consent: false, message: '', busy: false };
@@ -92,7 +93,7 @@ async function confirm(pack: Row): Promise<void> {
     form.busy = true;
     form.message = 'Mengatur pengiriman di server. Halaman boleh ditutup; periksa status saat dibuka kembali.';
     try {
-        const result = await apiRequest('/api/marketplace-fulfillment.php', {
+        const result = await apiRequest(ROUTES.api.fulfillment, {
             action: 'confirm', confirmed: '1', store_id: props.storeId, order_id: arrange.value.orderId, package_id: pack.package_id,
             offer_token: pack.offer_token, method: form.method, slot_start: form.slot,
         });

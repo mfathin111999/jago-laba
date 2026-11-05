@@ -5,6 +5,7 @@ import FlashBanner from '../../Components/FlashBanner.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatDate as fmtDate, formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -49,7 +50,7 @@ function notify(message: string, kind: 'success' | 'error' = 'success'): void {
 }
 
 function chooseStore(event: Event): void {
-    router.get('/marketplace/sync', { store_id: (event.target as HTMLSelectElement).value });
+    router.get(ROUTES.sync, { store_id: (event.target as HTMLSelectElement).value });
 }
 
 // ----- manual run + live status -----
@@ -84,7 +85,7 @@ onBeforeUnmount(stopPolling);
 async function startSync(): Promise<void> {
     busy.value = true;
     try {
-        const result = await apiRequest('/api/marketplace-sync.php', { action: 'start', store_id: storeId.value });
+        const result = await apiRequest(ROUTES.api.sync, { action: 'start', store_id: storeId.value });
         live.value = result.data ?? live.value;
         notify('Sinkronisasi masuk antrean. Halaman boleh ditutup, worker server yang memprosesnya.');
     } catch (error) {
@@ -109,7 +110,7 @@ const autoRows = computed(() => props.auto.filter((state) => !AUTO_MODES[state.m
 async function toggleAuto(state: Row): Promise<void> {
     busy.value = true;
     try {
-        await apiRequest('/api/marketplace-auto-sync.php', { store_id: storeId.value, mode: state.mode, enabled: state.enabled ? '0' : '1' });
+        await apiRequest(ROUTES.api.autoSync, { store_id: storeId.value, mode: state.mode, enabled: state.enabled ? '0' : '1' });
         notify(`${AUTO_MODES[state.mode]?.title ?? state.mode} ${state.enabled ? 'dinonaktifkan' : 'diaktifkan'}.`);
         router.reload({ only: ['auto'] });
     } catch (error) {

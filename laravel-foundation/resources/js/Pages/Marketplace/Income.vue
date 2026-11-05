@@ -5,6 +5,7 @@ import FlashBanner from '../../Components/FlashBanner.vue';
 import MarketplaceShell from '../../Components/MarketplaceShell.vue';
 import { ApiError, apiRequest } from '../../lib/api';
 import { formatValue } from '../../lib/format';
+import { ROUTES } from '../../lib/routes';
 
 type Row = Record<string, any>;
 
@@ -46,7 +47,7 @@ function go(extra: Record<string, string | number> = {}): void {
     Object.entries(filter).forEach(([key, value]) => {
         if (value !== '') query[key] = value;
     });
-    router.get('/marketplace/income', query, { preserveState: true, replace: true });
+    router.get(ROUTES.income, query, { preserveState: true, replace: true });
 }
 
 function setTab(next: Tab): void {
@@ -101,7 +102,7 @@ async function preview(): Promise<void> {
         const body = new FormData();
         body.set('store_id', importer.storeId);
         body.set('report', importer.file);
-        const result = await apiRequest('/pilot/marketplace/withdrawals/preview', body);
+        const result = await apiRequest(ROUTES.withdrawalsPreview, body);
         const data = result.data ?? {};
         Object.assign(importer, { key: data.key ?? '', count: data.count ?? 0, sample: data.rows ?? [], meta: data.meta ?? {} });
     } catch (error) {
@@ -115,7 +116,7 @@ async function confirmImport(): Promise<void> {
     busy.value = true;
     importError.value = null;
     try {
-        const result = await apiRequest('/api/marketplace-withdrawals.php', { action: 'confirm', key: importer.key });
+        const result = await apiRequest(ROUTES.api.withdrawals, { action: 'confirm', key: importer.key });
         const counts = result.data ?? {};
         flash.message = `Impor selesai: ${counts.inserted ?? 0} baru, ${counts.updated ?? 0} diperbarui, ${counts.unchanged ?? 0} tidak berubah.`;
         flash.kind = 'success';
