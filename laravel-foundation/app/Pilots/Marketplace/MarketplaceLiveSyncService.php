@@ -100,7 +100,7 @@ final class MarketplaceLiveSyncService
     private function run(string $companyKey, callable $callback): mixed
     {
         LegacyRuntime::prepare();
-        require_once dirname(__DIR__, 4).'/app/Modules/Marketplace/Services/MarketplaceSyncService.php';
+        LegacyRuntime::service('MarketplaceSyncService');
         $system = new LegacyUser(['id' => 'system', 'username' => 'system', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $companyKey]);
 
         $factory = $this->clientFactory;

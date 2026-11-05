@@ -18,7 +18,7 @@ final class MarketingReadService
      */
     public function dashboard(string $companyKey, string $storeId, array $filters): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceService.php';
+        LegacyRuntime::service('MarketplaceService');
 
         return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceService($pdo))->getMarketingDashboard(
             $storeId,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Marketplace\LegacyRuntime;
 use App\Http\Requests\MarketplaceAnalyticsRequest;
 use App\Pilots\Marketplace\MarketplaceAnalyticsReadService;
 use Illuminate\Http\RedirectResponse;
@@ -27,7 +28,7 @@ final class MarketplaceAnalyticsController
             );
             $format = $request->validated('format');
             if ($format === 'xlsx') {
-                require_once dirname(__DIR__, 4).'/app/Modules/Marketplace/Services/MarketplaceAnalyticsXlsx.php';
+                LegacyRuntime::service('MarketplaceAnalyticsXlsx');
                 $report = $payload['analytics'];
 
                 return response(\MarketplaceAnalyticsXlsx::bytes($report), 200, [
@@ -37,7 +38,7 @@ final class MarketplaceAnalyticsController
                 ]);
             }
             if ($format === 'csv') {
-                require_once dirname(__DIR__, 4).'/app/Modules/Marketplace/Services/MarketplaceAnalyticsCsv.php';
+                LegacyRuntime::service('MarketplaceAnalyticsCsv');
                 $report = $payload['analytics'];
 
                 return response()->streamDownload(function () use ($report): void {

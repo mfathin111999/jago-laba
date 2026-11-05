@@ -30,7 +30,7 @@ final class LiveGateway
     {
         LegacyRuntime::prepare();
         foreach ($services as $service) {
-            require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/'.$service;
+            LegacyRuntime::service($service);
         }
 
         return $this->context->run($user, $companyKey, $callback);

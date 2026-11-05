@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Marketplace\LegacyRuntime;
 use App\Exceptions\ProviderConnectorInactive;
 use App\Marketplace\LiveGateway;
 use App\Pilots\Marketplace\MarketplaceFulfillmentWriteService;
@@ -82,7 +83,7 @@ final class MarketplaceFulfillmentController
 
             return response()->json(['success' => true, 'data' => $data])->header('Cache-Control', 'no-store, private');
         } catch (\Throwable $e) {
-            require_once dirname(__DIR__, 4).'/app/Modules/Marketplace/Services/MarketplaceFulfillmentService.php';
+            LegacyRuntime::service('MarketplaceFulfillmentService');
 
             return response()->json(['success' => false, 'message' => \MarketplaceFulfillmentService::safeError($e)], $e instanceof DomainException ? 403 : 400)->header('Cache-Control', 'no-store, private');
         }

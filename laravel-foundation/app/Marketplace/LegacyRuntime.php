@@ -31,6 +31,29 @@ final class LegacyRuntime
         self::$prepared = true;
     }
 
+    /** Loads one legacy Marketplace service class (app/Modules/Marketplace/Services/<name>.php) once. */
+    public static function service(string $name): void
+    {
+        self::requireLegacy('Modules/Marketplace/Services', $name);
+    }
+
+    /** Loads one legacy shared class (app/Shared/<folder>/<name>.php, e.g. 'Security/MarketplaceTokenVault') once. */
+    public static function shared(string $path): void
+    {
+        $folder = dirname($path);
+        self::requireLegacy('Shared'.($folder === '.' ? '' : '/'.$folder), basename($path));
+    }
+
+    private static function requireLegacy(string $folder, string $name): void
+    {
+        $name = preg_replace('/\\.php$/', '', $name);
+        if (! is_string($name) || preg_match('/^[A-Za-z0-9_]+$/', $name) !== 1 || preg_match('#^[A-Za-z0-9_/]+$#', $folder) !== 1) {
+            throw new \InvalidArgumentException('Nama kelas legacy tidak valid.');
+        }
+
+        require_once dirname(__DIR__, 3).'/app/'.$folder.'/'.$name.'.php';
+    }
+
     /**
      * Makes the given settings visible to getenv() without overriding values the process already has.
      *

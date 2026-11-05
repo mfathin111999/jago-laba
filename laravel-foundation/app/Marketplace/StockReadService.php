@@ -15,7 +15,7 @@ final class StockReadService
      */
     public function listing(string $companyKey, string $storeId, array $filters): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceStockService.php';
+        LegacyRuntime::service('MarketplaceStockService');
 
         $data = $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceStockService($pdo))->listing($storeId, $filters));
         $data['rows'] = array_map(static function (array $row): array {

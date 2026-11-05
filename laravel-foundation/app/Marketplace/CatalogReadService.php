@@ -10,7 +10,7 @@ final class CatalogReadService
 
     public function listing(string $companyKey, string $storeId, array $filters): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceCatalogService.php';
+        LegacyRuntime::service('MarketplaceCatalogService');
 
         return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceCatalogService($pdo))->listingForStore($storeId, $filters));
     }

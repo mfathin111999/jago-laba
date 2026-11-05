@@ -2,6 +2,7 @@
 
 namespace App\Pilots\Marketplace;
 
+use App\Marketplace\LegacyRuntime;
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
@@ -194,9 +195,9 @@ final class MarketplaceAnalyticsReadService
     private function legacyReport(string $companyKey, array $filters): array
     {
         $root = dirname(__DIR__, 4);
-        require_once $root.'/app/Shared/Companies/MarketplaceScopeService.php';
-        require_once $root.'/app/Modules/Marketplace/Services/MarketplaceOrderPresentation.php';
-        require_once $root.'/app/Modules/Marketplace/Services/MarketplaceAnalyticsService.php';
+        LegacyRuntime::shared('Companies/MarketplaceScopeService');
+        LegacyRuntime::service('MarketplaceOrderPresentation');
+        LegacyRuntime::service('MarketplaceAnalyticsService');
 
         $hadCompany = array_key_exists('company_key', $_SESSION ?? []);
         $previousCompany = $_SESSION['company_key'] ?? null;

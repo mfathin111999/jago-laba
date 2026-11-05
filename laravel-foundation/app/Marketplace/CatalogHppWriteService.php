@@ -17,7 +17,7 @@ final class CatalogHppWriteService
 
     public function updateSkuHpp(LegacyUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceService.php';
+        LegacyRuntime::service('MarketplaceService');
 
         $sku = trim($sku);
         if ($sku === '' || $newHpp <= 0) {
@@ -65,7 +65,7 @@ final class CatalogHppWriteService
         bool $recalculateHistory = false,
         ?string $effectiveFrom = null,
     ): array {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceCatalogService.php';
+        LegacyRuntime::service('MarketplaceCatalogService');
 
         $affected = $this->context->run($user, $companyKey, function (PDO $pdo) use (
             $storeId, $amount, $applyAllVariants, $productId, $sku, $recalculateHistory, $effectiveFrom
@@ -119,7 +119,7 @@ final class CatalogHppWriteService
      */
     public function saveHppBatch(LegacyUser $user, string $companyKey, array $changes): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceCatalogService.php';
+        LegacyRuntime::service('MarketplaceCatalogService');
 
         $result = $this->context->run($user, $companyKey, function (PDO $pdo) use ($changes): array {
             $catalog = new \MarketplaceCatalogService($pdo);

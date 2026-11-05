@@ -15,7 +15,7 @@ final class IncomeReadService
      */
     public function income(string $companyKey, array $filters): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceIncomeService.php';
+        LegacyRuntime::service('MarketplaceIncomeService');
 
         $data = $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceIncomeService($pdo))->overview($filters));
         $data['rows'] = array_map(static fn (array $row): array => [
@@ -39,7 +39,7 @@ final class IncomeReadService
      */
     public function withdrawals(string $companyKey, array $filters): array
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceWithdrawalService.php';
+        LegacyRuntime::service('MarketplaceWithdrawalService');
 
         return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceWithdrawalService($pdo))->listing($filters));
     }

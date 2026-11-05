@@ -3,14 +3,14 @@
 namespace App\Pilots\Marketplace;
 
 use App\Auth\LegacyUser;
+use App\Marketplace\LegacyRuntime;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\UploadedFile;
 use InvalidArgumentException;
 
-$legacyRoot = dirname(__DIR__, 4);
-require_once $legacyRoot.'/app/Modules/Marketplace/Services/MarketplaceWithdrawalService.php';
-require_once $legacyRoot.'/app/Modules/Marketplace/Services/MarketplaceWithdrawalXlsx.php';
+LegacyRuntime::service('MarketplaceWithdrawalService');
+LegacyRuntime::service('MarketplaceWithdrawalXlsx');
 
 /**
  * Read-only Laravel boundary for the legacy withdrawal import preview.
