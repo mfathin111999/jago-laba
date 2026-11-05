@@ -38,7 +38,7 @@ final class ApiResponse
      *                                                                              message, as [status, code]; checked in order
      * @return T|JsonResponse
      */
-    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage, bool $logExceptionMessage = false, array $refusals = []): mixed
+    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage, bool $logExceptionMessage = false, array $refusals = [], int $failureStatus = 500): mixed
     {
         try {
             return $action();
@@ -56,7 +56,7 @@ final class ApiResponse
                 'exception' => $exception::class,
             ] + ($logExceptionMessage ? ['message' => $exception->getMessage()] : []));
 
-            return self::error($failureMessage, $failureCode, 500);
+            return self::error($failureMessage, $failureCode, $failureStatus);
         }
     }
 }

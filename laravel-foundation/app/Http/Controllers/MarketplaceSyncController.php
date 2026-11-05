@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceSyncRequest;
+use App\Http\Responses\ApiResponse;
 use App\Pilots\Marketplace\MarketplaceSyncDispatchService;
 use App\Support\RequestId;
+use DomainException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
-use Throwable;
+use InvalidArgumentException;
 
 final class MarketplaceSyncController
 {
@@ -15,49 +16,30 @@ final class MarketplaceSyncController
 
     public function __invoke(MarketplaceSyncRequest $request): JsonResponse
     {
-        $requestId = $this->requestId($request->header('X-Request-Id'));
+        // AssignRequestId already kept a valid client X-Request-Id, so this is the id the sync run is recorded under.
+        $requestId = RequestId::current();
 
-        try {
-            $result = $this->dispatcher->dispatchForStore(
+        $result = ApiResponse::guard(
+            fn (): array => $this->dispatcher->dispatchForStore(
                 (string) $request->attributes->get('company_key'),
                 (string) $request->validated('store_id'),
                 'browser',
                 (string) ($request->validated('run_key') ?: $request->header('X-Idempotency-Key') ?: ''),
                 $requestId,
-            );
-        } catch (\DomainException $exception) {
-            return $this->error($exception->getMessage(), 'SYNC_SCOPE_FORBIDDEN', 403, $requestId);
-        } catch (\InvalidArgumentException $exception) {
-            return $this->error($exception->getMessage(), 'SYNC_INPUT_INVALID', 422, $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Marketplace queue dispatch failed.', [
-                'request_id' => $requestId,
-                'exception' => $exception::class,
-            ]);
-
-            return $this->error('Sinkronisasi belum dapat diantrikan.', 'SYNC_QUEUE_UNAVAILABLE', 503, $requestId);
+            ),
+            'SYNC_QUEUE_UNAVAILABLE',
+            'Sinkronisasi belum dapat diantrikan.',
+            'Marketplace queue dispatch failed.',
+            refusals: [DomainException::class => [403, 'SYNC_SCOPE_FORBIDDEN'], InvalidArgumentException::class => [422, 'SYNC_INPUT_INVALID']],
+            failureStatus: 503,
+        );
+        if ($result instanceof JsonResponse) {
+            return $result;
         }
 
         return response()->json([
             'success' => true,
             'data' => $result,
         ], $result['duplicate'] ? 200 : 202)->header('X-Request-Id', $requestId);
-    }
-
-    private function requestId(?string $value): string
-    {
-        $value = trim((string) $value);
-
-        return RequestId::isValid($value) ? $value : RequestId::current();
-    }
-
-    private function error(string $message, string $code, int $status, string $requestId): JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'message' => $message,
-            'code' => $code,
-            'request_id' => $requestId,
-        ], $status)->header('X-Request-Id', $requestId);
     }
 }

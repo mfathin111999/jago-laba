@@ -67,6 +67,25 @@ final class ApiExceptionTest extends TestCase
         $this->getJson('/__test/guarded-typed')->assertStatus(403)->assertJson(['code' => 'STORE_FORBIDDEN', 'message' => 'Toko lain.']);
     }
 
+    public function test_guard_maps_listed_refusals_with_their_own_message_and_the_rest_to_the_failure_status(): void
+    {
+        $refusals = [\DomainException::class => [403, 'SCOPE_FORBIDDEN'], \InvalidArgumentException::class => [422, 'INPUT_INVALID']];
+        $run = static fn (\Throwable $failure) => ApiResponse::guard(static fn () => throw $failure, 'QUEUE_DOWN', 'Antrean belum tersedia.', 'Test failure.', refusals: $refusals, failureStatus: 503);
+
+        $domain = $run(new \DomainException('Di luar cakupan.'));
+        $this->assertSame(403, $domain->getStatusCode());
+        $this->assertSame(['success' => false, 'message' => 'Di luar cakupan.', 'code' => 'SCOPE_FORBIDDEN'], array_diff_key($domain->getData(true), ['request_id' => 1]));
+
+        $invalid = $run(new \InvalidArgumentException('Input salah.'));
+        $this->assertSame(422, $invalid->getStatusCode());
+        $this->assertSame('INPUT_INVALID', $invalid->getData(true)['code']);
+
+        $other = $run(new \RuntimeException('connection refused to 10.0.0.5'));
+        $this->assertSame(503, $other->getStatusCode());
+        $this->assertSame('QUEUE_DOWN', $other->getData(true)['code']);
+        $this->assertSame('Antrean belum tersedia.', $other->getData(true)['message']);
+    }
+
     public function test_api_exceptions_stay_compatible_with_plain_domain_exception_handling(): void
     {
         $exception = new StoreForbidden();
