@@ -180,3 +180,32 @@ Aturan umum: satu langkah per commit, jalankan suite penuh (`C:\xampp\php8_4\php
 - Angka berasal dari `grep` pada pola teks. Satu pola bisa menghitung komentar atau string; tujuannya memberi skala, bukan angka akhir.
 - Penilaian "Baik/Cukup/Lemah" bersifat penilaian reviewer terhadap kesesuaian dengan praktik umum Laravel 13 (versi yang terpasang, `^13.17`), bukan standar mutlak.
 - Dokumen ini tidak mengevaluasi kebenaran logika bisnis dan tidak mengubah kode. Kesetaraan angka dengan legacy (A9) masih terbuka di `laravel-completion-plan-20261104.md`.
+
+## 6. Status penerapan (cabang `refactor/laravel-way`)
+
+Diperbarui setelah pengerjaan fase 0–5. Setiap langkah dikerjakan dengan test kontrak lebih dulu; suite terakhir: PHPUnit 301 test, 14 test Node, smoke visual 11 halaman × 2 viewport, semuanya hijau.
+
+| Temuan | Status | Commit / catatan |
+|---|---|---|
+| A1 Eloquent | **Sebagian** | `2f8ebd6`, `fb3f7e4`: model `MarketplaceStore` + `CompanyScope`; dipakai pembacaan toko, service tulis toko, `StoreContext`. Model pengeluaran/pesanan belum (tabel pengeluaran tidak punya `company_key`) |
+| A2 Enum | Belum | Nilai status masih string |
+| A3 Cek skema runtime | Belum | Mayoritas untuk tabel milik legacy, sengaja dipertahankan |
+| B1 Exception per controller | **Sebagian** | `5526f2b`, `cf052b5`, `944687a`, `eb42ac4`: `ApiException`, `ApiResponse::guard`; controller pengeluaran, toko, HPP, sinkronisasi. Price, WithdrawalPreview, OrderWrite sengaja tidak diubah (bentuk error legacy berbeda) |
+| B2 Request ID | Selesai | `a671089` |
+| B3 `LegacyRpcController` | **Sebagian** | `604a2fe`: 682 → 581 baris; 10 method seragam lewat satu peta handler. Handler berkondisi khusus belum dipecah |
+| B4 Blok "belum ada toko" berulang | Belum | |
+| B5 Input manual / FormRequest | Belum | `authorize()` masih `true` |
+| C1/C2 Route berulang, alias ganda | Selesai | `7390dad`: 254 → 221 baris, 4 alias dihapus |
+| C3 Konteks via `attributes` | **Sebagian** | `b593a9c`: `RequestContext` + `$request->companyKey()`; CSRF ganda dibiarkan sampai pasca-cutover |
+| D1 Gate/Policy | Selesai (rute) | `c6957ea`: `can:<aksi>`, `EnsureRoleAction` dihapus. `authorize()` di FormRequest belum |
+| D2 Sesi legacy | Dibiarkan | Dibutuhkan sampai cutover |
+| E1 Penamaan/struktur | **Sebagian** | `bfa0830`: `Pilots` → `Services`, Job → `Jobs` (dengan alias untuk job yang sudah antre). Controller tetap satu folder; `App\Marketplace` tetap |
+| E2 `require_once` legacy | Selesai | `0746510`: `LegacyRuntime::service()/shared()` |
+| E3 `env()` di luar config | Selesai | `f221b21` |
+| F1 Berkas / CSV | **Sebagian** | `45167e9` dokumen via `Storage`; `2d32b06` CSV via `CsvDownload`. Backup tidak dipindah (gzip/mysqldump butuh path nyata) |
+| F2 Waktu | Belum | |
+| F3 Cache / event / rate limit | Belum | Rate limit menunggu keputusan batas |
+| F4 Audit via event | Belum | |
+| G1 Frontend URL | Selesai (path statis) | `7fe39c4`: `lib/routes.ts` + test terhadap snapshot route. `useForm` belum dipakai |
+| H1 Skema test | **Sebagian** | `e450b96`: dua helper menggantikan 39 blok; tabel yang berbeda per test tetap lokal |
+| Pengaman | Baru | `62b3501` snapshot kontrak route (73 route), test karakterisasi per endpoint yang diubah |
