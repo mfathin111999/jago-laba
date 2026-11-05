@@ -54,12 +54,8 @@ final class TokenVault
         if (! class_exists(\MarketplaceTokenVault::class, false)) {
             require_once dirname(__DIR__, 3).'/app/Shared/Security/MarketplaceTokenVault.php';
         }
-        // Laravel reads .env itself; the legacy vault reads the process environment.
-        foreach (['JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY', 'JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY_FILE'] as $name) {
-            $value = env($name);
-            if (is_string($value) && $value !== '' && getenv($name) === false) {
-                putenv($name.'='.$value);
-            }
-        }
+        // The legacy vault reads the process environment; the values come from config (env() is unusable once the config is cached).
+        $legacy = (array) config('jago.legacy_env', []);
+        LegacyRuntime::exportToEnvironment(array_intersect_key($legacy, array_flip(['JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY', 'JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY_FILE'])));
     }
 }
