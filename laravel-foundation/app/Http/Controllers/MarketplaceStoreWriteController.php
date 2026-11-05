@@ -5,196 +5,80 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplaceStoreCreateRequest;
 use App\Http\Requests\MarketplaceStoreToggleRequest;
 use App\Http\Requests\MarketplaceStoreUpdateRequest;
+use App\Http\Responses\ApiResponse;
 use App\Pilots\Marketplace\MarketplaceStoreWriteService;
 use App\Support\RequestId;
-use DomainException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
-use LogicException;
-use Throwable;
 
+/**
+ * Store writes. The service throws typed refusals (StoreForbidden, ResourceNotFound, InvalidInput) which the exception
+ * handler renders; anything unexpected becomes the endpoint's own failure code through ApiResponse::guard().
+ */
 final class MarketplaceStoreWriteController
 {
     public function __construct(private readonly MarketplaceStoreWriteService $service) {}
 
     public function create(MarketplaceStoreCreateRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-
-        try {
-            $result = $this->service->create(
-                $request->user('web'),
-                (string) $request->attributes->get('company_key'),
-                $request->validated(),
-            );
-        } catch (InvalidArgumentException|LogicException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_INPUT_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Create store failed.', ['request_id' => $requestId, 'exception' => $exception::class, 'message' => $exception->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menambahkan toko baru.',
-                'code' => 'CREATE_STORE_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->create($request->user('web'), $this->companyKey($request), $request->validated()),
+            'CREATE_STORE_FAILED',
+            'Gagal menambahkan toko baru.',
+            'Create store failed.',
+            logExceptionMessage: true,
+        ));
     }
 
     public function update(MarketplaceStoreUpdateRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-        $storeId = (string) $request->validated('store_id');
-
-        try {
-            $result = $this->service->update(
-                $request->user('web'),
-                (string) $request->attributes->get('company_key'),
-                $storeId,
-                $request->validated(),
-            );
-        } catch (DomainException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], 403)->header('X-Request-Id', $requestId);
-        } catch (InvalidArgumentException|LogicException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_INPUT_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Update store failed.', ['request_id' => $requestId, 'exception' => $exception::class]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui toko.',
-                'code' => 'UPDATE_STORE_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->update($request->user('web'), $this->companyKey($request), (string) $request->validated('store_id'), $request->validated()),
+            'UPDATE_STORE_FAILED',
+            'Gagal memperbarui toko.',
+            'Update store failed.',
+        ));
     }
 
     public function toggleStatus(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-        $storeId = (string) $request->validated('store_id');
-        $status = (string) $request->validated('status');
-
-        try {
-            $result = $this->service->toggleStatus(
-                $request->user('web'),
-                (string) $request->attributes->get('company_key'),
-                $storeId,
-                $status,
-            );
-        } catch (DomainException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], 403)->header('X-Request-Id', $requestId);
-        } catch (LogicException $exception) {
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => 'STORE_STATUS_INVALID',
-                'request_id' => $requestId,
-            ], 422)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Toggle store status failed.', ['request_id' => $requestId, 'exception' => $exception::class]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengubah status toko.',
-                'code' => 'TOGGLE_STATUS_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->toggleStatus($request->user('web'), $this->companyKey($request), (string) $request->validated('store_id'), (string) $request->validated('status')),
+            'TOGGLE_STATUS_FAILED',
+            'Gagal mengubah status toko.',
+            'Toggle store status failed.',
+        ));
     }
 
     public function archive(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-        $storeId = (string) $request->validated('store_id');
-
-        try {
-            $result = $this->service->archive(
-                $request->user('web'),
-                (string) $request->attributes->get('company_key'),
-                $storeId,
-            );
-        } catch (DomainException $exception) {
-            $status = $exception->getCode() === 404 ? 404 : 403;
-
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => $status === 404 ? 'STORE_NOT_FOUND' : 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], $status)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Archive store failed.', ['request_id' => $requestId, 'exception' => $exception::class]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengarsipkan toko.',
-                'code' => 'ARCHIVE_STORE_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->archive($request->user('web'), $this->companyKey($request), (string) $request->validated('store_id')),
+            'ARCHIVE_STORE_FAILED',
+            'Gagal mengarsipkan toko.',
+            'Archive store failed.',
+        ));
     }
 
     public function restore(MarketplaceStoreToggleRequest $request): JsonResponse
     {
-        $requestId = RequestId::current();
-        $storeId = (string) $request->validated('store_id');
+        return $this->respond(ApiResponse::guard(
+            fn (): array => $this->service->restore($request->user('web'), $this->companyKey($request), (string) $request->validated('store_id')),
+            'RESTORE_STORE_FAILED',
+            'Gagal memulihkan toko.',
+            'Restore store failed.',
+        ));
+    }
 
-        try {
-            $result = $this->service->restore(
-                $request->user('web'),
-                (string) $request->attributes->get('company_key'),
-                $storeId,
-            );
-        } catch (DomainException $exception) {
-            $status = $exception->getCode() === 404 ? 404 : 403;
+    /**
+     * @param  array<string, mixed>|JsonResponse  $result
+     */
+    private function respond(array|JsonResponse $result): JsonResponse
+    {
+        return $result instanceof JsonResponse ? $result : response()->json($result)->header('X-Request-Id', RequestId::current());
+    }
 
-            return response()->json([
-                'success' => false,
-                'message' => $exception->getMessage(),
-                'code' => $status === 404 ? 'STORE_NOT_FOUND' : 'STORE_FORBIDDEN',
-                'request_id' => $requestId,
-            ], $status)->header('X-Request-Id', $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Restore store failed.', ['request_id' => $requestId, 'exception' => $exception::class]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memulihkan toko.',
-                'code' => 'RESTORE_STORE_FAILED',
-                'request_id' => $requestId,
-            ], 500)->header('X-Request-Id', $requestId);
-        }
-
-        return response()->json($result)->header('X-Request-Id', $requestId);
+    private function companyKey(MarketplaceStoreUpdateRequest|MarketplaceStoreCreateRequest|MarketplaceStoreToggleRequest $request): string
+    {
+        return (string) $request->attributes->get('company_key');
     }
 }

@@ -156,6 +156,25 @@ final class MarketplaceStoresPageTest extends TestCase
         $this->assertNull(DB::table('marketplace_stores')->where('id', 'a')->value('archived_at'));
     }
 
+    public function test_refusals_keep_their_codes_statuses_and_request_id(): void
+    {
+        // The request validator already refuses "Terhubung" with the standard validation shape (no custom code).
+        $this->send('PATCH', '/pilot/marketplace/stores/a/status', ['status' => 'Terhubung'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Status terhubung hanya dapat ditetapkan setelah verifikasi API resmi.');
+
+        // An archived store is refused by the store-context middleware before the service runs (403, not 404).
+        $this->send('POST', '/pilot/marketplace/stores/old/archive')->assertForbidden()->assertJsonPath('code', 'STORE_FORBIDDEN');
+
+        // Restoring has no store-context middleware: "a" is active, so there is no archived store to restore.
+        $restored = $this->send('POST', '/pilot/marketplace/stores/a/restore')
+            ->assertStatus(404)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'STORE_NOT_FOUND')
+            ->assertJsonPath('message', 'Toko arsip tidak ditemukan.');
+        $this->assertSame($restored->headers->get('X-Request-Id'), $restored->json('request_id'));
+    }
+
     public function test_the_calls_refuse_other_companies_missing_names_and_non_administrators(): void
     {
         $this->send('POST', '/pilot/marketplace/stores', ['store_name' => '', 'platform' => 'Shopee'])->assertStatus(422)->assertJsonPath('success', false);

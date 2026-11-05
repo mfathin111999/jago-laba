@@ -4,10 +4,10 @@ namespace App\Pilots\Marketplace;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
-use DomainException;
+use App\Exceptions\InvalidInput;
+use App\Exceptions\ResourceNotFound;
+use App\Exceptions\StoreForbidden;
 use Illuminate\Database\DatabaseManager;
-use InvalidArgumentException;
-use LogicException;
 use RuntimeException;
 
 final class MarketplaceStoreWriteService
@@ -39,11 +39,11 @@ final class MarketplaceStoreWriteService
         $status = 'Terputus';
 
         if (! empty($data['partner_id']) || ! empty($data['app_key']) || ! empty($data['access_token'])) {
-            throw new LogicException('Kredensial langsung tidak diterima. Hubungkan toko melalui OAuth resmi.');
+            throw new InvalidInput('Kredensial langsung tidak diterima. Hubungkan toko melalui OAuth resmi.', 'STORE_INPUT_INVALID');
         }
 
         if ($storeName === '') {
-            throw new InvalidArgumentException('Nama Toko wajib diisi.');
+            throw new InvalidInput('Nama Toko wajib diisi.', 'STORE_INPUT_INVALID');
         }
 
         $connection = $this->database->connection();
@@ -136,11 +136,11 @@ final class MarketplaceStoreWriteService
         $status = 'Terputus';
 
         if (isset($data['partner_id']) || isset($data['access_token']) || isset($data['app_key'])) {
-            throw new LogicException('Kredensial langsung tidak diterima. Hubungkan toko melalui OAuth resmi.');
+            throw new InvalidInput('Kredensial langsung tidak diterima. Hubungkan toko melalui OAuth resmi.', 'STORE_INPUT_INVALID');
         }
 
         if ($storeName === '') {
-            throw new InvalidArgumentException('Nama Toko wajib diisi.');
+            throw new InvalidInput('Nama Toko wajib diisi.', 'STORE_INPUT_INVALID');
         }
 
         $connection = $this->database->connection();
@@ -157,7 +157,7 @@ final class MarketplaceStoreWriteService
                 ->first();
 
             if ($store === null) {
-                throw new DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
+                throw new StoreForbidden();
             }
 
             $connection->table('marketplace_stores')
@@ -210,7 +210,7 @@ final class MarketplaceStoreWriteService
     {
         $status = trim($status);
         if ($status === 'Terhubung') {
-            throw new LogicException('Status terhubung hanya dapat ditetapkan setelah verifikasi API resmi.');
+            throw new InvalidInput('Status terhubung hanya dapat ditetapkan setelah verifikasi API resmi.', 'STORE_STATUS_INVALID');
         }
 
         $connection = $this->database->connection();
@@ -224,7 +224,7 @@ final class MarketplaceStoreWriteService
                 ->first();
 
             if ($store === null) {
-                throw new DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
+                throw new StoreForbidden();
             }
 
             $updates = [
@@ -272,7 +272,7 @@ final class MarketplaceStoreWriteService
                 ->first();
 
             if (! $store || $store->archived_at !== null) {
-                throw new DomainException('Toko aktif tidak ditemukan.', 404);
+                throw new ResourceNotFound('Toko aktif tidak ditemukan.', 'STORE_NOT_FOUND');
             }
 
             $userId = (string) ($user->getAuthIdentifier() ?: $user->getUsername() ?: 'system');
@@ -332,7 +332,7 @@ final class MarketplaceStoreWriteService
                 ->first();
 
             if (! $store) {
-                throw new DomainException('Toko arsip tidak ditemukan.', 404);
+                throw new ResourceNotFound('Toko arsip tidak ditemukan.', 'STORE_NOT_FOUND');
             }
 
             $now = now();

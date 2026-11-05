@@ -36,7 +36,7 @@ final class ApiResponse
      * @param  callable(): T  $action
      * @return T|JsonResponse
      */
-    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage): mixed
+    public static function guard(callable $action, string $failureCode, string $failureMessage, string $logMessage, bool $logExceptionMessage = false): mixed
     {
         try {
             return $action();
@@ -46,7 +46,7 @@ final class ApiResponse
             Log::error($logMessage, [
                 'request_id' => RequestId::current(),
                 'exception' => $exception::class,
-            ]);
+            ] + ($logExceptionMessage ? ['message' => $exception->getMessage()] : []));
 
             return self::error($failureMessage, $failureCode, 500);
         }
