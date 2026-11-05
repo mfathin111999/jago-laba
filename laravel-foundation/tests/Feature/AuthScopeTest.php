@@ -82,7 +82,7 @@ final class AuthScopeTest extends TestCase
                 return response()->json(['store_id' => $request->attributes->get('store_id')]);
             });
 
-        Route::middleware(['web', 'auth', 'role.action:finance.manage'])
+        Route::middleware(['web', 'auth', 'can:finance.manage'])
             ->get('/_test/finance', fn () => response()->json(['ok' => true]));
 
         Route::middleware(['web', 'auth', 'workspace.context:marketplace'])

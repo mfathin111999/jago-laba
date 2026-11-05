@@ -43,6 +43,17 @@ final class RolePolicy
         ],
     ];
 
+    /**
+     * Every action a role can be granted; each one is registered as a Gate ability (AppServiceProvider),
+     * so routes use `can:<action>` and code uses `$user->can('<action>')`.
+     *
+     * @return list<string>
+     */
+    public static function abilities(): array
+    {
+        return self::ALL_ACTIONS;
+    }
+
     public function allows(?Authenticatable $user, string $action): bool
     {
         if (! $user instanceof LegacyUser) {

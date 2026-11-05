@@ -33,8 +33,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:store.delete",
             "legacy.session",
-            "role.action:store.delete",
             "web"
         ]
     },
@@ -48,8 +48,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:store.delete",
             "legacy.session",
-            "role.action:store.delete",
             "web"
         ]
     },
@@ -123,9 +123,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
             "legacy.session",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -190,9 +190,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
             "legacy.session",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -208,9 +208,9 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:shipping.fulfill",
             "company.context",
             "legacy.session",
-            "role.action:shipping.fulfill",
             "web",
             "workspace.context:marketplace"
         ]
@@ -256,9 +256,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:integration.manage",
             "company.context",
             "legacy.session",
-            "role.action:integration.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -273,9 +273,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
             "legacy.session",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -290,9 +290,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:integration.manage",
             "company.context",
             "legacy.session",
-            "role.action:integration.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -307,9 +307,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:price.manage",
             "company.context",
             "legacy.session",
-            "role.action:price.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -325,9 +325,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:shipping.fulfill",
             "company.context",
             "legacy.session",
-            "role.action:shipping.fulfill",
             "web",
             "workspace.context:marketplace"
         ]
@@ -342,9 +342,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:settings.manage",
             "company.context",
             "legacy.session",
-            "role.action:settings.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -360,9 +360,9 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:store.delete",
             "company.context",
             "legacy.session",
-            "role.action:store.delete",
             "web",
             "workspace.context:marketplace"
         ]
@@ -378,9 +378,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:integration.manage",
             "company.context",
             "legacy.session",
-            "role.action:integration.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -396,9 +396,9 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:withdrawal.manage",
             "company.context",
             "legacy.session",
-            "role.action:withdrawal.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -564,8 +564,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -580,8 +580,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -596,8 +596,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -612,8 +612,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -628,8 +628,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -644,8 +644,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -660,8 +660,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -676,8 +676,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -692,8 +692,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -708,8 +708,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -770,8 +770,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:expense.manage",
             "company.context",
-            "role.action:expense.manage",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"
@@ -788,8 +788,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:expense.manage",
             "company.context",
-            "role.action:expense.manage",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"
@@ -805,8 +805,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -822,8 +822,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:hpp.edit",
             "company.context",
-            "role.action:hpp.edit",
             "web",
             "workspace.context:marketplace"
         ]
@@ -839,8 +839,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:hpp.edit",
             "company.context",
-            "role.action:hpp.edit",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"
@@ -857,8 +857,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:hpp.edit",
             "company.context",
-            "role.action:hpp.edit",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"
@@ -994,8 +994,8 @@
         "defaults": [],
         "middleware": [
             "auth",
+            "can:report.view",
             "company.context",
-            "role.action:report.view",
             "web",
             "workspace.context:marketplace"
         ]
@@ -1026,8 +1026,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:integration.manage",
             "company.context",
-            "role.action:integration.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -1043,8 +1043,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:integration.manage",
             "company.context",
-            "role.action:integration.manage",
             "store.context:store",
             "web",
             "workspace.context:marketplace"
@@ -1061,8 +1061,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:integration.manage",
             "company.context",
-            "role.action:integration.manage",
             "store.context:store",
             "web",
             "workspace.context:marketplace"
@@ -1079,8 +1079,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:integration.manage",
             "company.context",
-            "role.action:integration.manage",
             "web",
             "workspace.context:marketplace"
         ]
@@ -1096,8 +1096,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:integration.manage",
             "company.context",
-            "role.action:integration.manage",
             "store.context:store",
             "web",
             "workspace.context:marketplace"
@@ -1114,8 +1114,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:sync.trigger",
             "company.context",
-            "role.action:sync.trigger",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"
@@ -1132,8 +1132,8 @@
         "middleware": [
             "auth",
             "browser.csrf",
+            "can:withdrawal.manage",
             "company.context",
-            "role.action:withdrawal.manage",
             "store.context:store_id",
             "web",
             "workspace.context:marketplace"

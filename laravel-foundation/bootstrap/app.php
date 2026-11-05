@@ -7,15 +7,16 @@ use App\Http\Middleware\EnsureBrowserCsrf;
 use App\Http\Middleware\EnsureCompanyContext;
 use App\Http\Middleware\EnsureLegacyMarketplaceAjaxContract;
 use App\Http\Middleware\EnsureLegacyMarketplaceExpenseAction;
-use App\Http\Middleware\EnsureRoleAction;
 use App\Http\Middleware\EnsureStoreContext;
 use App\Http\Middleware\EnsureWorkspace;
 use App\Http\Middleware\LegacySessionBridge;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware as InertiaMiddleware;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -48,7 +49,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.context' => EnsureCompanyContext::class,
             'store.context' => EnsureStoreContext::class,
             'workspace.context' => EnsureWorkspace::class,
-            'role.action' => EnsureRoleAction::class,
             'legacy.marketplace.ajax' => EnsureLegacyMarketplaceAjaxContract::class,
             'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,
@@ -59,6 +59,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Typed refusals answer the client through their own render(); they are not server errors worth logging.
         $exceptions->dontReport([ApiException::class, IdempotencyConflict::class]);
+        // A denied Gate/`can:` check keeps the contract the old role middleware had: 403 {message, code:ROLE_FORBIDDEN}.
+        // Laravel has already turned the AuthorizationException into an AccessDeniedHttpException at this point.
+        $exceptions->render(function (AccessDeniedHttpException $exception, Request $request) {
+            if ($exception->getPrevious() instanceof AuthorizationException) {
+                return response()->json(['message' => 'Aksi tidak diizinkan.', 'code' => 'ROLE_FORBIDDEN'], 403);
+            }
+
+            return null;
+        });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

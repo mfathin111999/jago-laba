@@ -53,7 +53,7 @@ Route::get('/api/health.php', HealthController::class)->name('legacy.health');
 Route::middleware(['auth', 'company.context'])->group(function (): void {
     Route::middleware('workspace.context:marketplace')->group(function (): void {
         // Read-only pages and exports: the report.view ability.
-        Route::middleware('role.action:report.view')->group(function (): void {
+        Route::middleware('can:report.view')->group(function (): void {
             Route::get('/marketplace/expenses', MarketplaceExpensesReadController::class)->name('marketplace.expenses.read');
             Route::get('/marketplace/catalog', MarketplaceCatalogController::class)->name('marketplace.catalog');
             Route::get('/marketplace/stock', MarketplaceStockPageController::class)->name('marketplace.stock');
@@ -76,41 +76,41 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
 
             // Writes: CSRF-checked JSON endpoints.
             Route::post('/expenses', MarketplaceExpenseController::class)
-                ->middleware(['role.action:expense.manage', 'store.context:store_id', 'browser.csrf'])
+                ->middleware(['can:expense.manage', 'store.context:store_id', 'browser.csrf'])
                 ->name('pilot.marketplace.expenses');
             Route::delete('/expenses/{id}', MarketplaceExpenseDeleteController::class)
-                ->middleware(['role.action:expense.manage', 'store.context:store_id', 'browser.csrf'])
+                ->middleware(['can:expense.manage', 'store.context:store_id', 'browser.csrf'])
                 ->name('pilot.marketplace.expenses.delete');
 
             Route::controller(MarketplaceStoreWriteController::class)->group(function (): void {
                 Route::post('/stores', 'create')
-                    ->middleware(['role.action:integration.manage', 'browser.csrf'])
+                    ->middleware(['can:integration.manage', 'browser.csrf'])
                     ->name('pilot.marketplace.stores.create');
                 Route::put('/stores/{store}', 'update')
-                    ->middleware(['role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+                    ->middleware(['can:integration.manage', 'store.context:store', 'browser.csrf'])
                     ->name('pilot.marketplace.stores.update');
                 Route::patch('/stores/{store}/status', 'toggleStatus')
-                    ->middleware(['role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+                    ->middleware(['can:integration.manage', 'store.context:store', 'browser.csrf'])
                     ->name('pilot.marketplace.stores.toggle');
                 Route::post('/stores/{store}/archive', 'archive')
-                    ->middleware(['role.action:integration.manage', 'store.context:store', 'browser.csrf'])
+                    ->middleware(['can:integration.manage', 'store.context:store', 'browser.csrf'])
                     ->name('pilot.marketplace.stores.archive');
                 Route::post('/stores/{store}/restore', 'restore')
-                    ->middleware(['role.action:integration.manage', 'browser.csrf'])
+                    ->middleware(['can:integration.manage', 'browser.csrf'])
                     ->name('pilot.marketplace.stores.restore');
             });
 
-            Route::controller(MarketplaceHppWriteController::class)->middleware('role.action:hpp.edit')->group(function (): void {
+            Route::controller(MarketplaceHppWriteController::class)->middleware('can:hpp.edit')->group(function (): void {
                 Route::post('/hpp/sku', 'updateSku')->middleware(['store.context:store_id', 'browser.csrf'])->name('pilot.marketplace.hpp.sku');
                 Route::post('/hpp/global', 'updateGlobal')->middleware(['store.context:store_id', 'browser.csrf'])->name('pilot.marketplace.hpp.global');
                 Route::post('/hpp/batch', 'saveBatch')->middleware('browser.csrf')->name('pilot.marketplace.hpp.batch');
             });
 
             Route::post('/sync', MarketplaceSyncController::class)
-                ->middleware(['role.action:sync.trigger', 'store.context:store_id', 'browser.csrf'])
+                ->middleware(['can:sync.trigger', 'store.context:store_id', 'browser.csrf'])
                 ->name('pilot.marketplace.sync');
             Route::post('/withdrawals/preview', MarketplaceWithdrawalPreviewController::class)
-                ->middleware(['role.action:withdrawal.manage', 'store.context:store_id', 'browser.csrf'])
+                ->middleware(['can:withdrawal.manage', 'store.context:store_id', 'browser.csrf'])
                 ->name('pilot.marketplace.withdrawals.preview');
 
             // OAuth: one invokable controller, the action comes from the route default.
@@ -154,42 +154,42 @@ Route::middleware('legacy.session')->group(function (): void {
             Route::get('/marketplace.php', [LegacyPilotPageController::class, 'marketplace'])->name('legacy.marketplace.page');
 
             Route::post('/api/marketplace-fulfillment.php', [MarketplaceFulfillmentController::class, 'handle'])
-                ->middleware(['role.action:shipping.fulfill', 'browser.csrf'])
+                ->middleware(['can:shipping.fulfill', 'browser.csrf'])
                 ->name('legacy.marketplace.fulfillment');
             Route::post('/api/marketplace-store-deletion.php', MarketplaceStoreDeletionController::class)
-                ->middleware(['role.action:store.delete', 'browser.csrf'])
+                ->middleware(['can:store.delete', 'browser.csrf'])
                 ->name('legacy.marketplace.store-deletion');
             Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
-                ->middleware('role.action:integration.manage')
+                ->middleware('can:integration.manage')
                 ->name('legacy.marketplace.sync');
             Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
-                ->middleware('role.action:withdrawal.manage')
+                ->middleware('can:withdrawal.manage')
                 ->name('legacy.marketplace.withdrawals');
             Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
-                ->middleware('role.action:price.manage')
+                ->middleware('can:price.manage')
                 ->name('legacy.marketplace.price');
             Route::post('/api/marketplace-stock.php', MarketplaceStockMinimumController::class)
-                ->middleware('role.action:settings.manage')
+                ->middleware('can:settings.manage')
                 ->name('legacy.marketplace.stock');
             Route::match(['GET', 'POST'], '/api/marketplace-auto-sync.php', [MarketplaceAutoSyncController::class, 'states'])->name('legacy.marketplace.auto-sync');
             Route::post('/api/marketplace-browser-pulse.php', [MarketplaceAutoSyncController::class, 'pulse'])->name('legacy.marketplace.browser-pulse');
             Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)->name('legacy.marketplace.branding');
 
-            Route::middleware('role.action:report.view')->group(function (): void {
+            Route::middleware('can:report.view')->group(function (): void {
                 Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])->name('legacy.marketplace.orders');
                 Route::get('/api/marketplace-analytics.php', [MarketplaceLegacyReportController::class, 'analytics'])->name('legacy.marketplace.analytics');
                 Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])->name('legacy.marketplace.dashboard');
             });
 
             Route::post('/api/marketplace-order-finance.php', [MarketplaceProviderBoundaryController::class, 'orderFinance'])
-                ->middleware('role.action:integration.manage')
+                ->middleware('can:integration.manage')
                 ->name('legacy.marketplace.order-finance');
             Route::post('/api/marketplace-partner-settings.php', [MarketplaceProviderBoundaryController::class, 'partnerSettings'])
-                ->middleware('role.action:integration.manage')
+                ->middleware('can:integration.manage')
                 ->name('legacy.marketplace.partner-settings');
             Route::match(['GET', 'POST'], '/api/marketplace-integration-status.php', MarketplaceIntegrationStatusController::class)->name('legacy.marketplace.integration-status');
             Route::match(['GET', 'POST'], '/api/marketplace-shipping-document.php', MarketplaceShippingDocumentController::class)
-                ->middleware('role.action:shipping.fulfill')
+                ->middleware('can:shipping.fulfill')
                 ->name('legacy.marketplace.shipping-document');
         });
     });
@@ -207,7 +207,7 @@ Route::middleware('legacy.session')->group(function (): void {
         Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])->name('legacy.workspace.select');
         Route::post('/api/logout.php', [AuthController::class, 'logout'])->name('legacy.logout');
 
-        Route::middleware('role.action:store.delete')->group(function (): void {
+        Route::middleware('can:store.delete')->group(function (): void {
             Route::get('/api/diagnostics.php', [DiagnosticsController::class, 'health'])->name('legacy.diagnostics');
             Route::get('/api/auth-diagnostic.php', [DiagnosticsController::class, 'auth'])->name('legacy.auth-diagnostic');
         });

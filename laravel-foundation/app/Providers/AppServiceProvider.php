@@ -59,8 +59,9 @@ class AppServiceProvider extends ServiceProvider
             return $name !== '' ? $name : null;
         });
 
-        Gate::define('role-action', function ($user, string $action): bool {
-            return app(RolePolicy::class)->allows($user, $action);
-        });
+        // One ability per role action (hpp.edit, report.view, ...): routes use `can:hpp.edit`, code uses $user->can(...).
+        foreach (RolePolicy::abilities() as $action) {
+            Gate::define($action, static fn ($user): bool => app(RolePolicy::class)->allows($user, $action));
+        }
     }
 }
