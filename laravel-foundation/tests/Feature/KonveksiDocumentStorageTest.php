@@ -84,6 +84,22 @@ final class KonveksiDocumentStorageTest extends TestCase
         $this->assertFileExists(app(KonveksiDocumentAndAiService::class)->documentPath($row->relative_path));
     }
 
+    public function test_the_stored_file_is_removed_when_the_registry_insert_fails(): void
+    {
+        Schema::drop('document_files');
+        Schema::create('document_files', function (Blueprint $table): void {
+            $table->string('file_id')->unique();
+        });
+
+        $this->expectException(\Illuminate\Database\QueryException::class);
+        try {
+            $this->save('data:image/png;base64,'.self::PNG);
+        } finally {
+            $files = is_dir($this->root) ? File::allFiles($this->root) : [];
+            $this->assertSame([], $files, 'no orphan file may stay behind');
+        }
+    }
+
     public function test_content_that_is_not_a_document_is_rejected_and_nothing_is_stored(): void
     {
         foreach ([base64_encode('<?php echo 1;'), base64_encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>'), '###not-base64###'] as $payload) {

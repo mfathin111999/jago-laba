@@ -5,6 +5,8 @@ namespace App\Pilots\Konveksi;
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use finfo;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -50,14 +52,12 @@ final class KonveksiDocumentAndAiService
         }
 
         $relativePath = "private/konveksi/documents/{$type}/".date('Y/m')."/{$fid}.{$allowed[$detected]}";
-        $path = $this->documentPath($relativePath);
-        $directory = dirname($path);
-        if (! is_dir($directory) && ! @mkdir($directory, 0700, true) && ! is_dir($directory)) {
-            throw new RuntimeException('Penyimpanan dokumen tidak dapat disiapkan.');
-        }
-        if (file_put_contents($path, $bin, LOCK_EX) !== strlen($bin)) {
-            @unlink($path);
-            throw new RuntimeException('Dokumen belum tersimpan lengkap.');
+        $disk = $this->documentDisk();
+        // put() creates the missing directories (private, 0700) and writes under an exclusive lock.
+        if (! $disk->put($relativePath, $bin)) {
+            $disk->delete($relativePath);
+
+            throw new RuntimeException(is_dir(dirname($this->documentPath($relativePath))) ? 'Dokumen belum tersimpan lengkap.' : 'Penyimpanan dokumen tidak dapat disiapkan.');
         }
 
         try {
@@ -72,7 +72,7 @@ final class KonveksiDocumentAndAiService
                 'created_at' => now(),
             ]);
         } catch (\Throwable $exception) {
-            @unlink($path);
+            $disk->delete($relativePath);
             throw $exception;
         }
 
@@ -142,9 +142,27 @@ final class KonveksiDocumentAndAiService
     /** Absolute path of a stored document. The root is private server storage, never the web root. */
     public function documentPath(string $relativePath): string
     {
-        $root = rtrim((string) (config('jago.documents.root') ?: storage_path('app')), '/\\');
+        return $this->documentRoot().'/'.ltrim($relativePath, '/');
+    }
 
-        return $root.'/'.ltrim($relativePath, '/');
+    private function documentRoot(): string
+    {
+        return rtrim((string) (config('jago.documents.root') ?: storage_path('app')), '/\\');
+    }
+
+    /**
+     * A local disk on the private document root. Built per call from config('jago.documents.root') (the legacy storage
+     * root, so existing files stay reachable); never the web root.
+     */
+    private function documentDisk(): Filesystem
+    {
+        return Storage::build([
+            'driver' => 'local',
+            'root' => $this->documentRoot(),
+            'lock' => LOCK_EX,
+            'throw' => false,
+            'permissions' => ['dir' => ['public' => 0700, 'private' => 0700]],
+        ]);
     }
 
     public function saveTemplate(LegacyUser $user, string $companyKey, array $p): array
