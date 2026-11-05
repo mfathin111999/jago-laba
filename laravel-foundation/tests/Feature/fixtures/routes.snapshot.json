@@ -1,0 +1,1166 @@
+[
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "/",
+        "name": "foundation",
+        "action": "App\\Http\\Controllers\\FoundationController",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "__sandbox/marketplace/oauth/authorize",
+        "name": "sandbox.marketplace.oauth.authorize",
+        "action": "App\\Http\\Controllers\\SandboxMarketplaceOAuthController",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/auth-diagnostic.php",
+        "name": "legacy.auth-diagnostic",
+        "action": "App\\Http\\Controllers\\DiagnosticsController@auth",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "legacy.session",
+            "role.action:store.delete",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/diagnostics.php",
+        "name": "legacy.diagnostics",
+        "action": "App\\Http\\Controllers\\DiagnosticsController@health",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "legacy.session",
+            "role.action:store.delete",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/health.php",
+        "name": "legacy.health",
+        "action": "App\\Http\\Controllers\\HealthController",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/konveksi-document.php",
+        "name": "legacy.konveksi.document",
+        "action": "App\\Http\\Controllers\\KonveksiDocumentController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:konveksi"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/logout.php",
+        "name": "legacy.logout",
+        "action": "App\\Http\\Controllers\\AuthController@logout",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "legacy.session",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-ajax.php",
+        "name": "legacy.marketplace.ajax",
+        "action": "App\\Http\\Controllers\\LegacyMarketplaceAjaxController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "legacy.marketplace.ajax",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/marketplace-analytics.php",
+        "name": "legacy.marketplace.analytics",
+        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@analytics",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-auto-sync.php",
+        "name": "legacy.marketplace.auto-sync",
+        "action": "App\\Http\\Controllers\\MarketplaceAutoSyncController@states",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-branding.php",
+        "name": "legacy.marketplace.branding",
+        "action": "App\\Http\\Controllers\\MarketplaceBrandingController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-browser-pulse.php",
+        "name": "legacy.marketplace.browser-pulse",
+        "action": "App\\Http\\Controllers\\MarketplaceAutoSyncController@pulse",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/marketplace-dashboard.php",
+        "name": "legacy.marketplace.dashboard",
+        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@dashboard",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-fulfillment.php",
+        "name": "legacy.marketplace.fulfillment",
+        "action": "App\\Http\\Controllers\\MarketplaceFulfillmentController@handle",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "legacy.session",
+            "role.action:shipping.fulfill",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-integration-status.php",
+        "name": "legacy.marketplace.integration-status",
+        "action": "App\\Http\\Controllers\\MarketplaceIntegrationStatusController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-oauth.php",
+        "name": "legacy.marketplace.oauth",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": [],
+        "middleware": [
+            "legacy.session",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-order-finance.php",
+        "name": "legacy.marketplace.order-finance",
+        "action": "App\\Http\\Controllers\\MarketplaceProviderBoundaryController@orderFinance",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:integration.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "api/marketplace-orders.php",
+        "name": "legacy.marketplace.orders",
+        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@orders",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-partner-settings.php",
+        "name": "legacy.marketplace.partner-settings",
+        "action": "App\\Http\\Controllers\\MarketplaceProviderBoundaryController@partnerSettings",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:integration.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-price.php",
+        "name": "legacy.marketplace.price",
+        "action": "App\\Http\\Controllers\\MarketplacePriceController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:price.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-shipping-document.php",
+        "name": "legacy.marketplace.shipping-document",
+        "action": "App\\Http\\Controllers\\MarketplaceShippingDocumentController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:shipping.fulfill",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-stock.php",
+        "name": "legacy.marketplace.stock",
+        "action": "App\\Http\\Controllers\\MarketplaceStockMinimumController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:settings.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/marketplace-store-deletion.php",
+        "name": "legacy.marketplace.store-deletion",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreDeletionController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "legacy.session",
+            "role.action:store.delete",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-sync.php",
+        "name": "legacy.marketplace.sync",
+        "action": "App\\Http\\Controllers\\MarketplaceSyncApiController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:integration.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET",
+            "POST"
+        ],
+        "uri": "api/marketplace-withdrawals.php",
+        "name": "legacy.marketplace.withdrawals",
+        "action": "App\\Http\\Controllers\\MarketplaceWithdrawalLegacyController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "role.action:withdrawal.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/rpc.php",
+        "name": "legacy.rpc",
+        "action": "App\\Http\\Controllers\\LegacyRpcController",
+        "defaults": [],
+        "middleware": [
+            "legacy.session",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "api/workspace.php",
+        "name": "legacy.workspace.select",
+        "action": "App\\Http\\Controllers\\WorkspaceController@select",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "legacy.session",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "auth/login",
+        "name": "auth.login",
+        "action": "App\\Http\\Controllers\\AuthController@login",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "auth/logout",
+        "name": "auth.logout",
+        "action": "App\\Http\\Controllers\\AuthController@logout",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "auth/me",
+        "name": "auth.me",
+        "action": "App\\Http\\Controllers\\AuthController@me",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "auth/store",
+        "name": "auth.store.select",
+        "action": "App\\Http\\Controllers\\StoreSelectionController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "auth/workspace",
+        "name": "auth.workspace.select",
+        "action": "App\\Http\\Controllers\\WorkspaceController@select",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "foundation",
+        "name": "foundation.read",
+        "action": "App\\Http\\Controllers\\FoundationController",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "konveksi",
+        "name": "legacy.konveksi.page",
+        "action": "App\\Http\\Controllers\\KonveksiLegacyAppController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:konveksi"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "login",
+        "name": "login",
+        "action": "App\\Http\\Controllers\\FoundationController",
+        "defaults": [],
+        "middleware": [
+            "web"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace.php",
+        "name": "legacy.marketplace.page",
+        "action": "\\App\\Http\\Controllers\\LegacyPilotPageController@marketplace",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "legacy.session",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/analytics/export",
+        "name": "marketplace.analytics.export",
+        "action": "App\\Http\\Controllers\\MarketplaceAnalyticsController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/catalog",
+        "name": "marketplace.catalog",
+        "action": "App\\Http\\Controllers\\MarketplaceCatalogController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/expenses",
+        "name": "marketplace.expenses.read",
+        "action": "App\\Http\\Controllers\\MarketplaceExpensesReadController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/income",
+        "name": "marketplace.income",
+        "action": "App\\Http\\Controllers\\MarketplaceIncomePageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/integrations",
+        "name": "marketplace.integrations",
+        "action": "App\\Http\\Controllers\\MarketplaceIntegrationsPageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/marketing",
+        "name": "marketplace.marketing",
+        "action": "App\\Http\\Controllers\\MarketplaceMarketingPageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/marketing/template",
+        "name": "marketplace.marketing.template",
+        "action": "App\\Http\\Controllers\\MarketplaceMarketingPageController@template",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/stock",
+        "name": "marketplace.stock",
+        "action": "App\\Http\\Controllers\\MarketplaceStockPageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/stores",
+        "name": "marketplace.stores",
+        "action": "App\\Http\\Controllers\\MarketplaceStoresPageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "marketplace/sync",
+        "name": "marketplace.sync",
+        "action": "App\\Http\\Controllers\\MarketplaceSyncPageController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/konveksi",
+        "name": "pilot.konveksi",
+        "action": "App\\Http\\Controllers\\KonveksiPilotController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:konveksi"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace",
+        "name": "pilot.marketplace",
+        "action": "App\\Http\\Controllers\\MarketplacePilotController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/analytics",
+        "name": "pilot.marketplace.analytics",
+        "action": "App\\Http\\Controllers\\MarketplaceAnalyticsController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/expenses",
+        "name": "pilot.marketplace.expenses",
+        "action": "App\\Http\\Controllers\\MarketplaceExpenseController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:expense.manage",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "DELETE"
+        ],
+        "uri": "pilot/marketplace/expenses/{id}",
+        "name": "pilot.marketplace.expenses.delete",
+        "action": "App\\Http\\Controllers\\MarketplaceExpenseDeleteController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:expense.manage",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/export",
+        "name": "pilot.marketplace.export",
+        "action": "App\\Http\\Controllers\\MarketplacePilotController@export",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/hpp/batch",
+        "name": "pilot.marketplace.hpp.batch",
+        "action": "App\\Http\\Controllers\\MarketplaceHppWriteController@saveBatch",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:hpp.edit",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/hpp/global",
+        "name": "pilot.marketplace.hpp.global",
+        "action": "App\\Http\\Controllers\\MarketplaceHppWriteController@updateGlobal",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:hpp.edit",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/hpp/sku",
+        "name": "pilot.marketplace.hpp.sku",
+        "action": "App\\Http\\Controllers\\MarketplaceHppWriteController@updateSku",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:hpp.edit",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/oauth/callback",
+        "name": "pilot.marketplace.oauth.callback",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "callback"
+        },
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/oauth/pending",
+        "name": "pilot.marketplace.oauth.pending",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "pending"
+        },
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/oauth/refresh",
+        "name": "pilot.marketplace.oauth.refresh",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "refresh"
+        },
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/oauth/select",
+        "name": "pilot.marketplace.oauth.select",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "select"
+        },
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/oauth/start",
+        "name": "pilot.marketplace.oauth.start",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "start"
+        },
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/oauth/status",
+        "name": "pilot.marketplace.oauth.status",
+        "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
+        "defaults": {
+            "oauth_action": "status"
+        },
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/orders",
+        "name": "pilot.marketplace.orders",
+        "action": "App\\Http\\Controllers\\MarketplaceOrderController@index",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/orders/export",
+        "name": "pilot.marketplace.orders.export",
+        "action": "App\\Http\\Controllers\\MarketplaceOrderController@export",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "role.action:report.view",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "pilot/marketplace/orders/{order}/detail",
+        "name": "pilot.marketplace.orders.detail",
+        "action": "App\\Http\\Controllers\\MarketplaceOrderController@detail",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "company.context",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/stores",
+        "name": "pilot.marketplace.stores.create",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreWriteController@create",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:integration.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "PUT"
+        ],
+        "uri": "pilot/marketplace/stores/{store}",
+        "name": "pilot.marketplace.stores.update",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreWriteController@update",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:integration.manage",
+            "store.context:store",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/stores/{store}/archive",
+        "name": "pilot.marketplace.stores.archive",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreWriteController@archive",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:integration.manage",
+            "store.context:store",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/stores/{store}/restore",
+        "name": "pilot.marketplace.stores.restore",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreWriteController@restore",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:integration.manage",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "PATCH"
+        ],
+        "uri": "pilot/marketplace/stores/{store}/status",
+        "name": "pilot.marketplace.stores.toggle",
+        "action": "App\\Http\\Controllers\\MarketplaceStoreWriteController@toggleStatus",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:integration.manage",
+            "store.context:store",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/sync",
+        "name": "pilot.marketplace.sync",
+        "action": "App\\Http\\Controllers\\MarketplaceSyncController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:sync.trigger",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "POST"
+        ],
+        "uri": "pilot/marketplace/withdrawals/preview",
+        "name": "pilot.marketplace.withdrawals.preview",
+        "action": "App\\Http\\Controllers\\MarketplaceWithdrawalPreviewController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "browser.csrf",
+            "company.context",
+            "role.action:withdrawal.manage",
+            "store.context:store_id",
+            "web",
+            "workspace.context:marketplace"
+        ]
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "up",
+        "name": null,
+        "action": "Illuminate\\Foundation\\Http\\HealthCheck",
+        "defaults": [],
+        "middleware": []
+    },
+    {
+        "methods": [
+            "GET"
+        ],
+        "uri": "workspace.php",
+        "name": "legacy.workspace.page",
+        "action": "App\\Http\\Controllers\\FoundationController",
+        "defaults": [],
+        "middleware": [
+            "auth",
+            "legacy.session",
+            "web"
+        ]
+    }
+]
