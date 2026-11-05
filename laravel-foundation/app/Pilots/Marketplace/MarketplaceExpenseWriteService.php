@@ -5,6 +5,8 @@ namespace App\Pilots\Marketplace;
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use App\Exceptions\IdempotencyConflict;
+use App\Exceptions\ResourceNotFound;
+use App\Exceptions\StoreForbidden;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
@@ -59,7 +61,7 @@ final class MarketplaceExpenseWriteService
                     ->first();
 
                 if ($store === null) {
-                    throw new \DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
+                    throw new StoreForbidden();
                 }
 
                 $expenseId = $connection->table('marketplace_expenses')->insertGetId([
@@ -163,7 +165,7 @@ final class MarketplaceExpenseWriteService
                 ->first();
 
             if ($store === null) {
-                throw new \DomainException('Toko marketplace tidak ditemukan dalam perusahaan aktif.', 403);
+                throw new StoreForbidden();
             }
 
             $expense = $connection->table('marketplace_expenses')
@@ -173,7 +175,7 @@ final class MarketplaceExpenseWriteService
                 ->first();
 
             if ($expense === null) {
-                throw new \DomainException('Pengeluaran marketplace tidak ditemukan.', 404);
+                throw new ResourceNotFound('Pengeluaran marketplace tidak ditemukan.', 'EXPENSE_NOT_FOUND');
             }
 
             $connection->table('marketplace_expenses')

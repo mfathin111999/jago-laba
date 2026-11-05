@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\ApiException;
+use App\Exceptions\IdempotencyConflict;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureBrowserCsrf;
 use App\Http\Middleware\EnsureCompanyContext;
@@ -55,6 +57,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: ['api/rpc.php']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Typed refusals answer the client through their own render(); they are not server errors worth logging.
+        $exceptions->dontReport([ApiException::class, IdempotencyConflict::class]);
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

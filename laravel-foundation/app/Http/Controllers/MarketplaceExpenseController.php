@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\IdempotencyConflict;
 use App\Http\Requests\MarketplaceExpenseRequest;
+use App\Http\Responses\ApiResponse;
 use App\Pilots\Marketplace\MarketplaceExpenseWriteService;
 use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 final class MarketplaceExpenseController
 {
@@ -21,30 +19,26 @@ final class MarketplaceExpenseController
         $idempotencyKey = trim((string) ($request->header('X-Idempotency-Key') ?: $request->input('idempotency_key')));
         if ($idempotencyKey === '') {
             if ($request->routeIs('pilot.marketplace.expenses')) {
-                return $this->error('Header X-Idempotency-Key wajib diisi.', 'IDEMPOTENCY_REQUIRED', 422, $requestId);
+                return ApiResponse::error('Header X-Idempotency-Key wajib diisi.', 'IDEMPOTENCY_REQUIRED', 422);
             }
 
             $idempotencyKey = 'legacy-'.bin2hex(random_bytes(16));
         }
 
-        try {
-            $result = $this->expenses->create(
+        // StoreForbidden and IdempotencyConflict are rendered by the exception handler.
+        $result = ApiResponse::guard(
+            fn (): array => $this->expenses->create(
                 $request->user('web'),
                 (string) $request->attributes->get('company_key'),
                 $request->validated(),
                 $idempotencyKey,
-            );
-        } catch (IdempotencyConflict $exception) {
-            return $this->error($exception->getMessage(), 'IDEMPOTENCY_CONFLICT', 409, $requestId);
-        } catch (\DomainException $exception) {
-            return $this->error($exception->getMessage(), 'STORE_FORBIDDEN', 403, $requestId);
-        } catch (Throwable $exception) {
-            Log::error('Marketplace expense write failed.', [
-                'request_id' => $requestId,
-                'exception' => $exception::class,
-            ]);
-
-            return $this->error('Pengeluaran belum berhasil disimpan.', 'WRITE_FAILED', 500, $requestId);
+            ),
+            'WRITE_FAILED',
+            'Pengeluaran belum berhasil disimpan.',
+            'Marketplace expense write failed.',
+        );
+        if ($result instanceof JsonResponse) {
+            return $result;
         }
 
         if ($request->routeIs('pilot.marketplace.expenses') && ! $request->expectsJson()) {
@@ -54,15 +48,5 @@ final class MarketplaceExpenseController
         }
 
         return response()->json($result)->header('X-Request-Id', $requestId);
-    }
-
-    private function error(string $message, string $code, int $status, string $requestId): JsonResponse
-    {
-        return response()->json([
-            'success' => false,
-            'message' => $message,
-            'code' => $code,
-            'request_id' => $requestId,
-        ], $status)->header('X-Request-Id', $requestId);
     }
 }
