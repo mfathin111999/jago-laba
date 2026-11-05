@@ -18,10 +18,7 @@ final class MarketplaceWithdrawalConfirmTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         Schema::create('marketplace_stores', function (Blueprint $table): void {
             $table->string('id')->primary();
             $table->string('company_key');

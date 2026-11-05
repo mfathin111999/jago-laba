@@ -16,16 +16,8 @@ final class MarketplaceSettlementImportTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
-        Schema::create('system_audit_logs', function (Blueprint $table): void {
-            $table->bigIncrements('id');
-            foreach (['event_id', 'event_time', 'user_id', 'username', 'module', 'action', 'record_id', 'reference_id', 'before_json', 'after_json', 'status', 'notes'] as $column) {
-                $table->text($column)->nullable();
-            }
-        });
+        $this->createWorkspaceAccessTable();
+        $this->createAuditLogTable();
         Schema::create('marketplace_stores', function (Blueprint $table): void {
             $table->string('id')->primary();
             $table->string('company_key');

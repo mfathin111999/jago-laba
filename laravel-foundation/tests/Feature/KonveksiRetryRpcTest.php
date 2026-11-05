@@ -27,12 +27,7 @@ final class KonveksiRetryRpcTest extends TestCase
         $this->app->useStoragePath($this->workdir.'/storage');
         config(['jago.documents.root' => $this->workdir.'/docs', 'jago.backup.local_directory' => $this->workdir.'/backups', 'jago.backup.external_directory' => null, 'jago.backup.mysqldump' => null]);
 
-        Schema::create('system_audit_logs', function (Blueprint $table): void {
-            $table->bigIncrements('id');
-            foreach (['event_id', 'event_time', 'user_id', 'username', 'module', 'action', 'record_id', 'reference_id', 'before_json', 'after_json', 'status', 'notes'] as $column) {
-                $table->text($column)->nullable();
-            }
-        });
+        $this->createAuditLogTable();
         Schema::create('system_table_map', function (Blueprint $table): void {
             $table->bigIncrements('id');
             $table->string('sheet_name');

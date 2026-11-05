@@ -35,10 +35,7 @@ final class WorkspaceGrantsTest extends TestCase
         $this->assertSame(['konveksi'], app(WorkspaceContext::class)->allowed($this->user()));
         $this->assertSame(['konveksi', 'marketplace'], app(WorkspaceContext::class)->allowed($this->user('ROLE-OWNER_SUPER_ADMIN')));
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         \DB::table('workspace_user_access')->insert([['user_key' => 'u1', 'workspace' => 'marketplace']]);
 
         $this->assertSame(['marketplace'], app(WorkspaceContext::class)->allowed($this->user()));

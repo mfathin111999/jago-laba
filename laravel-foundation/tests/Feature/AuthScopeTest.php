@@ -240,10 +240,7 @@ final class AuthScopeTest extends TestCase
 
     public function test_explicit_workspace_registry_overrides_role_defaults_and_clears_store_context(): void
     {
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         DB::table('workspace_user_access')->insert(['user_key' => 'AUTHV2-1', 'workspace' => 'konveksi']);
         $this->loginAs('owner', 'owner-secret');
         $this->postJson('/api/workspace.php', ['workspace' => 'marketplace'])->assertForbidden();

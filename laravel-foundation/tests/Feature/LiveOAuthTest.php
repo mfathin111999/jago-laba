@@ -24,10 +24,7 @@ final class LiveOAuthTest extends TestCase
         putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.base64_encode(str_repeat('k', 32)));
         config(['app.key' => 'base64:'.base64_encode(str_repeat('o', 32)), 'jago.oauth.state_ttl_seconds' => 600, 'jago.oauth.retry.max_attempts' => 1]);
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         Schema::create('marketplace_stores', function (Blueprint $table): void {
             $table->string('id')->primary();
             $table->string('company_key');

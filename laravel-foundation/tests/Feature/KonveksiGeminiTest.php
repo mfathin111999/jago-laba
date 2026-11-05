@@ -18,12 +18,7 @@ final class KonveksiGeminiTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('system_audit_logs', function (Blueprint $table): void {
-            $table->bigIncrements('id');
-            foreach (['event_id', 'event_time', 'user_id', 'username', 'module', 'action', 'record_id', 'reference_id', 'before_json', 'after_json', 'status', 'notes'] as $column) {
-                $table->text($column)->nullable();
-            }
-        });
+        $this->createAuditLogTable();
         Schema::create('system_settings', function (Blueprint $table): void {
             $table->string('setting_key')->primary();
             $table->text('setting_value')->nullable();

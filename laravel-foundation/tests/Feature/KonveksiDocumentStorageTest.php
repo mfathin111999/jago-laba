@@ -24,12 +24,7 @@ final class KonveksiDocumentStorageTest extends TestCase
         $this->root = sys_get_temp_dir().'/jl-docs-'.bin2hex(random_bytes(4));
         config(['jago.documents.root' => $this->root]);
 
-        Schema::create('system_audit_logs', function (Blueprint $table): void {
-            $table->bigIncrements('id');
-            foreach (['event_id', 'event_time', 'user_id', 'username', 'module', 'action', 'record_id', 'reference_id', 'before_json', 'after_json', 'status', 'notes'] as $column) {
-                $table->text($column)->nullable();
-            }
-        });
+        $this->createAuditLogTable();
         Schema::create('document_files', function (Blueprint $table): void {
             $table->bigIncrements('id');
             $table->string('file_id')->unique();

@@ -15,10 +15,7 @@ final class KonveksiLegacyAppTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         DB::table('workspace_user_access')->insert([['user_key' => 'u1', 'workspace' => 'konveksi']]);
     }
 

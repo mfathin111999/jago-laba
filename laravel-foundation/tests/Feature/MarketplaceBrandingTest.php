@@ -18,10 +18,7 @@ final class MarketplaceBrandingTest extends TestCase
     {
         parent::setUp();
 
-        Schema::create('workspace_user_access', function (Blueprint $table): void {
-            $table->string('user_key');
-            $table->string('workspace');
-        });
+        $this->createWorkspaceAccessTable();
         Schema::create('marketplace_branding', function (Blueprint $table): void {
             $table->string('company_key', 120)->primary();
             $table->binary('logo_blob')->nullable();
