@@ -2,6 +2,7 @@
 
 namespace App\Pilots\Marketplace;
 
+use App\Models\Marketplace\MarketplaceStore;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Schema;
 
@@ -25,7 +26,7 @@ final class MarketplaceStoreReadService
     public function overview(string $companyKey): array
     {
         $connection = $this->database->connection();
-        $rows = $connection->table('marketplace_stores')->where('company_key', $companyKey)->orderBy('platform')->orderBy('store_name')->get();
+        $rows = MarketplaceStore::query()->forCompany($companyKey)->orderBy('platform')->orderBy('store_name')->get();
 
         $connections = [];
         if (Schema::hasTable('marketplace_oauth_connections')) {
@@ -42,7 +43,7 @@ final class MarketplaceStoreReadService
         $stores = [];
         $archived = [];
         foreach ($rows as $row) {
-            $data = (array) $row;
+            $data = $row->getAttributes();
             if (! empty($data['archived_at'])) {
                 $archived[] = [
                     'id' => $data['id'], 'platform' => $data['platform'] ?? null, 'store_name' => $data['store_name'] ?? null,
