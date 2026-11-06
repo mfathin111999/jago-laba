@@ -1,6 +1,0 @@
-<?php
-require_once (dirname(__DIR__, 2) . '/app/Bootstrap/bootstrap.php');
-$rows=[];foreach(['Hitam','Abu Abu','Navy','Hijau Army'] as $i=>$name)$rows[]=['external_variant_id'=>'V'.$i,'variant_name'=>$name,'sku'=>'RANSEL BIMO '.$i,'base_price'=>175000,'editable'=>true,'promotions'=>[],'fee_rate'=>$i?null:0.264];
-$fixture=['product_name'=>'JAGOIN Tas Ransel Sekolah Waterproof','store_name'=>'TikTok Sandbox · Preview','rows'=>$rows,'promotion_error'=>null];
-ob_start();?><!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/jago-laba/public/"><title>Preview editor harga</title><style>body{font-family:Arial,sans-serif;background:#eef3fa;padding:40px}button{cursor:pointer}</style><h1>Produk Global</h1><p>Preview UI — data contoh, tidak mengirim perubahan ke marketplace.</p><button data-edit-marketplace-price data-store="PREVIEW" data-product="PREVIEW">Edit harga produk</button><script>window.fetch=async()=>({ok:true,json:async()=>({success:true,data:<?= json_encode($fixture,JSON_HEX_TAG|JSON_HEX_AMP) ?>})});</script><?php require (dirname(__DIR__, 2) . '/app/Modules/Marketplace/Views/marketplace_price_editor.php'); ?></html><?php
-file_put_contents((dirname(__DIR__, 2) . '/public/marketplace-price-preview.html'),ob_get_clean());

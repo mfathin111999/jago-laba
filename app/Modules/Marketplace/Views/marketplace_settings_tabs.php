@@ -1,4 +1,0 @@
-<?php $settingsTabs=['toko'=>['fa-store','Manajemen Toko'],'tambah_toko'=>['fa-plus','Tambah Toko'],'integrasi'=>['fa-plug','Integrasi API'],'akses'=>['fa-users-gear','Pengguna & Hak Akses'],'identitas'=>['fa-palette','Identitas & Logo'],'backup'=>['fa-database','Penyimpanan & Backup']]; ?>
-<nav class="flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" aria-label="Menu Pengaturan">
- <?php foreach($settingsTabs as $key=>[$icon,$label]): ?><a href="marketplace.php?<?= htmlspecialchars(http_build_query(['tab'=>'pengaturan','peng_sub'=>$key])) ?>" <?= $pengSubTab===$key?'aria-current="page"':'' ?> class="flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-xs font-bold transition <?= $pengSubTab===$key?'bg-brand-50 text-brand-700 shadow-sm':'text-slate-500 hover:bg-slate-50 hover:text-slate-900' ?>"><i class="fa-solid <?= $icon ?>" aria-hidden="true"></i><?= $label ?></a><?php endforeach; ?>
-</nav>

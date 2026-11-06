@@ -29,9 +29,9 @@ Semua skema database kini dikelola migrasi Laravel. Perintah di bawah dijalankan
 ## C. Memisahkan database Konveksi (opsional)
 1. Pastikan user MySQL aplikasi boleh `CREATE DATABASE`, `CREATE USER`, `GRANT` (hanya saat langkah ini).
 2. `php artisan konveksi:isolate --prepare` — menyalin data ke `jago_laba_konveksi` (`--target=` mengganti nama), membandingkan setiap baris, membuat user khusus (hanya SELECT/INSERT/UPDATE/DELETE di database itu) dan membuktikan user itu tidak bisa membaca tabel Marketplace. Sumber tidak diubah; target yang sudah berisi tabel tidak ditimpa.
-3. Tambahkan `--activate` untuk menulis `storage/private/konveksi/database.php`.
+3. Tambahkan `--activate` untuk menulis `laravel-foundation/storage/private/konveksi/database.php`.
 4. Pastikan `JL_KONVEKSI_DATABASE_ISOLATED` di `.env` tidak bernilai `false` (nilai `.env` mengalahkan file konfigurasi); set `true` atau hapus barisnya.
-5. Rollback: hapus `storage/private/konveksi/database.php` (dan set flag di atas kembali); aplikasi kembali memakai database utama, yang tidak pernah diubah.
+5. Rollback: hapus `laravel-foundation/storage/private/konveksi/database.php` (dan set flag di atas kembali); aplikasi kembali memakai database utama, yang tidak pernah diubah.
 
 ## Catatan
 - `down()` migrasi hanya jalan di `local`/`testing`; di lingkungan lain melempar exception.

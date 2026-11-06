@@ -1,6 +1,0 @@
-
-Fatal error: Uncaught PDOException: SQLSTATE[HY000]: General error: 1205 Lock wait timeout exceeded; try restarting transaction in C:\xampp\htdocs\jago-laba\scripts\marketplace-background-worker.php:25
-Stack trace:
-#0 C:\xampp\htdocs\jago-laba\scripts\marketplace-background-worker.php(25): PDOStatement->execute(Array)
-#1 {main}
-  thrown in C:\xampp\htdocs\jago-laba\scripts\marketplace-background-worker.php on line 25
