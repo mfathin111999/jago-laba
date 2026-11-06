@@ -72,6 +72,7 @@ Rollback tiap koleksi: kembalikan saklar ke `json` (tabel JSON tetap utuh dan te
 - `konveksi:isolate`, `konveksi:schema-check`, dan `konveksi:import-snapshot` sudah mengenali tabel bertipe (importer tidak mengalihkan koleksi bertipe kembali ke JSON).
 - `konveksi:isolate` ikut menyalin tabel arsip JSON (`jl_data_<koleksi>`) dari koleksi yang sudah bertipe (diuji: Produk 17 baris di arsip dan di `kv_produk`).
 - Nama indeks tabel pendukung (`system_table_map`, `system_audit_logs`, `backup_log`, `document_files`, `idempotency_keys`) disamakan dengan DDL lama; dibandingkan lewat `information_schema.statistics`, 18 indeks identik.
+- Pembuatan skema saat request dihapus dari jalur yang dipakai Laravel: trigger penghapusan toko (`jl_erase_*`, 52 buah) dipasang migrasi `2026_11_13_000001` (diuji pada MariaDB kosong) dan layanan hanya memeriksanya; `MarketplacePartnerSettings` tidak lagi membuat tabel (tabelnya dari migrasi 000003). Sisa `install()` hanya dipanggil skrip installer lama (`public/install.php`, `bin/`, `scripts/`), bukan oleh aplikasi Laravel.
 - Bukti (MariaDB, snapshot nyata): 21 koleksi, semua record identik setelah dipindah dan setelah rollback + migrate ulang; isolasi database menyalin tabel bertipe.
 
 ## 10. Temuan data

@@ -563,10 +563,7 @@ final class MarketplaceStoreDeletionService
         $missing = fn () => collect($tables)->crossJoin(['INSERT', 'UPDATE'])->contains(
             fn ($pair) => ! isset($this->triggerNames()[$this->triggerName($pair[0], $pair[1])])
         );
-        if ($missing()) {
-            $this->install();
-            $this->triggerNames = null;
-        }
+        // The triggers are installed by the 2026_11_13_000001 migration; a request only verifies them.
         if ($missing()) {
             throw new DomainException('Pengaman penghapusan belum terpasang. Jalankan migrasi penghapusan toko.');
         }

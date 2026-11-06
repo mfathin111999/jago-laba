@@ -177,14 +177,8 @@ final class MarketplacePartnerSettings
     private function ensureTable(): void
     {
         if ($this->pdo->query("SHOW TABLES LIKE 'marketplace_partner_settings'")->fetchColumn()) return;
-        if ($this->pdo->inTransaction()) throw new MarketplaceIntegrationException('Skema pengaturan partner belum dipasang.','PARTNER_SCHEMA_MISSING');
-        $this->pdo->exec('CREATE TABLE IF NOT EXISTS marketplace_partner_settings (
-            platform VARCHAR(40) NOT NULL PRIMARY KEY,
-            settings_encrypted MEDIUMTEXT NOT NULL,
-            last_test_status VARCHAR(20) NULL,
-            last_tested_at DATETIME NULL,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        // The table is created by the Laravel migrations (php artisan migrate); a request never creates schema.
+        throw new MarketplaceIntegrationException('Skema pengaturan partner belum dipasang. Jalankan php artisan migrate.','PARTNER_SCHEMA_MISSING');
     }
 
     private function assertPlatform(string $platform): void
