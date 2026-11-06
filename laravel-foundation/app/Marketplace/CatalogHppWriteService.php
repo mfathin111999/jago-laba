@@ -5,33 +5,27 @@ namespace App\Marketplace;
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use App\Services\Marketplace\Catalog\CatalogService;
+use App\Services\Marketplace\Catalog\SkuHppUpdater;
 use App\Services\Marketplace\MarketplaceScope;
-use DomainException;
 use InvalidArgumentException;
-use PDO;
 
 final class CatalogHppWriteService
 {
     public function __construct(
-        private readonly LegacyExecutionContext $context,
         private readonly MarketplaceScope $scope,
         private readonly CatalogService $catalog,
+        private readonly SkuHppUpdater $skuHpp,
         private readonly AuditLogger $audit,
     ) {}
 
     public function updateSkuHpp(LegacyUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
     {
-        LegacyRuntime::service('MarketplaceService');
-
         $sku = trim($sku);
         if ($sku === '' || $newHpp <= 0) {
             throw new InvalidArgumentException('SKU dan HPP harus valid.');
         }
 
-        $this->context->run($user, $companyKey, function (PDO $pdo) use ($storeId, $sku, $newHpp, $variantId): void {
-            $service = new \MarketplaceService($pdo);
-            $service->updateProductHpp($storeId, $sku, $newHpp, $variantId);
-        });
+        $this->scope->run($user, $companyKey, fn (): bool => $this->skuHpp->update($storeId, $sku, $newHpp, $variantId));
 
         $this->audit->record(
             $user,

@@ -2,17 +2,23 @@
 
 namespace App\Marketplace;
 
-use PDO;
+use App\Services\Marketplace\Expenses\ExpenseListing;
+use App\Services\Marketplace\MarketplaceScope;
 
 final class ExpensesReadService
 {
-    public function __construct(private readonly LegacyReadContext $context) {}
+    public function __construct(
+        private readonly MarketplaceScope $scope,
+        private readonly ExpenseListing $expenses,
+    ) {}
 
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
     public function listing(string $companyKey, string $storeId, array $filters): array
     {
-        LegacyRuntime::service('MarketplaceService');
-
-        return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceService($pdo))->getExpenses(
+        return $this->scope->forCompany($companyKey, fn (): array => $this->expenses->list(
             $storeId, $filters['category'] ?? null, $filters['search'] ?? null, $filters['date'] ?? null,
         ));
     }
