@@ -107,6 +107,11 @@ final class KonveksiIsolateCommand extends Command
                 $definition = collect($typed->definitions())->first(fn ($candidate) => $candidate->table === $table);
                 $this->copy($source, $admin, $table, $definition?->tableColumns() ?? KonveksiSchema::COLLECTION_COLUMNS);
                 $this->assertSame($source, $admin, $table, $typed);
+                // A typed collection keeps its former JSON table as a read-only archive; carry it along.
+                $archive = 'jl_data_'.$map['api_key'];
+                if ($definition !== null && $archive !== $table && isset(KonveksiSchema::mappedCollections()[$archive])) {
+                    $this->copy($source, $admin, $archive, KonveksiSchema::COLLECTION_COLUMNS);
+                }
                 $admin->table('system_table_map')->insert($map);
                 $rows[] = (int) $admin->table($table)->count();
             }

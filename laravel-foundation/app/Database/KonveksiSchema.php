@@ -152,9 +152,9 @@ final class KonveksiSchema
             },
             'system_table_map' => function (Blueprint $t): void {
                 $t->id();
-                $t->string('sheet_name', 190)->unique();
-                $t->string('api_key', 190)->unique();
-                $t->string('table_name', 190)->unique();
+                $t->string('sheet_name', 190)->unique('sheet_name');
+                $t->string('api_key', 190)->unique('api_key');
+                $t->string('table_name', 190)->unique('table_name');
                 $t->longText('headers_json')->nullable();
                 $t->integer('source_row_count')->default(0);
                 $t->integer('imported_row_count')->default(0);
@@ -175,13 +175,13 @@ final class KonveksiSchema
                 $t->longText('after_json')->nullable();
                 $t->string('status', 32)->default('SUCCESS');
                 $t->text('notes')->nullable();
-                $t->index('event_time');
-                $t->index('action');
-                $t->index('reference_id');
+                $t->index('event_time', 'idx_audit_time');
+                $t->index('action', 'idx_audit_action');
+                $t->index('reference_id', 'idx_audit_ref');
             },
             'backup_log' => function (Blueprint $t): void {
                 $t->id();
-                $t->string('backup_id', 120)->unique();
+                $t->string('backup_id', 120)->unique('backup_id');
                 $t->dateTime('created_at')->useCurrent();
                 $t->string('mode', 40);
                 $t->string('status', 32);
@@ -192,12 +192,12 @@ final class KonveksiSchema
                 $t->bigInteger('size_bytes')->default(0);
                 $t->string('checksum', 128)->nullable();
                 $t->text('message')->nullable();
-                $t->index('created_at');
-                $t->index('mode');
+                $t->index('created_at', 'idx_backup_time');
+                $t->index('mode', 'idx_backup_mode');
             },
             'document_files' => function (Blueprint $t): void {
                 $t->id();
-                $t->string('file_id', 120)->unique();
+                $t->string('file_id', 120)->unique('file_id');
                 $t->string('document_type', 120)->nullable();
                 $t->string('reference_id', 190)->nullable();
                 $t->string('file_name', 255);
@@ -205,8 +205,8 @@ final class KonveksiSchema
                 $t->string('mime_type', 120)->nullable();
                 $t->bigInteger('size_bytes')->default(0);
                 $t->dateTime('created_at')->useCurrent();
-                $t->index('reference_id');
-                $t->index('document_type');
+                $t->index('reference_id', 'idx_doc_ref');
+                $t->index('document_type', 'idx_doc_type');
             },
             'idempotency_keys' => function (Blueprint $t): void {
                 $t->id();
@@ -216,7 +216,7 @@ final class KonveksiSchema
                 $t->string('reference_id', 190)->nullable();
                 $t->longText('response_json')->nullable();
                 $t->dateTime('created_at')->useCurrent();
-                $t->unique(['company_key', 'module', 'idempotency_key']);
+                $t->unique(['company_key', 'module', 'idempotency_key'], 'uq_idempotency_scope');
             },
             'konveksi_request_receipts' => function (Blueprint $t): void {
                 $t->string('request_key', 190)->primary();

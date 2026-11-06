@@ -70,6 +70,8 @@ Rollback tiap koleksi: kembalikan saklar ke `json` (tabel JSON tetap utuh dan te
 - **`php artisan konveksi:profile`** (baca saja): profil tipe per field dari data nyata.
 - **`php artisan konveksi:typed status|migrate|rollback`**: `migrate` menyalin (row id dipertahankan), membandingkan setiap record dengan JSON, baru mengalihkan `system_table_map`; verifikasi gagal = tidak ada pengalihan. `rollback` menyalin baris bertipe kembali ke tabel JSON (tulisan baru ikut) lalu mengalihkan balik. Tabel JSON tetap sebagai arsip. Memakai kunci tulis yang sama dengan `konveksi:isolate`.
 - `konveksi:isolate`, `konveksi:schema-check`, dan `konveksi:import-snapshot` sudah mengenali tabel bertipe (importer tidak mengalihkan koleksi bertipe kembali ke JSON).
+- `konveksi:isolate` ikut menyalin tabel arsip JSON (`jl_data_<koleksi>`) dari koleksi yang sudah bertipe (diuji: Produk 17 baris di arsip dan di `kv_produk`).
+- Nama indeks tabel pendukung (`system_table_map`, `system_audit_logs`, `backup_log`, `document_files`, `idempotency_keys`) disamakan dengan DDL lama; dibandingkan lewat `information_schema.statistics`, 18 indeks identik.
 - Bukti (MariaDB, snapshot nyata): 21 koleksi, semua record identik setelah dipindah dan setelah rollback + migrate ulang; isolasi database menyalin tabel bertipe.
 
 ## 10. Temuan data
