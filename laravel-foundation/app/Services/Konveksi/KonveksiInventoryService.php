@@ -10,29 +10,14 @@ final class KonveksiInventoryService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     public function audit(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->konveksi->connection();
-        $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
-        $tableMaster = (string) $connection->table('system_table_map')->where('api_key', 'master_stok')->value('table_name');
-        $tableMut = (string) $connection->table('system_table_map')->where('api_key', 'mutasi_stok')->value('table_name');
-
-        $produk = [];
-        if ($tableProduk) {
-            $produk = $connection->table($tableProduk)->get()->map(fn ($r) => json_decode((string) $r->_data_json, true))->filter()->values()->all();
-        }
-
-        $master = [];
-        if ($tableMaster) {
-            $master = $connection->table($tableMaster)->get()->map(fn ($r) => json_decode((string) $r->_data_json, true))->filter()->values()->all();
-        }
-
-        $mutCount = 0;
-        if ($tableMut) {
-            $mutCount = $connection->table($tableMut)->count();
-        }
+        $produk = $this->collections->mapped('produk') ? array_values(array_filter($this->collections->documents('produk'))) : [];
+        $master = $this->collections->mapped('master_stok') ? array_values(array_filter($this->collections->documents('master_stok'))) : [];
+        $mutCount = $this->collections->mapped('mutasi_stok') ? $this->collections->count('mutasi_stok') : 0;
 
         $missing = [];
         $dup = [];
@@ -114,48 +99,34 @@ final class KonveksiInventoryService
 
     public function migrateIds(LegacyUser $user, string $companyKey): array
     {
-        $connection = $this->konveksi->connection();
-        $tableProduk = (string) $connection->table('system_table_map')->where('api_key', 'produk')->value('table_name');
-        $tableMaster = (string) $connection->table('system_table_map')->where('api_key', 'master_stok')->value('table_name');
-
-        if (! $tableProduk || ! $tableMaster) {
+        if (! $this->collections->mapped('produk') || ! $this->collections->mapped('master_stok')) {
             return ['status' => 'success', 'updated' => 0, 'message' => 'Tabel inventori belum dipetakan.'];
         }
 
         $changed = 0;
-        $connection->transaction(function () use ($connection, $tableProduk, $tableMaster, &$changed): void {
+        $this->konveksi->connection()->transaction(function () use (&$changed): void {
             $map = [];
-            $produkRows = $connection->table($tableProduk)->get();
 
-            foreach ($produkRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec)) {
-                    if (empty($dec['id_stok_item'])) {
-                        $dec['id_stok_item'] = 'STK-'.strtoupper(substr(bin2hex(random_bytes(6)), 0, 10));
-                        $changed++;
-                        $connection->table($tableProduk)->where('_row_id', $row->_row_id)->update([
-                            '_data_json' => json_encode($dec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                        ]);
-                    }
-                    $sku = strtoupper((string) ($dec['kode_sku'] ?? ($dec['sku_varian'] ?? ($dec['kode'] ?? ''))));
-                    if ($sku !== '') {
-                        $map[$sku] = $dec['id_stok_item'];
-                    }
+            foreach ($this->collections->rows('produk') as $row) {
+                $dec = $row['data'];
+                if (empty($dec['id_stok_item'])) {
+                    $dec['id_stok_item'] = 'STK-'.strtoupper(substr(bin2hex(random_bytes(6)), 0, 10));
+                    $changed++;
+                    $this->collections->update('produk', $row['id'], $dec);
+                }
+                $sku = strtoupper((string) ($dec['kode_sku'] ?? ($dec['sku_varian'] ?? ($dec['kode'] ?? ''))));
+                if ($sku !== '') {
+                    $map[$sku] = $dec['id_stok_item'];
                 }
             }
 
-            $masterRows = $connection->table($tableMaster)->get();
-            foreach ($masterRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec)) {
-                    if (empty($dec['id_stok_item'])) {
-                        $sku = strtoupper((string) ($dec['kode_sku'] ?? ($dec['sku_varian'] ?? ($dec['kode'] ?? ''))));
-                        $dec['id_stok_item'] = $map[$sku] ?? ('STK-'.strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
-                        $changed++;
-                        $connection->table($tableMaster)->where('_row_id', $row->_row_id)->update([
-                            '_data_json' => json_encode($dec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                        ]);
-                    }
+            foreach ($this->collections->rows('master_stok') as $row) {
+                $dec = $row['data'];
+                if (empty($dec['id_stok_item'])) {
+                    $sku = strtoupper((string) ($dec['kode_sku'] ?? ($dec['sku_varian'] ?? ($dec['kode'] ?? ''))));
+                    $dec['id_stok_item'] = $map[$sku] ?? ('STK-'.strtoupper(substr(bin2hex(random_bytes(6)), 0, 10)));
+                    $changed++;
+                    $this->collections->update('master_stok', $row['id'], $dec);
                 }
             }
         });

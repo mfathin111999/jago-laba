@@ -15,6 +15,7 @@ final class KonveksiDocumentAndAiService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     public function saveBase64Document(LegacyUser $user, string $companyKey, string $base64, string $fileName, string $type = 'General', string $referenceId = ''): array
@@ -168,36 +169,26 @@ final class KonveksiDocumentAndAiService
     public function saveTemplate(LegacyUser $user, string $companyKey, array $p): array
     {
         $id = (string) ($p['id'] ?? ($p['id_template'] ?? 'TPL-DEFAULT'));
-        $connection = $this->konveksi->connection();
-        $mapping = $connection->table('system_table_map')->where('api_key', 'template_dokumen')->first();
-
-        if (! $mapping) {
+        if (! $this->collections->mapped('template_dokumen')) {
             return ['status' => 'success', 'message' => 'Template dokumen tersimpan.', 'data' => $p];
         }
 
-        $table = (string) $mapping->table_name;
-        $existingRows = $connection->table($table)->get();
         $foundRowId = null;
 
-        foreach ($existingRows as $row) {
-            $dec = json_decode((string) $row->_data_json, true);
-            if (is_array($dec) && ((string) ($dec['id'] ?? ($dec['id_template'] ?? '')) === $id)) {
-                $foundRowId = $row->_row_id;
+        foreach ($this->collections->rows('template_dokumen') as $row) {
+            $dec = $row['data'];
+            if ((string) ($dec['id'] ?? ($dec['id_template'] ?? '')) === $id) {
+                $foundRowId = $row['id'];
                 $p = array_merge($dec, $p, ['updated_at' => now()->toIso8601String()]);
                 break;
             }
         }
 
         if ($foundRowId !== null) {
-            $connection->table($table)->where('_row_id', $foundRowId)->update([
-                '_data_json' => json_encode($p, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ]);
+            $this->collections->update('template_dokumen', $foundRowId, $p);
         } else {
             $p = array_merge($p, ['id' => $id, 'created_at' => now()->toIso8601String(), 'updated_at' => now()->toIso8601String()]);
-            $connection->table($table)->insert([
-                '_row_order' => 0,
-                '_data_json' => json_encode($p, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ]);
+            $this->collections->insert('template_dokumen', $p);
         }
 
         $this->audit->record(

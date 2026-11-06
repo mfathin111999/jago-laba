@@ -18,7 +18,10 @@ final class KonveksiPilotReadService
         'mutasi_stok_konveksi', 'hutangsupplier', 'hutang_supplier',
     ];
 
-    public function __construct(private readonly KonveksiConnection $konveksi) {}
+    public function __construct(
+        private readonly KonveksiConnection $konveksi,
+        private readonly KonveksiCollections $collections,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -104,13 +107,14 @@ final class KonveksiPilotReadService
         }
 
         $table = (string) ($mapping->table_name ?? '');
-        if (! preg_match('/^jl_data_[a-z0-9_]+$/', $table)) {
+        if (! preg_match('/^(jl_data|kv)_[a-z0-9_]+$/', $table)) {
             throw new RuntimeException('Pemetaan tabel Konveksi tidak valid.');
         }
 
-        $expectedTables = ['jl_data_'.$key];
+        $expectedTables = ['jl_data_'.$key, 'kv_'.$key];
         if ($key === 'hutangsupplier') {
             $expectedTables[] = 'jl_data_hutang_supplier';
+            $expectedTables[] = 'kv_hutang_supplier';
         }
         if (! in_array($table, $expectedTables, true)) {
             throw new RuntimeException('Pemetaan tabel Konveksi berada di luar allowlist.');
@@ -119,18 +123,7 @@ final class KonveksiPilotReadService
             throw new RuntimeException('Tabel Konveksi yang dipetakan tidak ditemukan.');
         }
 
-        return $this->connection()->table($table)
-            ->orderBy('_row_order')
-            ->orderBy('_row_id')
-            ->pluck('_data_json')
-            ->map(static function ($json): ?array {
-                $value = json_decode((string) $json, true);
-
-                return is_array($value) ? $value : null;
-            })
-            ->filter()
-            ->values()
-            ->all();
+        return array_values(array_filter($this->collections->documentsOfTable($table)));
     }
 
     /**

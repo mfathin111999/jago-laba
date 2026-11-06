@@ -15,7 +15,6 @@ use Throwable;
  */
 final class KonveksiBackupService
 {
-    private const TABLE_PATTERN = '/^jl_data_[a-z0-9_]+$/';
 
     private const DUMP_TIMEOUT_SECONDS = 300;
 
@@ -26,6 +25,7 @@ final class KonveksiBackupService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     /**
@@ -200,21 +200,9 @@ final class KonveksiBackupService
             $write('{"metadata":'.json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).',"tables":{');
             $connection->transaction(function () use ($connection, $write, &$total, &$missing): void {
                 $first = true;
-                foreach ($connection->table('system_table_map')->orderBy('id')->get(['sheet_name', 'table_name']) as $map) {
-                    $table = (string) $map->table_name;
-                    if (preg_match(self::TABLE_PATTERN, $table) !== 1) {
-                        throw new RuntimeException('Pemetaan tabel Konveksi tidak valid.');
-                    }
-                    if (! $connection->getSchemaBuilder()->hasTable($table)) {
-                        $missing[] = $table;
-
-                        continue;
-                    }
-
-                    $rows = $connection->table($table)->orderBy('_row_order')->orderBy('_row_id')->pluck('_data_json')
-                        ->map(static fn ($json) => json_decode((string) $json, true))->filter(static fn ($row) => is_array($row))->values()->all();
+                foreach ($this->collections->eachSheet($missing) as $sheet => $rows) {
                     $total += count($rows);
-                    $write(($first ? '' : ',').json_encode((string) $map->sheet_name, JSON_UNESCAPED_UNICODE).':'.json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+                    $write(($first ? '' : ',').json_encode($sheet, JSON_UNESCAPED_UNICODE).':'.json_encode($rows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
                     $first = false;
                 }
             });

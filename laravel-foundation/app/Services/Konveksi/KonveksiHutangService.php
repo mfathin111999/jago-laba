@@ -11,6 +11,7 @@ final class KonveksiHutangService
     public function __construct(
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
+        private readonly KonveksiCollections $collections,
     ) {}
 
     public function createManual(LegacyUser $user, string $companyKey, array $p): array
@@ -24,12 +25,9 @@ final class KonveksiHutangService
             throw new RuntimeException('Nominal hutang upah harus lebih dari Rp 0.');
         }
 
-        $connection = $this->konveksi->connection();
-        $tableMapping = $connection->table('system_table_map')->where('api_key', 'hutang_konveksi')->first();
-        if (! $tableMapping) {
+        if (! $this->collections->mapped('hutang_konveksi')) {
             throw new RuntimeException('Tabel hutang konveksi belum dipetakan.');
         }
-        $table = (string) $tableMapping->table_name;
 
         $tgl = $p['tanggal'] ?? now('Asia/Jakarta')->format('Y-m-d');
         $idHutang = 'HTK-MAN-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
@@ -60,10 +58,7 @@ final class KonveksiHutangService
             'operator' => $operator,
         ];
 
-        $connection->table($table)->insert([
-            '_row_order' => 0,
-            '_data_json' => json_encode($r, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-        ]);
+        $this->collections->insert('hutang_konveksi', $r);
 
         $this->audit->record(
             $user,
@@ -99,12 +94,7 @@ final class KonveksiHutangService
             throw new RuntimeException('Rekening kas sumber wajib dipilih.');
         }
 
-        $connection = $this->konveksi->connection();
-        $tableHutang = (string) $connection->table('system_table_map')->where('api_key', 'hutang_konveksi')->value('table_name');
-        $tableHist = (string) $connection->table('system_table_map')->where('api_key', 'riwayat_bayar_hutang_konveksi')->value('table_name');
-        $tableKeu = (string) $connection->table('system_table_map')->where('api_key', 'keuangan')->value('table_name');
-
-        if (! $tableHutang || ! $tableHist || ! $tableKeu) {
+        if (! $this->collections->mapped('hutang_konveksi') || ! $this->collections->mapped('riwayat_bayar_hutang_konveksi') || ! $this->collections->mapped('keuangan')) {
             throw new RuntimeException('Tabel keuangan/hutang konveksi belum lengkap dipetakan.');
         }
 
@@ -112,16 +102,12 @@ final class KonveksiHutangService
         $tgl = $p['tanggal_bayar'] ?? now('Asia/Jakarta')->format('Y-m-d');
         $operator = (string) ($user->getUsername() ?: $user->getAuthIdentifier() ?: 'system');
 
-        return $connection->transaction(function () use (
-            $connection, $tableHutang, $tableHist, $tableKeu, $idp, $nom, $rek,
-            $tgl, $now, $operator, $p, $user
-        ): array {
-            $hutangRows = $connection->table($tableHutang)->lockForUpdate()->get();
+        return $this->konveksi->connection()->transaction(function () use ($idp, $nom, $rek, $tgl, $now, $operator, $p, $user): array {
             $applicable = [];
-            foreach ($hutangRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec) && (string) ($dec['id_pegawai'] ?? '') === $idp && (float) ($dec['saldo_hutang'] ?? 0) > 0) {
-                    $applicable[] = ['row_id' => $row->_row_id, 'data' => $dec];
+            foreach ($this->collections->rows('hutang_konveksi', true) as $row) {
+                $dec = $row['data'];
+                if ((string) ($dec['id_pegawai'] ?? '') === $idp && (float) ($dec['saldo_hutang'] ?? 0) > 0) {
+                    $applicable[] = ['row_id' => $row['id'], 'data' => $dec];
                 }
             }
 
@@ -152,9 +138,7 @@ final class KonveksiHutangService
                 $item['data']['status'] = $after <= 0 ? 'Lunas' : 'Aktif';
                 $item['data']['updated_at'] = $now;
 
-                $connection->table($tableHutang)->where('_row_id', $item['row_id'])->update([
-                    '_data_json' => json_encode($item['data'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->update('hutang_konveksi', $item['row_id'], $item['data']);
 
                 $payId = 'BYR-HTK-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
                 $histRow = [
@@ -174,10 +158,7 @@ final class KonveksiHutangService
                     'created_at' => $now,
                 ];
 
-                $connection->table($tableHist)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($histRow, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('riwayat_bayar_hutang_konveksi', $histRow);
 
                 $generated[] = $histRow;
                 $left -= $pay;
@@ -198,10 +179,7 @@ final class KonveksiHutangService
                 'created_by' => $operator,
             ];
 
-            $connection->table($tableKeu)->insert([
-                '_row_order' => 0,
-                '_data_json' => json_encode($journal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ]);
+            $this->collections->insert('keuangan', $journal);
 
             $remaining = max(0, $total - $nom);
             $this->audit->record(

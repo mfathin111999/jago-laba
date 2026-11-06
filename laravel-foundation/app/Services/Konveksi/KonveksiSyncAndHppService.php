@@ -22,25 +22,12 @@ final class KonveksiSyncAndHppService
             throw new InvalidArgumentException('Payload syncTab tidak valid.');
         }
 
-        $connection = $this->konveksi->connection();
-        $mapping = $connection->table('system_table_map')->where('api_key', $tab)->first();
-        if (! $mapping) {
+        if (! $this->collections->mapped($tab)) {
             throw new RuntimeException("Tabel untuk tab {$tab} belum dipetakan.");
         }
 
-        $table = (string) $mapping->table_name;
-
-        $connection->transaction(function () use ($connection, $table, $rows): void {
-            $connection->table($table)->delete();
-            foreach ($rows as $idx => $r) {
-                if (! is_array($r)) {
-                    continue;
-                }
-                $connection->table($table)->insert([
-                    '_row_order' => $idx,
-                    '_data_json' => json_encode($r, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
-            }
+        $this->konveksi->connection()->transaction(function () use ($tab, $rows): void {
+            $this->collections->replace($tab, $rows);
         });
 
         $this->audit->record(
@@ -64,30 +51,14 @@ final class KonveksiSyncAndHppService
             throw new InvalidArgumentException('Payload syncMultiTabs tidak valid.');
         }
 
-        $connection = $this->konveksi->connection();
         $synced = [];
 
-        $connection->transaction(function () use ($connection, $map, &$synced): void {
+        $this->konveksi->connection()->transaction(function () use ($map, &$synced): void {
             foreach ($map as $tab => $rows) {
-                if (! is_array($rows)) {
+                if (! is_array($rows) || ! $this->collections->mapped((string) $tab)) {
                     continue;
                 }
-                $mapping = $connection->table('system_table_map')->where('api_key', $tab)->first();
-                if (! $mapping) {
-                    continue;
-                }
-
-                $table = (string) $mapping->table_name;
-                $connection->table($table)->delete();
-                foreach ($rows as $idx => $r) {
-                    if (! is_array($r)) {
-                        continue;
-                    }
-                    $connection->table($table)->insert([
-                        '_row_order' => $idx,
-                        '_data_json' => json_encode($r, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                    ]);
-                }
+                $this->collections->replace((string) $tab, $rows);
                 $synced[$tab] = count($rows);
             }
         });

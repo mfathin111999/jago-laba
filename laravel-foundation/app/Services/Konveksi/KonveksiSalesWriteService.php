@@ -30,23 +30,19 @@ final class KonveksiSalesWriteService
             throw new InvalidArgumentException('ID penjualan tidak valid.');
         }
 
-        $connection = $this->konveksi->connection();
-        $table = (string) $connection->table('system_table_map')->where('api_key', 'penjualan')->value('table_name');
-        if ($table === '') {
+        if (! $this->collections->mapped('penjualan')) {
             throw new RuntimeException('Tabel penjualan belum dipetakan.');
         }
 
-        return $connection->transaction(function () use ($connection, $table, $id, $user): array {
-            foreach ($connection->table($table)->lockForUpdate()->get() as $row) {
-                $sale = json_decode((string) $row->_data_json, true);
-                if (! is_array($sale) || (string) ($sale['id_penjualan'] ?? '') !== $id) {
+        return $this->konveksi->connection()->transaction(function () use ($id, $user): array {
+            foreach ($this->collections->rows('penjualan', true) as $row) {
+                $sale = $row['data'];
+                if ((string) ($sale['id_penjualan'] ?? '') !== $id) {
                     continue;
                 }
 
                 $updated = array_merge($sale, ['backup_status' => 'PENDING', 'backup_at' => now()->toIso8601String()]);
-                $connection->table($table)->where('_row_id', $row->_row_id)->update([
-                    '_data_json' => json_encode($updated, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->update('penjualan', $row['id'], $updated);
                 $this->audit->record($user, 'Konveksi', 'RETRY_SALE_BACKUP', $id, (string) ($sale['no_penjualan'] ?? ''), $sale, $updated, 'Backup transaksi penjualan dijadwalkan ulang');
 
                 return ['status' => 'success', 'message' => 'Status backup transaksi dijadwalkan ulang.', 'data' => $updated];
@@ -63,25 +59,14 @@ final class KonveksiSalesWriteService
             $id = 'SALE-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
         }
 
-        $connection = $this->konveksi->connection();
-        $tableMapping = $connection->table('system_table_map')->where('api_key', 'penjualan')->first();
-        $itemMapping = $connection->table('system_table_map')->where('api_key', 'penjualan_item')->first();
-
-        if (! $tableMapping || ! $itemMapping) {
+        if (! $this->collections->mapped('penjualan') || ! $this->collections->mapped('penjualan_item')) {
             throw new RuntimeException('Tabel penjualan belum dipetakan.');
         }
 
-        $salesTable = (string) $tableMapping->table_name;
-        $itemsTable = (string) $itemMapping->table_name;
-
         // Check if existing sale is posted
-        $existingRows = $connection->table($salesTable)->get();
-        foreach ($existingRows as $row) {
-            $decoded = json_decode((string) $row->_data_json, true);
-            if (is_array($decoded) && ($decoded['id_penjualan'] ?? '') === $id) {
-                if (strtoupper((string) ($decoded['status_transaksi'] ?? '')) !== 'DRAFT') {
-                    throw new DomainException('Penjualan terposting tidak dapat dijadikan draft.', 409);
-                }
+        foreach ($this->collections->documents('penjualan') as $decoded) {
+            if (($decoded['id_penjualan'] ?? '') === $id && strtoupper((string) ($decoded['status_transaksi'] ?? '')) !== 'DRAFT') {
+                throw new DomainException('Penjualan terposting tidak dapat dijadikan draft.', 409);
             }
         }
 
@@ -99,35 +84,26 @@ final class KonveksiSalesWriteService
             'updated_at' => $now,
         ]);
 
-        return $connection->transaction(function () use ($connection, $salesTable, $itemsTable, $id, $no, $now, $record, $data, $user): array {
+        return $this->konveksi->connection()->transaction(function () use ($id, $no, $now, $record, $data, $user): array {
             // Upsert in penjualan table
             $foundId = null;
-            $existingSales = $connection->table($salesTable)->get();
-            foreach ($existingSales as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec) && ($dec['id_penjualan'] ?? '') === $id) {
-                    $foundId = $row->_row_id;
+            foreach ($this->collections->rows('penjualan') as $row) {
+                if (($row['data']['id_penjualan'] ?? '') === $id) {
+                    $foundId = $row['id'];
                     break;
                 }
             }
 
             if ($foundId !== null) {
-                $connection->table($salesTable)->where('_row_id', $foundId)->update([
-                    '_data_json' => json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->update('penjualan', $foundId, $record);
             } else {
-                $connection->table($salesTable)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('penjualan', $record);
             }
 
             // Remove existing items for this sale
-            $existingItems = $connection->table($itemsTable)->get();
-            foreach ($existingItems as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec) && ($dec['id_penjualan'] ?? '') === $id) {
-                    $connection->table($itemsTable)->where('_row_id', $row->_row_id)->delete();
+            foreach ($this->collections->rows('penjualan_item') as $row) {
+                if (($row['data']['id_penjualan'] ?? '') === $id) {
+                    $this->collections->delete('penjualan_item', $row['id']);
                 }
             }
 
@@ -143,10 +119,7 @@ final class KonveksiSalesWriteService
                     'no_penjualan' => $no,
                     'created_at' => $now,
                 ]);
-                $connection->table($itemsTable)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($itemRec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('penjualan_item', $itemRec);
             }
 
             $this->audit->record(

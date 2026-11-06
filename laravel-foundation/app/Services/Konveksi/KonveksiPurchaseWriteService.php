@@ -44,12 +44,9 @@ final class KonveksiPurchaseWriteService
 
     public function saveMaterial(LegacyUser $user, string $companyKey, array $p): array
     {
-        $connection = $this->konveksi->connection();
-        $tableBahan = (string) $connection->table('system_table_map')->where('api_key', 'bahan')->value('table_name');
-        $tableHpp = (string) $connection->table('system_table_map')->where('api_key', 'bahan_hpp')->value('table_name');
-        $tableMut = (string) $connection->table('system_table_map')->where('api_key', 'mutasi_stok')->value('table_name');
+        $hasMovements = $this->collections->mapped('mutasi_stok');
 
-        if (! $tableBahan || ! $tableHpp) {
+        if (! $this->collections->mapped('bahan') || ! $this->collections->mapped('bahan_hpp')) {
             throw new RuntimeException('Tabel bahan/bahan_hpp belum dipetakan.');
         }
 
@@ -67,24 +64,18 @@ final class KonveksiPurchaseWriteService
         $now = now()->toIso8601String();
         $operator = (string) ($user->getUsername() ?: $user->getAuthIdentifier() ?: 'system');
 
-        return $connection->transaction(function () use (
-            $connection, $tableBahan, $tableHpp, $tableMut, $id, $kode, $edit,
-            $p, $now, $operator, $user
-        ): array {
-            $existingRows = $connection->table($tableBahan)->get();
+        return $this->konveksi->connection()->transaction(function () use ($hasMovements, $id, $kode, $edit, $p, $now, $operator, $user): array {
             $foundRowId = null;
             $oldData = [];
 
-            foreach ($existingRows as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec)) {
-                    if (strtoupper((string) ($dec['kode_bahan'] ?? $dec['kode'] ?? '')) === $kode && (string) ($dec['id_bahan'] ?? $dec['id'] ?? '') !== $id) {
-                        throw new RuntimeException("Kode material sudah digunakan: {$kode}");
-                    }
-                    if ((string) ($dec['id_bahan'] ?? $dec['id'] ?? '') === $id) {
-                        $foundRowId = $row->_row_id;
-                        $oldData = $dec;
-                    }
+            foreach ($this->collections->rows('bahan') as $row) {
+                $dec = $row['data'];
+                if (strtoupper((string) ($dec['kode_bahan'] ?? $dec['kode'] ?? '')) === $kode && (string) ($dec['id_bahan'] ?? $dec['id'] ?? '') !== $id) {
+                    throw new RuntimeException("Kode material sudah digunakan: {$kode}");
+                }
+                if ((string) ($dec['id_bahan'] ?? $dec['id'] ?? '') === $id) {
+                    $foundRowId = $row['id'];
+                    $oldData = $dec;
                 }
             }
 
@@ -99,14 +90,9 @@ final class KonveksiPurchaseWriteService
             ]);
 
             if ($foundRowId !== null) {
-                $connection->table($tableBahan)->where('_row_id', $foundRowId)->update([
-                    '_data_json' => json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->update('bahan', $foundRowId, $record);
             } else {
-                $connection->table($tableBahan)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('bahan', $record);
             }
 
             $isi = max(1, (float) ($record['isi_satuan_beli'] ?? 1));
@@ -133,29 +119,23 @@ final class KonveksiPurchaseWriteService
             ];
 
             $foundHppRowId = null;
-            $existingHpp = $connection->table($tableHpp)->get();
-            foreach ($existingHpp as $row) {
-                $dec = json_decode((string) $row->_data_json, true);
-                if (is_array($dec) && ((string) ($dec['id_bahan'] ?? $dec['id_bahan_gudang'] ?? '') === $id)) {
-                    $foundHppRowId = $row->_row_id;
+            foreach ($this->collections->rows('bahan_hpp') as $row) {
+                $dec = $row['data'];
+                if ((string) ($dec['id_bahan'] ?? $dec['id_bahan_gudang'] ?? '') === $id) {
+                    $foundHppRowId = $row['id'];
                     $hppRec = array_merge($dec, $hppRec);
                     break;
                 }
             }
 
             if ($foundHppRowId !== null) {
-                $connection->table($tableHpp)->where('_row_id', $foundHppRowId)->update([
-                    '_data_json' => json_encode($hppRec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->update('bahan_hpp', $foundHppRowId, $hppRec);
             } else {
-                $connection->table($tableHpp)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($hppRec, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('bahan_hpp', $hppRec);
             }
 
             $movement = null;
-            if (! $edit && (float) ($record['stok'] ?? 0) > 0 && $tableMut) {
+            if (! $edit && (float) ($record['stok'] ?? 0) > 0 && $hasMovements) {
                 $movement = [
                     'id_mutasi' => 'MUT-'.date('Ymd').'-'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 8)),
                     'tanggal' => now('Asia/Jakarta')->format('Y-m-d'),
@@ -173,10 +153,7 @@ final class KonveksiPurchaseWriteService
                     'operator' => $operator,
                     'created_at' => $now,
                 ];
-                $connection->table($tableMut)->insert([
-                    '_row_order' => 0,
-                    '_data_json' => json_encode($movement, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                ]);
+                $this->collections->insert('mutasi_stok', $movement);
             }
 
             $this->audit->record(
