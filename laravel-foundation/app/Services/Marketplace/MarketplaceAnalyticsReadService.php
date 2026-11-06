@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Marketplace\LegacyRuntime;
+use App\Services\Marketplace\Analytics\AnalyticsReport;
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
@@ -27,6 +27,7 @@ final class MarketplaceAnalyticsReadService
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly MarketplacePilotReadService $marketplace,
+        private readonly AnalyticsReport $report,
     ) {}
 
     /**
@@ -72,7 +73,7 @@ final class MarketplaceAnalyticsReadService
             'analytics_mode' => $analyticsMode,
         ];
 
-        $analytics = $this->legacyReport($companyKey, $legacyFilters);
+        $analytics = $this->report->report($companyKey, $legacyFilters);
 
         return [
             'read_only' => true,
@@ -188,29 +189,4 @@ final class MarketplaceAnalyticsReadService
         return [$dates[0], $dates[1]];
     }
 
-    /**
-     * @param  array<string, mixed>  $filters
-     * @return array<string, mixed>
-     */
-    private function legacyReport(string $companyKey, array $filters): array
-    {
-        $root = dirname(__DIR__, 4);
-        LegacyRuntime::shared('Companies/MarketplaceScopeService');
-        LegacyRuntime::service('MarketplaceOrderPresentation');
-        LegacyRuntime::service('MarketplaceAnalyticsService');
-
-        $hadCompany = array_key_exists('company_key', $_SESSION ?? []);
-        $previousCompany = $_SESSION['company_key'] ?? null;
-        $_SESSION['company_key'] = $companyKey;
-
-        try {
-            return (new \MarketplaceAnalyticsService($this->database->connection()->getPdo()))->report($filters);
-        } finally {
-            if ($hadCompany) {
-                $_SESSION['company_key'] = $previousCompany;
-            } else {
-                unset($_SESSION['company_key']);
-            }
-        }
-    }
 }

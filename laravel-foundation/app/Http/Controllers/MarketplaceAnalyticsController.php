@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Marketplace\LegacyRuntime;
 use App\Http\Requests\MarketplaceAnalyticsRequest;
+use App\Services\Marketplace\Export\AnalyticsCsv;
+use App\Services\Marketplace\Export\AnalyticsXlsx;
 use App\Services\Marketplace\MarketplaceAnalyticsReadService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -28,22 +29,20 @@ final class MarketplaceAnalyticsController
             );
             $format = $request->validated('format');
             if ($format === 'xlsx') {
-                LegacyRuntime::service('MarketplaceAnalyticsXlsx');
                 $report = $payload['analytics'];
 
-                return response(\MarketplaceAnalyticsXlsx::bytes($report), 200, [
+                return response(AnalyticsXlsx::bytes($report), 200, [
                     'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                     'Content-Disposition' => 'attachment; filename="analitik-toko-'.$report['start'].'-'.$report['end'].'.xlsx"',
                     'Cache-Control' => 'no-store, private',
                 ]);
             }
             if ($format === 'csv') {
-                LegacyRuntime::service('MarketplaceAnalyticsCsv');
                 $report = $payload['analytics'];
 
                 return response()->streamDownload(function () use ($report): void {
                     $out = fopen('php://output', 'w');
-                    \MarketplaceAnalyticsCsv::write($out, $report);
+                    AnalyticsCsv::write($out, $report);
                     fclose($out);
                 }, 'analitik-global-'.$report['start'].'-'.$report['end'].'.csv', [
                     'Content-Type' => 'text/csv; charset=utf-8', 'Cache-Control' => 'no-store, private',
