@@ -4,6 +4,8 @@ namespace App\Marketplace;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
+use App\Services\Marketplace\Catalog\CatalogService;
+use App\Services\Marketplace\MarketplaceScope;
 use DomainException;
 use InvalidArgumentException;
 use PDO;
@@ -12,6 +14,8 @@ final class CatalogHppWriteService
 {
     public function __construct(
         private readonly LegacyExecutionContext $context,
+        private readonly MarketplaceScope $scope,
+        private readonly CatalogService $catalog,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -65,25 +69,22 @@ final class CatalogHppWriteService
         bool $recalculateHistory = false,
         ?string $effectiveFrom = null,
     ): array {
-        LegacyRuntime::service('MarketplaceCatalogService');
-
-        $affected = $this->context->run($user, $companyKey, function (PDO $pdo) use (
+        $affected = $this->scope->run($user, $companyKey, function () use (
             $storeId, $amount, $applyAllVariants, $productId, $sku, $recalculateHistory, $effectiveFrom
         ): int {
-            $catalog = new \MarketplaceCatalogService($pdo);
             if ($applyAllVariants) {
                 if (empty($productId)) {
                     throw new InvalidArgumentException('Product ID wajib diisi jika menerapkan ke semua varian.');
                 }
 
-                return $catalog->updateProductHpp($storeId, $productId, $amount, $recalculateHistory, $effectiveFrom);
+                return $this->catalog->updateProductHpp($storeId, $productId, $amount, $recalculateHistory, $effectiveFrom);
             }
 
             if (empty($sku)) {
                 throw new InvalidArgumentException('SKU wajib diisi.');
             }
 
-            return $catalog->updateHpp($storeId, $sku, $amount, $recalculateHistory, $effectiveFrom);
+            return $this->catalog->updateHpp($storeId, $sku, $amount, $recalculateHistory, $effectiveFrom);
         });
 
         $this->audit->record(
@@ -119,13 +120,7 @@ final class CatalogHppWriteService
      */
     public function saveHppBatch(LegacyUser $user, string $companyKey, array $changes): array
     {
-        LegacyRuntime::service('MarketplaceCatalogService');
-
-        $result = $this->context->run($user, $companyKey, function (PDO $pdo) use ($changes): array {
-            $catalog = new \MarketplaceCatalogService($pdo);
-
-            return $catalog->updateHppBatch($changes);
-        });
+        $result = $this->scope->run($user, $companyKey, fn (): array => $this->catalog->updateHppBatch($changes));
 
         $skuCount = (int) ($result['sku_count'] ?? count($changes));
         $this->audit->record(

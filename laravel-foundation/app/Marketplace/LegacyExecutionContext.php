@@ -3,11 +3,12 @@
 namespace App\Marketplace;
 
 use App\Auth\LegacyUser;
+use App\Services\Marketplace\MarketplaceScope;
 use Illuminate\Database\DatabaseManager;
 
 final class LegacyExecutionContext
 {
-    public function __construct(private readonly DatabaseManager $database) {}
+    public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     public function run(LegacyUser $user, string $companyKey, callable $callback): mixed
     {
@@ -24,7 +25,7 @@ final class LegacyExecutionContext
         ];
 
         try {
-            return $callback($this->database->connection()->getPdo());
+            return $this->scope->run($user, $companyKey, fn () => $callback($this->database->connection()->getPdo()));
         } finally {
             $_SESSION = $previous;
         }

@@ -6,6 +6,7 @@ use App\Auth\LegacyUserProvider;
 use App\Authorization\RequestContext;
 use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Marketplace\MarketplaceBrandingService;
+use App\Services\Marketplace\MarketplaceScope;
 use App\Policies\RolePolicy;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -27,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(KonveksiConnection::class);
         // One instance per request (and per queued job): the company/store/workspace the context middleware decided.
         $this->app->scoped(RequestContext::class);
+        // Who is acting for which company inside the marketplace services (replaces the legacy $_SESSION keys).
+        $this->app->scoped(MarketplaceScope::class);
 
         // Jobs that were queued before the move to App\Jobs are stored with the old class name; keep them runnable.
         foreach (['MarketplaceSyncJob', 'MarketplaceLiveSyncJob'] as $job) {

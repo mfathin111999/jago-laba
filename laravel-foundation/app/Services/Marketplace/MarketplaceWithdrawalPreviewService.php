@@ -3,21 +3,19 @@
 namespace App\Services\Marketplace;
 
 use App\Auth\LegacyUser;
-use App\Marketplace\LegacyRuntime;
+use App\Services\Marketplace\Withdrawal\WithdrawalService;
+use App\Services\Marketplace\Withdrawal\WithdrawalXlsx;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Http\UploadedFile;
 use InvalidArgumentException;
-
-LegacyRuntime::service('MarketplaceWithdrawalService');
-LegacyRuntime::service('MarketplaceWithdrawalXlsx');
 
 /**
  * Read-only Laravel boundary for the legacy withdrawal import preview.
  *
  * The legacy parser remains the source of truth for dates, currency, amount
  * precision, masking, and duplicate detection within one upload. This
- * adapter deliberately stops before MarketplaceWithdrawalService::import().
+ * adapter deliberately stops before WithdrawalService::import().
  */
 final class MarketplaceWithdrawalPreviewService
 {
@@ -67,7 +65,7 @@ final class MarketplaceWithdrawalPreviewService
                 throw new InvalidArgumentException('Format XLSX income ini khusus laporan TikTok Shop. Pilih toko TikTok yang sesuai.');
             }
 
-            $parsed = \MarketplaceWithdrawalXlsx::parse($path);
+            $parsed = WithdrawalXlsx::parse($path);
             $rows = $parsed['rows'];
             $meta = $parsed['meta'];
         } else {
@@ -76,7 +74,7 @@ final class MarketplaceWithdrawalPreviewService
                 throw new InvalidArgumentException('Berkas CSV tidak dapat dibaca.');
             }
 
-            $rows = \MarketplaceWithdrawalService::parseCsv($contents);
+            $rows = WithdrawalService::parseCsv($contents);
         }
 
         $hash = hash_file('sha256', $path);

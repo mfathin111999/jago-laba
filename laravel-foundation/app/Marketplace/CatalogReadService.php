@@ -2,16 +2,22 @@
 
 namespace App\Marketplace;
 
-use PDO;
+use App\Services\Marketplace\Catalog\CatalogService;
+use App\Services\Marketplace\MarketplaceScope;
 
 final class CatalogReadService
 {
-    public function __construct(private readonly LegacyReadContext $context) {}
+    public function __construct(
+        private readonly MarketplaceScope $scope,
+        private readonly CatalogService $catalog,
+    ) {}
 
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
     public function listing(string $companyKey, string $storeId, array $filters): array
     {
-        LegacyRuntime::service('MarketplaceCatalogService');
-
-        return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceCatalogService($pdo))->listingForStore($storeId, $filters));
+        return $this->scope->forCompany($companyKey, fn (): array => $this->catalog->listingForStore($storeId, $filters));
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Marketplace;
 
+use App\Services\Marketplace\MarketplaceScope;
 use Illuminate\Database\DatabaseManager;
 
 final class LegacyReadContext
 {
-    public function __construct(private readonly DatabaseManager $database) {}
+    public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     public function run(string $companyKey, callable $read): mixed
     {
@@ -17,7 +18,7 @@ final class LegacyReadContext
         $_SESSION = ['company_key' => $companyKey];
 
         try {
-            return $read($this->database->connection()->getPdo());
+            return $this->scope->forCompany($companyKey, fn () => $read($this->database->connection()->getPdo()));
         } finally {
             $_SESSION = $previous;
         }

@@ -2,12 +2,18 @@
 
 namespace App\Marketplace;
 
-use PDO;
+use App\Services\Marketplace\Income\IncomeService;
+use App\Services\Marketplace\MarketplaceScope;
+use App\Services\Marketplace\Withdrawal\WithdrawalService;
 
-/** Income overview and withdrawal history through the legacy services, trimmed to what the page displays. */
+/** Income overview and withdrawal history, trimmed to what the page displays. */
 final class IncomeReadService
 {
-    public function __construct(private readonly LegacyReadContext $context) {}
+    public function __construct(
+        private readonly MarketplaceScope $scope,
+        private readonly IncomeService $income,
+        private readonly WithdrawalService $withdrawals,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $filters
@@ -15,9 +21,7 @@ final class IncomeReadService
      */
     public function income(string $companyKey, array $filters): array
     {
-        LegacyRuntime::service('MarketplaceIncomeService');
-
-        $data = $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceIncomeService($pdo))->overview($filters));
+        $data = $this->scope->forCompany($companyKey, fn (): array => $this->income->overview($filters));
         $data['rows'] = array_map(static fn (array $row): array => [
             'order_id' => (string) ($row['order']['id'] ?? ''),
             'order_date' => $row['order']['order_date'] ?? null,
@@ -39,8 +43,6 @@ final class IncomeReadService
      */
     public function withdrawals(string $companyKey, array $filters): array
     {
-        LegacyRuntime::service('MarketplaceWithdrawalService');
-
-        return $this->context->run($companyKey, fn (PDO $pdo): array => (new \MarketplaceWithdrawalService($pdo))->listing($filters));
+        return $this->scope->forCompany($companyKey, fn (): array => $this->withdrawals->listing($filters));
     }
 }
