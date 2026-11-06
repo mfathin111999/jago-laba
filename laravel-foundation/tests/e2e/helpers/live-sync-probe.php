@@ -18,7 +18,6 @@ require __DIR__.'/../../../vendor/autoload.php';
 $app = require __DIR__.'/../../../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
-putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.base64_encode(str_repeat('p', 32)));
 config(['jago.oauth.mode' => 'live']);
 $company = getenv('JL_COMPANY_KEY') ?: 'LOCAL-COMPANY';
 $store = 'STR-LIVE-PROBE';

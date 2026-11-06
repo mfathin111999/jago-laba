@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
+use App\Marketplace\TokenVault;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,6 @@ final class LiveOAuthTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.base64_encode(str_repeat('k', 32)));
         config(['app.key' => 'base64:'.base64_encode(str_repeat('o', 32)), 'jago.oauth.state_ttl_seconds' => 600, 'jago.oauth.retry.max_attempts' => 1]);
 
         $this->createWorkspaceAccessTable();
@@ -94,12 +94,6 @@ final class LiveOAuthTest extends TestCase
         ]);
         $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
-    }
-
-    protected function tearDown(): void
-    {
-        putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY');
-        parent::tearDown();
     }
 
     /** Answers every outgoing platform call with $answer(method, url, body); the calls are recorded in $this->calls. */
@@ -182,9 +176,8 @@ final class LiveOAuthTest extends TestCase
         $this->assertSame('A', $connection->company_key);
         $this->assertSame('Toko Nyata Shopee', $connection->external_store_name);
         $this->assertStringNotContainsString('LIVE-ACCESS-TOKEN', (string) $connection->access_token_encrypted);
-        // The legacy sync engine and the legacy application read the same column with their own vault.
-        $this->assertSame('LIVE-ACCESS-TOKEN', \MarketplaceTokenVault::decrypt((string) $connection->access_token_encrypted));
-        $this->assertSame('LIVE-REFRESH-TOKEN', \MarketplaceTokenVault::decrypt((string) $connection->refresh_token_encrypted));
+        $this->assertSame('LIVE-ACCESS-TOKEN', app(TokenVault::class)->decrypt((string) $connection->access_token_encrypted));
+        $this->assertSame('LIVE-REFRESH-TOKEN', app(TokenVault::class)->decrypt((string) $connection->refresh_token_encrypted));
         $this->assertNotNull($connection->token_expires_at);
         $this->assertSame('Toko Nyata Shopee', DB::table('marketplace_stores')->where('id', $connection->store_id)->value('store_name'));
         $this->assertStringNotContainsString('LIVE-ACCESS-TOKEN', $callback->getContent());

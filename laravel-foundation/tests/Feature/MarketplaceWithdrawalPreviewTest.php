@@ -10,14 +10,10 @@ use Tests\TestCase;
 
 final class MarketplaceWithdrawalPreviewTest extends TestCase
 {
-    private string|false $previousKey = false;
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->previousKey = getenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY');
-        putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.base64_encode(random_bytes(32)));
         config()->set('jago.company_key', 'LOCAL-COMPANY');
 
         Schema::create('auth_users_v2', function (Blueprint $table): void {
@@ -63,17 +59,6 @@ final class MarketplaceWithdrawalPreviewTest extends TestCase
             ['id' => 'store-local', 'company_key' => 'LOCAL-COMPANY', 'platform' => 'TikTok Shop', 'store_name' => 'Local', 'archived_at' => null],
             ['id' => 'store-foreign', 'company_key' => 'OTHER-COMPANY', 'platform' => 'TikTok Shop', 'store_name' => 'Foreign', 'archived_at' => null],
         ]);
-    }
-
-    protected function tearDown(): void
-    {
-        if ($this->previousKey === false) {
-            putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY');
-        } else {
-            putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.$this->previousKey);
-        }
-
-        parent::tearDown();
     }
 
     public function test_xlsx_preview_preserves_amount_date_scope_and_does_not_insert_final_rows(): void

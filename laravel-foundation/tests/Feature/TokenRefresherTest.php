@@ -17,7 +17,6 @@ final class TokenRefresherTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY='.base64_encode(str_repeat('k', 32)));
         config([
             'app.key' => 'base64:'.base64_encode(str_repeat('o', 32)),
             'jago.oauth.mode' => 'live',
@@ -63,12 +62,6 @@ final class TokenRefresherTest extends TestCase
             'access_token_encrypted' => $vault->encrypt('OLD-ACCESS'), 'refresh_token_encrypted' => $vault->encrypt('OLD-REFRESH'),
             'token_expires_at' => now()->subMinute()->format('Y-m-d H:i:s'),
         ]);
-    }
-
-    protected function tearDown(): void
-    {
-        putenv('JL_MARKETPLACE_TOKEN_ENCRYPTION_KEY');
-        parent::tearDown();
     }
 
     private function refresh(bool $force = true): array
