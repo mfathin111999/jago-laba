@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DateTimeImmutable;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
@@ -17,7 +17,7 @@ final class MarketplaceHppService
         private readonly AuditLogger $audit,
     ) {}
 
-    public function updateSkuHpp(LegacyUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
+    public function updateSkuHpp(AuthenticatedUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
     {
         $companyKey = trim($companyKey);
         $storeId = trim($storeId);
@@ -133,7 +133,7 @@ final class MarketplaceHppService
     }
 
     public function updateHpp(
-        LegacyUser $user,
+        AuthenticatedUser $user,
         string $companyKey,
         string $storeId,
         string $sku,
@@ -350,7 +350,7 @@ final class MarketplaceHppService
     }
 
     public function updateProductHpp(
-        LegacyUser $user,
+        AuthenticatedUser $user,
         string $companyKey,
         string $storeId,
         string $productId,
@@ -384,7 +384,7 @@ final class MarketplaceHppService
      * @param  array<int, array<string, mixed>>  $changes
      * @return array<string, int>
      */
-    public function updateHppBatch(LegacyUser $user, string $companyKey, array $changes): array
+    public function updateHppBatch(AuthenticatedUser $user, string $companyKey, array $changes): array
     {
         if ($changes === [] || count($changes) > 500) {
             throw new InvalidArgumentException('Pilih 1–500 SKU untuk disimpan.');

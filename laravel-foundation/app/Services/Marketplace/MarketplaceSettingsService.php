@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
@@ -145,7 +145,7 @@ final class MarketplaceSettingsService
      * @param  array<string, mixed>  $settings
      * @return array<string, mixed>
      */
-    public function saveAppSettings(LegacyUser $user, array $settings): array
+    public function saveAppSettings(AuthenticatedUser $user, array $settings): array
     {
         $connection = $this->database->connection();
         if (! Schema::hasTable('marketplace_app_settings')) {

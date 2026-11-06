@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyAuthenticationService;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
+use App\Auth\AuthenticationService;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 final class AuthController
 {
     public function __construct(
-        private readonly LegacyAuthenticationService $authentication,
+        private readonly AuthenticationService $authentication,
     ) {}
 
     public function login(Request $request): JsonResponse
@@ -43,7 +43,7 @@ final class AuthController
     {
         $user = Auth::guard('web')->user();
 
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return response()->json(['message' => 'Autentikasi diperlukan.', 'code' => 'AUTH_REQUIRED'], 401);
         }
 

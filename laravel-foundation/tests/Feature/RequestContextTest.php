@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\RequestContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +20,7 @@ final class RequestContextTest extends TestCase
 
     private function as(string $company): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'u-'.$company, 'username' => 'u', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $company]), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u-'.$company, 'username' => 'u', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $company]), 'web');
     }
 
     public function test_the_company_context_middleware_fills_the_request_context_and_the_macro(): void

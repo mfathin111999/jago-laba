@@ -5,11 +5,11 @@ use App\Http\Controllers\DiagnosticsController;
 use App\Http\Controllers\FoundationController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\KonveksiDocumentController;
-use App\Http\Controllers\KonveksiLegacyAppController;
+use App\Http\Controllers\KonveksiAppController;
 use App\Http\Controllers\KonveksiPilotController;
-use App\Http\Controllers\LegacyMarketplaceAjaxController;
-use App\Http\Controllers\LegacyPilotPageController;
-use App\Http\Controllers\LegacyRpcController;
+use App\Http\Controllers\MarketplaceAjaxController;
+use App\Http\Controllers\PilotPageController;
+use App\Http\Controllers\KonveksiRpcController;
 use App\Http\Controllers\MarketplaceAnalyticsController;
 use App\Http\Controllers\MarketplaceAutoSyncController;
 use App\Http\Controllers\MarketplaceBrandingController;
@@ -22,7 +22,7 @@ use App\Http\Controllers\MarketplaceHppWriteController;
 use App\Http\Controllers\MarketplaceIncomePageController;
 use App\Http\Controllers\MarketplaceIntegrationsPageController;
 use App\Http\Controllers\MarketplaceIntegrationStatusController;
-use App\Http\Controllers\MarketplaceLegacyReportController;
+use App\Http\Controllers\MarketplaceReportUrlController;
 use App\Http\Controllers\MarketplaceMarketingPageController;
 use App\Http\Controllers\MarketplaceOAuthController;
 use App\Http\Controllers\MarketplaceOrderController;
@@ -38,7 +38,7 @@ use App\Http\Controllers\MarketplaceStoreWriteController;
 use App\Http\Controllers\MarketplaceSyncApiController;
 use App\Http\Controllers\MarketplaceSyncController;
 use App\Http\Controllers\MarketplaceSyncPageController;
-use App\Http\Controllers\MarketplaceWithdrawalLegacyController;
+use App\Http\Controllers\MarketplaceWithdrawalApiController;
 use App\Http\Controllers\MarketplaceWithdrawalPreviewController;
 use App\Http\Controllers\SandboxMarketplaceOAuthController;
 use App\Http\Controllers\StoreSelectionController;
@@ -145,12 +145,12 @@ Route::prefix('auth')->group(function (): void {
 // Old entry points and *.php endpoints stay available for the legacy clients (kept until the post-cutover cleanup).
 Route::middleware(['auth', 'company.context'])->group(function (): void {
     Route::middleware('workspace.context:konveksi')->group(function (): void {
-        Route::get('/konveksi', KonveksiLegacyAppController::class)->name('legacy.konveksi.page');
+        Route::get('/konveksi', KonveksiAppController::class)->name('legacy.konveksi.page');
         Route::get('/api/konveksi-document.php', KonveksiDocumentController::class)->name('legacy.konveksi.document');
     });
 
     Route::middleware('workspace.context:marketplace')->group(function (): void {
-        Route::get('/marketplace.php', [LegacyPilotPageController::class, 'marketplace'])->name('legacy.marketplace.page');
+        Route::get('/marketplace.php', [PilotPageController::class, 'marketplace'])->name('legacy.marketplace.page');
 
         Route::post('/api/marketplace-fulfillment.php', [MarketplaceFulfillmentController::class, 'handle'])
             ->middleware(['can:shipping.fulfill', 'browser.csrf'])
@@ -161,7 +161,7 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
             ->middleware('can:integration.manage')
             ->name('legacy.marketplace.sync');
-        Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
+        Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalApiController::class)
             ->middleware(['can:withdrawal.manage', 'throttle:imports'])
             ->name('legacy.marketplace.withdrawals');
         Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
@@ -175,9 +175,9 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
         Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)->name('legacy.marketplace.branding');
 
         Route::middleware('can:report.view')->group(function (): void {
-            Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])->name('legacy.marketplace.orders');
-            Route::get('/api/marketplace-analytics.php', [MarketplaceLegacyReportController::class, 'analytics'])->name('legacy.marketplace.analytics');
-            Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])->name('legacy.marketplace.dashboard');
+            Route::get('/api/marketplace-orders.php', [MarketplaceReportUrlController::class, 'orders'])->name('legacy.marketplace.orders');
+            Route::get('/api/marketplace-analytics.php', [MarketplaceReportUrlController::class, 'analytics'])->name('legacy.marketplace.analytics');
+            Route::get('/api/marketplace-dashboard.php', [MarketplaceReportUrlController::class, 'dashboard'])->name('legacy.marketplace.dashboard');
         });
 
         Route::post('/api/marketplace-order-finance.php', [MarketplaceProviderBoundaryController::class, 'orderFinance'])
@@ -194,12 +194,12 @@ Route::middleware(['auth', 'company.context'])->group(function (): void {
 });
 
 // The marketplace AJAX contract guard runs before authentication, so this route keeps its own explicit list.
-Route::post('/api/marketplace-ajax.php', LegacyMarketplaceAjaxController::class)
+Route::post('/api/marketplace-ajax.php', MarketplaceAjaxController::class)
     ->middleware(['legacy.marketplace.ajax', 'auth', 'company.context', 'workspace.context:marketplace', 'browser.csrf'])
     ->name('legacy.marketplace.ajax');
 
 // Login stays on the old RPC contract; every other method is gated inside the controller.
-Route::post('/api/rpc.php', LegacyRpcController::class)->name('legacy.rpc');
+Route::post('/api/rpc.php', KonveksiRpcController::class)->name('legacy.rpc');
 
 Route::middleware('auth')->group(function (): void {
     Route::get('/workspace.php', FoundationController::class)->name('legacy.workspace.page');

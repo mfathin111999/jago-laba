@@ -2,7 +2,7 @@
 
 namespace App\Services\Konveksi;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Exceptions\KonveksiRequestRejected;
 use Illuminate\Http\Request;
 use JsonException;
@@ -37,7 +37,7 @@ final class KonveksiOperationGate
      * @param  callable(): array<string, mixed>  $operation
      * @return array<string, mixed>
      */
-    public function run(LegacyUser $user, string $companyKey, string $method, array $args, Request $request, callable $operation): array
+    public function run(AuthenticatedUser $user, string $companyKey, string $method, array $args, Request $request, callable $operation): array
     {
         $this->reader->assertCompany($companyKey);
         $connection = $this->konveksi->connection();
@@ -60,7 +60,7 @@ final class KonveksiOperationGate
             if (preg_match(self::KEY_PATTERN, $key) !== 1) {
                 throw new KonveksiRequestRejected('Identitas permintaan belum tersedia. Muat ulang halaman.', 'IDEMPOTENCY_KEY_REQUIRED', 422);
             }
-            $requestKey = hash('sha256', $companyKey.'|'.$user->getLegacyUserId().'|'.$key);
+            $requestKey = hash('sha256', $companyKey.'|'.$user->getAccountId().'|'.$key);
             $hash = hash('sha256', json_encode([$method, $args], JSON_THROW_ON_ERROR));
 
             return $connection->transaction(function () use ($connection, $requestKey, $hash, $method, $args, $request, $operation, $companyKey): array {

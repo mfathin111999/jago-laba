@@ -97,7 +97,7 @@
         ],
         "uri": "api/marketplace-ajax.php",
         "name": "legacy.marketplace.ajax",
-        "action": "App\\Http\\Controllers\\LegacyMarketplaceAjaxController",
+        "action": "App\\Http\\Controllers\\MarketplaceAjaxController",
         "defaults": [],
         "middleware": [
             "auth",
@@ -114,7 +114,7 @@
         ],
         "uri": "api/marketplace-analytics.php",
         "name": "legacy.marketplace.analytics",
-        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@analytics",
+        "action": "App\\Http\\Controllers\\MarketplaceReportUrlController@analytics",
         "defaults": [],
         "middleware": [
             "auth",
@@ -177,7 +177,7 @@
         ],
         "uri": "api/marketplace-dashboard.php",
         "name": "legacy.marketplace.dashboard",
-        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@dashboard",
+        "action": "App\\Http\\Controllers\\MarketplaceReportUrlController@dashboard",
         "defaults": [],
         "middleware": [
             "auth",
@@ -255,7 +255,7 @@
         ],
         "uri": "api/marketplace-orders.php",
         "name": "legacy.marketplace.orders",
-        "action": "App\\Http\\Controllers\\MarketplaceLegacyReportController@orders",
+        "action": "App\\Http\\Controllers\\MarketplaceReportUrlController@orders",
         "defaults": [],
         "middleware": [
             "auth",
@@ -371,7 +371,7 @@
         ],
         "uri": "api/marketplace-withdrawals.php",
         "name": "legacy.marketplace.withdrawals",
-        "action": "App\\Http\\Controllers\\MarketplaceWithdrawalLegacyController",
+        "action": "App\\Http\\Controllers\\MarketplaceWithdrawalApiController",
         "defaults": [],
         "middleware": [
             "auth",
@@ -388,7 +388,7 @@
         ],
         "uri": "api/rpc.php",
         "name": "legacy.rpc",
-        "action": "App\\Http\\Controllers\\LegacyRpcController",
+        "action": "App\\Http\\Controllers\\KonveksiRpcController",
         "defaults": [],
         "middleware": [
             "web"
@@ -493,7 +493,7 @@
         ],
         "uri": "konveksi",
         "name": "legacy.konveksi.page",
-        "action": "App\\Http\\Controllers\\KonveksiLegacyAppController",
+        "action": "App\\Http\\Controllers\\KonveksiAppController",
         "defaults": [],
         "middleware": [
             "auth",
@@ -520,7 +520,7 @@
         ],
         "uri": "marketplace.php",
         "name": "legacy.marketplace.page",
-        "action": "App\\Http\\Controllers\\LegacyPilotPageController@marketplace",
+        "action": "App\\Http\\Controllers\\PilotPageController@marketplace",
         "defaults": [],
         "middleware": [
             "auth",

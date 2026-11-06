@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use App\Audit\AuditRecorded;
 use App\Audit\Listeners\WriteAuditLog;
-use App\Auth\LegacyUserProvider;
+use App\Auth\AuthenticatedUserProvider;
 use App\Authorization\RequestContext;
 use App\Http\Responses\ApiResponse;
 use App\Policies\RolePolicy;
@@ -54,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Limits for actions that are expensive or call a provider; per signed-in user (IP when anonymous).
-        // Login has its own limiter (LegacyAuthenticationService). Callbacks from a provider are never limited.
+        // Login has its own limiter (AuthenticationService). Callbacks from a provider are never limited.
         foreach (['imports' => [10, 'Terlalu banyak impor dalam satu menit.'], 'oauth' => [20, 'Terlalu banyak permintaan koneksi toko dalam satu menit.']] as $name => [$perMinute, $message]) {
             RateLimiter::for($name, static fn (Request $request): Limit => Limit::perMinute($perMinute)
                 ->by($name.'|'.($request->user('web')?->getAuthIdentifier() ?: $request->ip()))
@@ -63,8 +63,8 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(AuditRecorded::class, WriteAuditLog::class);
 
-        Auth::provider('legacy', function ($app, array $config): LegacyUserProvider {
-            return new LegacyUserProvider($app['db'], $config['connection'] ?? null);
+        Auth::provider('legacy', function ($app, array $config): AuthenticatedUserProvider {
+            return new AuthenticatedUserProvider($app['db'], $config['connection'] ?? null);
         });
 
         // The company logo for the Marketplace sidebar; resolved lazily and never allowed to break a page.

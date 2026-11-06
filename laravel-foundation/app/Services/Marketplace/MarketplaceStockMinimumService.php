@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
@@ -15,7 +15,7 @@ final class MarketplaceStockMinimumService
 {
     public function __construct(private readonly DatabaseManager $database) {}
 
-    public function setMinimum(LegacyUser $user, string $companyKey, string $storeId, string $productId, string $variantId, string $warehouseId, string $amount): void
+    public function setMinimum(AuthenticatedUser $user, string $companyKey, string $storeId, string $productId, string $variantId, string $warehouseId, string $amount): void
     {
         if (! preg_match('/^\d{1,10}(?:\.\d{1,3})?$/', $amount)) {
             throw new InvalidArgumentException('Minimum stok harus nol atau angka positif, maksimal 3 desimal.');
@@ -31,7 +31,7 @@ final class MarketplaceStockMinimumService
             throw new DomainException('Gudang tidak cocok dengan varian toko.');
         }
 
-        $actor = $user->getLegacyUserId();
+        $actor = $user->getAccountId();
         $identity = ['store_id' => $storeId, 'product_id' => $productId, 'variant_id' => $variantId, 'warehouse_id' => $warehouseId];
         $connection->transaction(function () use ($connection, $variant, $identity, $companyKey, $amount, $actor): void {
             $connection->table('marketplace_catalog_variants')->where($variant)->lockForUpdate()->first();

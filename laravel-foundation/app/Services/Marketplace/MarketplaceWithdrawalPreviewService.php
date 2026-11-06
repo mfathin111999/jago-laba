@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\Withdrawal\WithdrawalService;
 use App\Services\Marketplace\Withdrawal\WithdrawalXlsx;
 use DomainException;
@@ -28,7 +28,7 @@ final class MarketplaceWithdrawalPreviewService
      *
      * @return array{key: string, count: int, rows: list<array<string, mixed>>, staged_rows: list<array<string, mixed>>, meta: array<string, mixed>, hash: string, expires_at: int}
      */
-    public function preview(LegacyUser $user, string $companyKey, string $storeId, UploadedFile $file): array
+    public function preview(AuthenticatedUser $user, string $companyKey, string $storeId, UploadedFile $file): array
     {
         $store = $this->database->connection()->table('marketplace_stores')
             ->where('id', $storeId)
@@ -95,10 +95,10 @@ final class MarketplaceWithdrawalPreviewService
         ];
     }
 
-    public function actorKey(LegacyUser $user): string
+    public function actorKey(AuthenticatedUser $user): string
     {
         return $user->getSource() === 'auth_users_v2'
-            ? 'AUTHV2-'.$user->getLegacyUserId()
-            : $user->getLegacyUserId();
+            ? 'AUTHV2-'.$user->getAccountId()
+            : $user->getAccountId();
     }
 }

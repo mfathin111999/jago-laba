@@ -2,7 +2,7 @@
 
 namespace App\Authorization;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Policies\RolePolicy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -24,7 +24,7 @@ final class WorkspaceContext
      */
     public function allowed(?Authenticatable $user): array
     {
-        $legacyUser = $user instanceof LegacyUser ? $user : null;
+        $legacyUser = $user instanceof AuthenticatedUser ? $user : null;
 
         if (! $legacyUser) {
             return [];
@@ -55,7 +55,7 @@ final class WorkspaceContext
 
     public function active(?Authenticatable $user): ?string
     {
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return null;
         }
 
@@ -93,7 +93,7 @@ final class WorkspaceContext
      *
      * @return Collection<int, mixed>
      */
-    private function grantedWorkspaces(LegacyUser $user): Collection
+    private function grantedWorkspaces(AuthenticatedUser $user): Collection
     {
         $connection = $this->database->connection();
         $query = $connection->table('workspace_user_access')->whereIn('user_key', $user->legacyKeyCandidates());

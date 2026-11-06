@@ -2,7 +2,7 @@
 
 namespace App\Services\Konveksi;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Policies\RolePolicy;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -82,7 +82,7 @@ final class KonveksiUserAccounts
      * @param  list<mixed>  $records  the list that was stored
      * @param  list<string>  $previous  usernames in the list before this change
      */
-    public function mirror(LegacyUser $actor, array $changed, array $records, array $previous): void
+    public function mirror(AuthenticatedUser $actor, array $changed, array $records, array $previous): void
     {
         if (! Schema::hasTable('auth_users_v2')) {
             return;

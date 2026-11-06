@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Security\CsrfTokenValidator;
 use App\Services\Marketplace\MarketplaceWithdrawalImportService;
 use DomainException;
@@ -19,7 +19,7 @@ use Throwable;
  * template (GET) downloads the CSV format; preview delegates to the existing preview controller;
  * confirm writes the staged rows. No provider is called.
  */
-final class MarketplaceWithdrawalLegacyController
+final class MarketplaceWithdrawalApiController
 {
     private const TEMPLATE_HEADER = "withdrawal_id,requested_at,completed_at,amount,fee,net_amount,currency,status,type,bank_name,account_number,failure_reason\r\n";
 
@@ -68,7 +68,7 @@ final class MarketplaceWithdrawalLegacyController
     private function confirm(Request $request): JsonResponse
     {
         $user = $request->user('web');
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             throw new DomainException('Autentikasi diperlukan.');
         }
 

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -42,7 +42,7 @@ final class MarketplaceLiveEndpointsTest extends TestCase
         DB::table('marketplace_stores')->insert([['id' => 'a', 'company_key' => 'A', 'platform' => 'TikTok Shop', 'store_name' => 'Toko A', 'status' => 'Terhubung']]);
         DB::table('marketplace_orders')->insert([['id' => 'O1', 'store_id' => 'a', 'source_kind' => 'api', 'order_date' => '2026-11-01 10:00:00', 'order_status' => 'Pending', 'gross_sales' => 1000, 'transaction_detail_json' => json_encode(['source_status' => 'AWAITING_SHIPMENT']), 'internal_state' => 'active']]);
         DB::table('workspace_user_access')->insert([['user_key' => 'u1', 'workspace' => 'marketplace']]);
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
     }
 

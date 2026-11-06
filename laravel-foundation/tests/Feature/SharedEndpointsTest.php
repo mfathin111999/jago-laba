@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiDocumentAndAiService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +74,7 @@ final class SharedEndpointsTest extends TestCase
 
     private function actAs(string $role, string $workspace = 'konveksi'): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => $role, 'company_key' => 'LOCAL-COMPANY']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'role_id' => $role, 'company_key' => 'LOCAL-COMPANY']), 'web');
         session(['workspace' => $workspace]);
     }
 

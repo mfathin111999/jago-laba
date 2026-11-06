@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Exceptions\IdempotencyConflict;
 use App\Exceptions\ResourceNotFound;
 use App\Exceptions\StoreForbidden;
@@ -25,7 +25,7 @@ final class MarketplaceExpenseWriteService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function create(LegacyUser $user, string $companyKey, array $data, string $idempotencyKey): array
+    public function create(AuthenticatedUser $user, string $companyKey, array $data, string $idempotencyKey): array
     {
         $companyKey = trim($companyKey);
         $idempotencyKey = trim($idempotencyKey);
@@ -144,7 +144,7 @@ final class MarketplaceExpenseWriteService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function delete(LegacyUser $user, string $companyKey, string $storeId, int $expenseId): array
+    public function delete(AuthenticatedUser $user, string $companyKey, string $storeId, int $expenseId): array
     {
         $companyKey = trim($companyKey);
         $storeId = trim($storeId);

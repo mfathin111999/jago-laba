@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +21,7 @@ final class MarketplaceSettlementAndClaimService
     ) {}
 
     public function updateReturnClaimStatus(
-        LegacyUser $user,
+        AuthenticatedUser $user,
         string $companyKey,
         int $claimId,
         string $storeId,
@@ -130,7 +130,7 @@ final class MarketplaceSettlementAndClaimService
         });
     }
 
-    public function importProductAdReport(LegacyUser $user, string $companyKey, string $storeId, string $path): int
+    public function importProductAdReport(AuthenticatedUser $user, string $companyKey, string $storeId, string $path): int
     {
         $connection = $this->database->connection();
         $store = $connection->table('marketplace_stores')
@@ -234,7 +234,7 @@ final class MarketplaceSettlementAndClaimService
         });
     }
 
-    public function importSettlementCSV(LegacyUser $user, string $companyKey, string $storeId, string $tmpPath, string $origName): array
+    public function importSettlementCSV(AuthenticatedUser $user, string $companyKey, string $storeId, string $tmpPath, string $origName): array
     {
         $connection = $this->database->connection();
         $store = $connection->table('marketplace_stores')

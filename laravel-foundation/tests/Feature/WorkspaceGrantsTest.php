@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\WorkspaceContext;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,9 +10,9 @@ use Tests\TestCase;
 
 final class WorkspaceGrantsTest extends TestCase
 {
-    private function user(string $role = 'ROLE-STAF'): LegacyUser
+    private function user(string $role = 'ROLE-STAF'): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => $role, 'company_key' => 'A']);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'role_id' => $role, 'company_key' => 'A']);
     }
 
     public function test_the_reviewed_legacy_table_shape_is_honoured_including_revocations(): void

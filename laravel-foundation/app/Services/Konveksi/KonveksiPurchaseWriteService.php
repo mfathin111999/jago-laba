@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -23,7 +23,7 @@ final class KonveksiPurchaseWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function retryDocument(LegacyUser $user, string $companyKey, array $p): array
+    public function retryDocument(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $file = $p['file_invoice'] ?? null;
         if (! is_array($file) || empty($file['base64'])) {
@@ -42,7 +42,7 @@ final class KonveksiPurchaseWriteService
         );
     }
 
-    public function saveMaterial(LegacyUser $user, string $companyKey, array $p): array
+    public function saveMaterial(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $hasMovements = $this->collections->mapped('mutasi_stok');
 
@@ -191,7 +191,7 @@ final class KonveksiPurchaseWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function saveInvoice(LegacyUser $user, string $companyKey, array $p): array
+    public function saveInvoice(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $items = array_values((array) ($p['items'] ?? []));
         if ($items === []) {

@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use InvalidArgumentException;
 use RuntimeException;
@@ -23,7 +23,7 @@ final class KonveksiSalesWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function retryBackup(LegacyUser $user, string $companyKey, array $p): array
+    public function retryBackup(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $id = trim((string) ($p['id_penjualan'] ?? ''));
         if ($id === '') {
@@ -52,7 +52,7 @@ final class KonveksiSalesWriteService
         });
     }
 
-    public function saveDraft(LegacyUser $user, string $companyKey, array $data): array
+    public function saveDraft(AuthenticatedUser $user, string $companyKey, array $data): array
     {
         $id = trim((string) ($data['id_penjualan'] ?? ''));
         if ($id === '') {
@@ -163,7 +163,7 @@ final class KonveksiSalesWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function post(LegacyUser $user, string $companyKey, array $p): array
+    public function post(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $items = array_values((array) ($p['items'] ?? []));
         if ($items === []) {
@@ -376,7 +376,7 @@ final class KonveksiSalesWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function correct(LegacyUser $user, string $companyKey, array $p): array
+    public function correct(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $id = trim((string) ($p['id_penjualan'] ?? ''));
         if ($id === '') {
@@ -438,7 +438,7 @@ final class KonveksiSalesWriteService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function void(LegacyUser $user, string $companyKey, array $p): array
+    public function void(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $id = trim((string) ($p['id_penjualan'] ?? ''));
         if ($id === '') {
@@ -609,7 +609,7 @@ final class KonveksiSalesWriteService
         return now()->toIso8601String();
     }
 
-    private function operatorName(LegacyUser $user): string
+    private function operatorName(AuthenticatedUser $user): string
     {
         return (string) ($user->getUsername() ?: $user->getAuthIdentifier() ?: 'system');
     }

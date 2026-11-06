@@ -5,8 +5,8 @@
  * Used by konveksi-smoke.mjs.   php tests/visual/render-konveksi.php > page.html
  */
 
-use App\Auth\LegacyUser;
-use App\Http\Controllers\KonveksiLegacyAppController;
+use App\Auth\AuthenticatedUser;
+use App\Http\Controllers\KonveksiAppController;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Session\ArraySessionHandler;
@@ -20,6 +20,6 @@ $session = new Store('smoke', new ArraySessionHandler(120));
 $session->put('_token', 'smoke-csrf-token');
 $request = Request::create('/konveksi');
 $request->setLaravelSession($session);
-$request->setUserResolver(static fn () => new LegacyUser(['id' => 'u1', 'username' => 'smoke', 'name' => 'Smoke Test', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']));
+$request->setUserResolver(static fn () => new AuthenticatedUser(['id' => 'u1', 'username' => 'smoke', 'name' => 'Smoke Test', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']));
 
-echo (new KonveksiLegacyAppController)($request)->getContent();
+echo (new KonveksiAppController)($request)->getContent();

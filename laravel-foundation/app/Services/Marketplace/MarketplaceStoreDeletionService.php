@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
@@ -161,7 +161,7 @@ final class MarketplaceStoreDeletionService
     }
 
     /** @return array<string, mixed> */
-    public function request(LegacyUser $user, string $companyKey, string $storeId, string $confirmation): array
+    public function request(AuthenticatedUser $user, string $companyKey, string $storeId, string $confirmation): array
     {
         if ($old = $this->status($companyKey, $storeId)) {
             return $old;
@@ -172,7 +172,7 @@ final class MarketplaceStoreDeletionService
         }
         $this->plan();
         $this->assertGuards();
-        $actor = $user->getLegacyUserId();
+        $actor = $user->getAccountId();
 
         $this->db()->transaction(function () use ($storeId, $companyKey, $actor, $confirmation, $user): void {
             $store = $this->store($storeId, $companyKey, true);

@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Database\DatabaseManager;
@@ -26,7 +26,7 @@ final class MarketplaceWithdrawalImportService
     /**
      * @return array{inserted: int, updated: int, unchanged: int}
      */
-    public function confirm(Session $session, LegacyUser $user, string $companyKey, string $key): array
+    public function confirm(Session $session, AuthenticatedUser $user, string $companyKey, string $key): array
     {
         $stage = $session->get(self::SESSION_KEY, []);
         if (! is_array($stage)
@@ -48,7 +48,7 @@ final class MarketplaceWithdrawalImportService
      * @param  list<array<string, mixed>>  $rows
      * @return array{inserted: int, updated: int, unchanged: int}
      */
-    private function import(LegacyUser $user, string $companyKey, string $storeId, array $rows, string $sourceHash): array
+    private function import(AuthenticatedUser $user, string $companyKey, string $storeId, array $rows, string $sourceHash): array
     {
         $connection = $this->database->connection();
         $actor = $this->preview->actorKey($user);

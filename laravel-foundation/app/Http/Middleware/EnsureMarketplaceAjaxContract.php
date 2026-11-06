@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Authorization\RequestContext;
 use App\Authorization\StoreContext;
-use App\Http\Responses\LegacyResponse;
+use App\Http\Responses\UnavailableResponse;
 use App\Policies\RolePolicy;
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-final class EnsureLegacyMarketplaceAjaxContract
+final class EnsureMarketplaceAjaxContract
 {
     private const ALLOWED_ACTIONS = [
         'add_expense',
@@ -52,7 +52,7 @@ final class EnsureLegacyMarketplaceAjaxContract
         $action = trim((string) ($request->input('action') ?: $request->query('action', '')));
 
         if (! in_array($action, self::ALLOWED_ACTIONS, true)) {
-            return LegacyResponse::unavailable('rpc');
+            return UnavailableResponse::unavailable('rpc');
         }
 
         $user = Auth::guard('web')->user();

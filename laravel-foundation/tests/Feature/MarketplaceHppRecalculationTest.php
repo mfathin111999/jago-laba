@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\MarketplaceHppService;
 use DomainException;
 use Illuminate\Database\Schema\Blueprint;
@@ -100,9 +100,9 @@ final class MarketplaceHppRecalculationTest extends TestCase
         return app(MarketplaceHppService::class);
     }
 
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'admin', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'admin', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
     }
 
     private function order(string $id): object

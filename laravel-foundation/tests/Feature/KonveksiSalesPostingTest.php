@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiSalesWriteService;
 use DomainException;
 use Illuminate\Database\Schema\Blueprint;
@@ -63,9 +63,9 @@ final class KonveksiSalesPostingTest extends TestCase
         return app(KonveksiSalesWriteService::class);
     }
 
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
     }
 
     /** @return array<string, mixed> */

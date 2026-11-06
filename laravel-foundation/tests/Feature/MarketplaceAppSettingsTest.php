@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -34,7 +34,7 @@ final class MarketplaceAppSettingsTest extends TestCase
 
     private function loginAs(string $role): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'admin', 'role_id' => $role, 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'admin', 'role_id' => $role, 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
     }
 

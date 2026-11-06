@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\TokenVault;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Request;
@@ -92,7 +92,7 @@ final class LiveOAuthTest extends TestCase
             'services.shopee' => ['partner_id' => '100001', 'partner_key' => 'test-partner-key-not-real', 'region' => 'live', 'auth_url' => 'https://open.shopee.com/auth', 'api_base_url' => 'https://partner.shopeemobile.com'],
             'services.tiktok_shop' => ['app_key' => '', 'app_secret' => '', 'service_id' => '', 'auth_url' => 'https://services.tiktokshop.com/open/authorize', 'api_base_url' => 'https://open-api.tiktokglobalshop.com'],
         ]);
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
     }
 

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiDocumentAndAiService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +32,9 @@ final class KonveksiGeminiTest extends TestCase
         return app(KonveksiDocumentAndAiService::class);
     }
 
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'admin', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'admin', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
     }
 
     public function test_the_key_is_stored_reported_masked_and_kept_out_of_the_audit_trail(): void

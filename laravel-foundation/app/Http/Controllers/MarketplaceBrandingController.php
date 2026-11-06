@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use App\Services\Marketplace\MarketplaceBrandingService;
@@ -42,7 +42,7 @@ final class MarketplaceBrandingController
             }
 
             $user = $request->user('web');
-            if (! $user instanceof LegacyUser) {
+            if (! $user instanceof AuthenticatedUser) {
                 throw new DomainException('Autentikasi diperlukan.');
             }
             if (! $this->csrf->valid($request)) {

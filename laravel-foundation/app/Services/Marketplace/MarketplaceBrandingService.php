@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
@@ -49,7 +49,7 @@ final class MarketplaceBrandingService
     /**
      * @return array<string, mixed>
      */
-    public function save(LegacyUser $user, string $companyKey, ?string $bytes, int $size, string $fit, bool $reset = false): array
+    public function save(AuthenticatedUser $user, string $companyKey, ?string $bytes, int $size, string $fit, bool $reset = false): array
     {
         if (! in_array($size, self::SIZES, true) || ! in_array($fit, self::FITS, true)) {
             throw new InvalidArgumentException('Pilihan tampilan logo tidak valid.');
@@ -69,7 +69,7 @@ final class MarketplaceBrandingService
             'logo_size' => $this->logoSize($size),
             'logo_fit' => $fit,
             'logo_hash' => $image !== null ? hash('sha256', $image) : null,
-            'updated_by' => $user->getLegacyUserId(),
+            'updated_by' => $user->getAccountId(),
             'updated_at' => now(),
         ];
 

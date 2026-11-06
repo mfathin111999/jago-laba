@@ -17,7 +17,7 @@ Tanggal: 6 November 2026. Aplikasi PHP murni (`app/`, `bin/`, `config/`, `databa
 | Pembuatan tabel saat runtime (`install()`, `SchemaManager`) | Migrasi Laravel (skema Marketplace, Konveksi, tabel bertipe, trigger penghapusan toko) |
 | Tampilan SPA Konveksi di `app/Modules/Konveksi/Views` | `laravel-foundation/resources/konveksi/views` |
 | Snapshot data awal `database/legacy` | `laravel-foundation/database/snapshots` |
-| Sesi PHP asli yang disalin ke Laravel (`LegacySessionStore`, `LegacySessionBridge`) | Sesi Laravel saja |
+| Sesi PHP asli yang disalin ke Laravel (`LegacySessionStore`, `LegacySessionBridge`, sudah dihapus) | Sesi Laravel saja |
 
 ## Tes
 

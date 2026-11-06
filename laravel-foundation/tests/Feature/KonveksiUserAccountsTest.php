@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiCollections;
 use App\Services\Konveksi\KonveksiPilotReadService;
 use App\Services\Konveksi\KonveksiSyncAndHppService;
@@ -35,12 +35,12 @@ final class KonveksiUserAccountsTest extends TestCase
         DB::table('auth_users_v2')->insert(['username' => 'owner', 'name' => 'Owner', 'password_hash' => password_hash('rahasia-owner', PASSWORD_BCRYPT), 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'status' => 'Aktif']);
     }
 
-    private function actor(string $role = 'ROLE-OWNER_SUPER_ADMIN'): LegacyUser
+    private function actor(string $role = 'ROLE-OWNER_SUPER_ADMIN'): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'owner', 'role_id' => $role]);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'owner', 'role_id' => $role]);
     }
 
-    private function sync(array $rows, ?LegacyUser $actor = null): void
+    private function sync(array $rows, ?AuthenticatedUser $actor = null): void
     {
         app(KonveksiSyncAndHppService::class)->syncTab($actor ?? $this->actor(), 'LOCAL-COMPANY', 'pengguna', $rows);
     }

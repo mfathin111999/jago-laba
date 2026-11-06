@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Audit\AuditLogger;
 use App\Audit\AuditRecorded;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -13,9 +13,9 @@ use Tests\TestCase;
 
 final class AuditEventTest extends TestCase
 {
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        return new AuthenticatedUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
     }
 
     public function test_recording_dispatches_an_event_other_listeners_can_react_to(): void

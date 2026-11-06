@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -73,7 +73,7 @@ final class MarketplaceWithdrawalConfirmTest extends TestCase
 
     private function loginAs(string $role): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => $role, 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => $role, 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
     }
 
@@ -167,7 +167,7 @@ final class MarketplaceWithdrawalConfirmTest extends TestCase
     public function test_foreign_company_cannot_reuse_a_staged_import_and_foreign_store_is_rejected(): void
     {
         $key = $this->stage([['WD-1', '1000']]);
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'B']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'B']), 'web');
 
         $this->legacy(['action' => 'confirm', 'key' => $key])->assertForbidden();
         $this->assertSame(0, DB::table('marketplace_withdrawals')->count());

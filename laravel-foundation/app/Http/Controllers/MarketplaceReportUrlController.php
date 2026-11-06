@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Legacy report URLs (/api/marketplace-orders.php, /api/marketplace-dashboard.php).
  * ?format=csv keeps downloading the CSV; any other request moves to the Laravel page.
  */
-final class MarketplaceLegacyReportController
+final class MarketplaceReportUrlController
 {
     public function orders(Request $request): Response|RedirectResponse
     {

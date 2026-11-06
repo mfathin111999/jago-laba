@@ -82,7 +82,7 @@ return [
         'root' => env('JL_DOCUMENT_STORAGE_ROOT') ?: null,
     ],
     'konveksi' => [
-        // The legacy Konveksi single-page client (HTML views) is served by Laravel; see KonveksiLegacyAppController.
+        // The legacy Konveksi single-page client (HTML views) is served by Laravel; see KonveksiAppController.
         'views_path' => env('JL_KONVEKSI_VIEWS_PATH') ?: resource_path('konveksi/views'),
         // Cache-busting token for assets/konveksi/js/jl-api.js.
         'client_version' => '20261029',

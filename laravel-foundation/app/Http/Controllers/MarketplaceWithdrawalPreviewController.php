@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Http\Requests\MarketplaceWithdrawalPreviewRequest;
 use App\Services\Marketplace\MarketplaceWithdrawalPreviewService;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +16,7 @@ final class MarketplaceWithdrawalPreviewController
     public function __invoke(MarketplaceWithdrawalPreviewRequest $request): JsonResponse
     {
         $user = $request->user('web');
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return $this->error('Autentikasi diperlukan.', 'AUTH_REQUIRED', 401);
         }
 

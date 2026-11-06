@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Policies\RolePolicy;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +14,7 @@ final class RolePolicyParityTest extends TestCase
         $matrix = json_decode((string) file_get_contents(__DIR__.'/fixtures/role-policy-matrix.json'), true, 512, JSON_THROW_ON_ERROR);
         $this->assertNotEmpty($matrix);
         foreach ($matrix as $role => $actions) {
-            $user = new LegacyUser(['role_id' => $role]);
+            $user = new AuthenticatedUser(['role_id' => $role]);
             foreach ($actions as $action => $expected) {
                 $this->assertSame($expected, (new RolePolicy)->allows($user, (string) $action), $role.':'.$action);
             }

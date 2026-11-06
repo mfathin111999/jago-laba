@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyAuthenticationService;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
+use App\Auth\AuthenticationService;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
 use App\Exceptions\KonveksiRequestRejected;
-use App\Http\Responses\LegacyResponse;
+use App\Http\Responses\UnavailableResponse;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use App\Services\Konveksi\KonveksiBackupService;
@@ -31,7 +31,7 @@ use PDOException;
 use RuntimeException;
 use Throwable;
 
-final class LegacyRpcController
+final class KonveksiRpcController
 {
     /** Methods any Konveksi user may call; every other method requires an administrator. */
     private const READ_METHODS = ['loadSemuaData', 'getRiwayatBackupJagoLaba', 'getGeminiApiKeyStatusServerRpc'];
@@ -47,7 +47,7 @@ final class LegacyRpcController
     ];
 
     public function __construct(
-        private readonly LegacyAuthenticationService $authentication,
+        private readonly AuthenticationService $authentication,
         private readonly CsrfTokenValidator $csrf,
         private readonly CompanyContext $company,
         private readonly WorkspaceContext $workspace,
@@ -104,7 +104,7 @@ final class LegacyRpcController
      * RPC methods that take one array argument (args[0], already an array or a JSON string) and return the service
      * result as-is: each is [user, company key, data] -> result. They all answer {ok: true, result}.
      *
-     * @return array<string, \Closure(LegacyUser, string, array<string, mixed>): mixed>
+     * @return array<string, \Closure(AuthenticatedUser, string, array<string, mixed>): mixed>
      */
     private function dataHandlers(): array
     {
@@ -123,7 +123,7 @@ final class LegacyRpcController
     }
 
     /**
-     * @param  \Closure(LegacyUser, string, array<string, mixed>): mixed  $handler
+     * @param  \Closure(AuthenticatedUser, string, array<string, mixed>): mixed  $handler
      * @param  array<int, mixed>  $args
      */
     private function callWithData(\Closure $handler, array $args): JsonResponse
@@ -202,7 +202,7 @@ final class LegacyRpcController
             return $this->migrateInventoryIds($request);
         }
 
-        return LegacyResponse::unavailable('rpc');
+        return UnavailableResponse::unavailable('rpc');
     }
 
     private function auditInventory(Request $request): JsonResponse
@@ -483,7 +483,7 @@ final class LegacyRpcController
 
         $user = $this->authentication->attempt($request, $username, $password);
 
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return response()->json([
                 'ok' => true,
                 'result' => [

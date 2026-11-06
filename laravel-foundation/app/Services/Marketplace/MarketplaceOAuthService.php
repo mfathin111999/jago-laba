@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Enums\ConnectionStatus;
 use App\Exceptions\MarketplaceOAuthException;
 use App\Services\Marketplace\OAuth\LiveOAuthProvider;
@@ -114,7 +114,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function start(LegacyUser $user, string $companyKey, string $platform, ?string $returnPath = null, ?string $scenario = null): array
+    public function start(AuthenticatedUser $user, string $companyKey, string $platform, ?string $returnPath = null, ?string $scenario = null): array
     {
         $platform = $this->assertPlatform($platform);
         $this->assertStorage('marketplace_oauth_states');
@@ -144,7 +144,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function callback(LegacyUser $user, string $companyKey, array $callback): array
+    public function callback(AuthenticatedUser $user, string $companyKey, array $callback): array
     {
         $this->assertStorage('marketplace_oauth_states');
         $state = trim((string) ($callback['state'] ?? ''));
@@ -188,7 +188,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function pending(LegacyUser $user, string $companyKey, string $pendingId): array
+    public function pending(AuthenticatedUser $user, string $companyKey, string $pendingId): array
     {
         $this->assertStorage('marketplace_oauth_pending');
         $row = $this->loadPending($user, $companyKey, $pendingId, false);
@@ -202,7 +202,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function selectPending(LegacyUser $user, string $companyKey, string $pendingId, string $externalStoreId): array
+    public function selectPending(AuthenticatedUser $user, string $companyKey, string $pendingId, string $externalStoreId): array
     {
         $this->assertStorage('marketplace_oauth_pending');
         $this->assertStorage('marketplace_oauth_connections');
@@ -246,7 +246,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function refresh(LegacyUser $user, string $companyKey, string $storeId): array
+    public function refresh(AuthenticatedUser $user, string $companyKey, string $storeId): array
     {
         $this->assertStorage('marketplace_oauth_connections');
         $connection = $this->database->connection();
@@ -318,7 +318,7 @@ final class MarketplaceOAuthService
     }
 
     /** @return array<string, mixed> */
-    public function disconnect(LegacyUser $user, string $companyKey, string $storeId): array
+    public function disconnect(AuthenticatedUser $user, string $companyKey, string $storeId): array
     {
         $this->assertStorage('marketplace_oauth_connections');
         $connection = $this->database->connection();
@@ -375,7 +375,7 @@ final class MarketplaceOAuthService
         return route('legacy.marketplace.oauth', ['action' => 'callback']);
     }
 
-    private function consumeState(string $state, LegacyUser $user, string $companyKey, string $callbackPlatform): object
+    private function consumeState(string $state, AuthenticatedUser $user, string $companyKey, string $callbackPlatform): object
     {
         $connection = $this->database->connection();
 
@@ -407,7 +407,7 @@ final class MarketplaceOAuthService
         });
     }
 
-    private function storePending(LegacyUser $user, string $companyKey, object $state, string $platform, array $tokens, array $shops): string
+    private function storePending(AuthenticatedUser $user, string $companyKey, object $state, string $platform, array $tokens, array $shops): string
     {
         $this->assertStorage('marketplace_oauth_pending');
         $pendingId = bin2hex(random_bytes(24));
@@ -432,7 +432,7 @@ final class MarketplaceOAuthService
         return $pendingId;
     }
 
-    private function loadPending(LegacyUser $user, string $companyKey, string $pendingId, bool $lock): object
+    private function loadPending(AuthenticatedUser $user, string $companyKey, string $pendingId, bool $lock): object
     {
         if (! preg_match('/^[a-f0-9]{48}$/D', $pendingId)) {
             throw new MarketplaceOAuthException('Pilihan toko tidak valid.', 'INVALID_PENDING_SELECTION');
@@ -591,9 +591,9 @@ final class MarketplaceOAuthService
         }
     }
 
-    private function userKey(LegacyUser $user): string
+    private function userKey(AuthenticatedUser $user): string
     {
-        return $user->getLegacyUserId() !== '' ? $user->getLegacyUserId() : $user->getAuthIdentifier();
+        return $user->getAccountId() !== '' ? $user->getAccountId() : $user->getAuthIdentifier();
     }
 
     private function safeReturnPath(?string $returnPath): string

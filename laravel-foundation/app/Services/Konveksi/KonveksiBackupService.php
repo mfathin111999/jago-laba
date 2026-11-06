@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -30,7 +30,7 @@ final class KonveksiBackupService
     /**
      * @return array<string, mixed>
      */
-    public function create(LegacyUser $user, string $mode = 'MANUAL'): array
+    public function create(AuthenticatedUser $user, string $mode = 'MANUAL'): array
     {
         $mode = strtoupper(preg_replace('/[^A-Za-z0-9_]/', '', $mode) ?: 'MANUAL');
         $id = 'BKP-'.$mode.'-'.date('Ymd-His');
@@ -111,7 +111,7 @@ final class KonveksiBackupService
      *
      * @return array<string, mixed>
      */
-    public function scheduleSmart(LegacyUser $user): array
+    public function scheduleSmart(AuthenticatedUser $user): array
     {
         $marker = $this->markerPath();
         $this->ensureDirectory(dirname($marker));
@@ -138,7 +138,7 @@ final class KonveksiBackupService
 
         @unlink($marker);
 
-        return $this->create(new LegacyUser(['id' => 'SYSTEM', 'username' => 'system', 'role_id' => 'SYSTEM']), 'SMART');
+        return $this->create(new AuthenticatedUser(['id' => 'SYSTEM', 'username' => 'system', 'role_id' => 'SYSTEM']), 'SMART');
     }
 
     private function markerPath(): string

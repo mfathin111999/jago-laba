@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 final class RolePolicy
@@ -56,7 +56,7 @@ final class RolePolicy
 
     public function allows(?Authenticatable $user, string $action): bool
     {
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return false;
         }
 

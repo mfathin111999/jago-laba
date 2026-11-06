@@ -5,8 +5,8 @@ use App\Exceptions\IdempotencyConflict;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureBrowserCsrf;
 use App\Http\Middleware\EnsureCompanyContext;
-use App\Http\Middleware\EnsureLegacyMarketplaceAjaxContract;
-use App\Http\Middleware\EnsureLegacyMarketplaceExpenseAction;
+use App\Http\Middleware\EnsureMarketplaceAjaxContract;
+use App\Http\Middleware\EnsureMarketplaceExpenseAction;
 use App\Http\Middleware\EnsureStoreContext;
 use App\Http\Middleware\EnsureWorkspace;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -47,8 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.context' => EnsureCompanyContext::class,
             'store.context' => EnsureStoreContext::class,
             'workspace.context' => EnsureWorkspace::class,
-            'legacy.marketplace.ajax' => EnsureLegacyMarketplaceAjaxContract::class,
-            'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
+            'legacy.marketplace.ajax' => EnsureMarketplaceAjaxContract::class,
+            'legacy.marketplace.expense' => EnsureMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,
         ]);
         $middleware->web(prepend: [AssignRequestId::class], append: [InertiaMiddleware::class]);

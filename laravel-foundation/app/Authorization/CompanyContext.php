@@ -2,7 +2,7 @@
 
 namespace App\Authorization;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 
@@ -10,7 +10,7 @@ final class CompanyContext
 {
     public function key(?Authenticatable $user): ?string
     {
-        $userKey = $user instanceof LegacyUser ? $user->getCompanyKey() : null;
+        $userKey = $user instanceof AuthenticatedUser ? $user->getCompanyKey() : null;
 
         if ($userKey !== null && $userKey !== '') {
             return $userKey;

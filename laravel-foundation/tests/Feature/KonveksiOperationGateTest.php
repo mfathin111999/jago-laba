@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiPilotReadService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +47,7 @@ final class KonveksiOperationGateTest extends TestCase
         DB::table('jl_data_produk')->insert([['_row_order' => 0, '_data_json' => json_encode(['id' => 'P1', 'nama' => 'Kemeja'])]]);
         DB::table('workspace_user_access')->insert([['user_key' => 'u1', 'workspace' => 'konveksi']]);
 
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'LOCAL-COMPANY']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'LOCAL-COMPANY']), 'web');
         session(['_token' => 'tok', 'workspace' => 'konveksi']);
     }
 

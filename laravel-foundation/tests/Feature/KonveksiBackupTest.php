@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
-use App\Http\Controllers\LegacyRpcController;
+use App\Auth\AuthenticatedUser;
+use App\Http\Controllers\KonveksiRpcController;
 use App\Services\Konveksi\KonveksiBackupService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -76,14 +76,14 @@ final class KonveksiBackupTest extends TestCase
         return app(KonveksiBackupService::class);
     }
 
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']);
+        return new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']);
     }
 
     public function test_the_browser_never_receives_server_paths_for_backups(): void
     {
-        $controller = app(LegacyRpcController::class);
+        $controller = app(KonveksiRpcController::class);
         $method = new \ReflectionMethod($controller, 'publicBackup');
 
         $clean = $method->invoke($controller, [

@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -16,7 +16,7 @@ final class KonveksiSyncAndHppService
         private readonly KonveksiUserAccounts $accounts,
     ) {}
 
-    public function syncTab(LegacyUser $user, string $companyKey, string $tab, mixed $payload): array
+    public function syncTab(AuthenticatedUser $user, string $companyKey, string $tab, mixed $payload): array
     {
         $rows = is_string($payload) ? json_decode($payload, true) : $payload;
         if (! is_array($rows)) {
@@ -50,7 +50,7 @@ final class KonveksiSyncAndHppService
         return ['success' => true, 'tab' => $tab, 'count' => count($rows)];
     }
 
-    public function syncMultiTabs(LegacyUser $user, string $companyKey, mixed $payload): array
+    public function syncMultiTabs(AuthenticatedUser $user, string $companyKey, mixed $payload): array
     {
         $map = is_string($payload) ? json_decode($payload, true) : $payload;
         if (! is_array($map)) {
@@ -100,7 +100,7 @@ final class KonveksiSyncAndHppService
      * @param  array<string, mixed>  $p
      * @return array<string, mixed>
      */
-    public function activateHpp(LegacyUser $user, string $companyKey, array $p): array
+    public function activateHpp(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $model = trim((string) ($p['model_key'] ?? ''));
         if ($model === '') {
@@ -202,7 +202,7 @@ final class KonveksiSyncAndHppService
      *
      * @return array<string, mixed>
      */
-    public function syncFromPurchases(LegacyUser $user, string $companyKey): array
+    public function syncFromPurchases(AuthenticatedUser $user, string $companyKey): array
     {
         return $this->konveksi->connection()->transaction(function () use ($user): array {
             $latest = [];

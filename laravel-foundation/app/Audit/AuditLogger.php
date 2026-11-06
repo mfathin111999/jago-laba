@@ -2,7 +2,7 @@
 
 namespace App\Audit;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Contracts\Events\Dispatcher;
 
 /** The one place that turns "this user did that" into an AuditRecorded event. */
@@ -15,7 +15,7 @@ final class AuditLogger
      * @param  array<string, mixed>|null  $after
      */
     public function record(
-        LegacyUser $user,
+        AuthenticatedUser $user,
         string $module,
         string $action,
         ?string $recordId,
@@ -25,8 +25,8 @@ final class AuditLogger
         string $notes = '',
     ): void {
         $userId = $user->getSource() === 'auth_users_v2'
-            ? 'AUTHV2-'.$user->getLegacyUserId()
-            : $user->getLegacyUserId();
+            ? 'AUTHV2-'.$user->getAccountId()
+            : $user->getAccountId();
 
         $this->events->dispatch(new AuditRecorded($userId, $user->getUsername(), $module, $action, $recordId, $referenceId, $before, $after, $notes));
     }

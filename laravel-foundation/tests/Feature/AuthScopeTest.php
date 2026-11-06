@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -224,10 +224,10 @@ final class AuthScopeTest extends TestCase
     {
         DB::table('auth_users_v2')->where('username', 'owner')->update(['status' => 'disabled']);
         $this->postJson('/auth/login', ['username' => 'owner', 'password' => 'owner-secret'])->assertUnauthorized();
-        $user = new LegacyUser(['id' => 1, 'username' => 'safe', 'password_hash' => 'secret', 'api_key' => 'private', 'company_key' => 'COMPANY-A']);
+        $user = new AuthenticatedUser(['id' => 1, 'username' => 'safe', 'password_hash' => 'secret', 'api_key' => 'private', 'company_key' => 'COMPANY-A']);
         $this->assertArrayNotHasKey('api_key', $user->toArray());
         $this->assertArrayNotHasKey('password_hash', $user->toArray());
-        $this->assertSame('COMPANY-A', $user->withLegacyContext(['company_key' => 'COMPANY-B'])->getCompanyKey());
+        $this->assertSame('COMPANY-A', $user->withContext(['company_key' => 'COMPANY-B'])->getCompanyKey());
     }
 
     public function test_company_context_rejects_malformed_or_conflicting_scope_selectors(): void

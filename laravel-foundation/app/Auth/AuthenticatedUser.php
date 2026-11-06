@@ -7,7 +7,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use JsonSerializable;
 
-final class LegacyUser implements Authenticatable, AuthorizableContract, JsonSerializable
+final class AuthenticatedUser implements Authenticatable, AuthorizableContract, JsonSerializable
 {
     use Authorizable;
 
@@ -51,7 +51,7 @@ final class LegacyUser implements Authenticatable, AuthorizableContract, JsonSer
         return 'remember_token';
     }
 
-    public function getLegacyUserId(): string
+    public function getAccountId(): string
     {
         return (string) ($this->attributes['id'] ?? '');
     }
@@ -109,12 +109,12 @@ final class LegacyUser implements Authenticatable, AuthorizableContract, JsonSer
     public function legacyKeyCandidates(): array
     {
         $keys = [
-            $this->getLegacyUserId(),
+            $this->getAccountId(),
             $this->getAuthIdentifier(),
         ];
 
-        if ($this->getSource() === 'auth_users_v2' && $this->getLegacyUserId() !== '') {
-            $keys[] = 'AUTHV2-'.$this->getLegacyUserId();
+        if ($this->getSource() === 'auth_users_v2' && $this->getAccountId() !== '') {
+            $keys[] = 'AUTHV2-'.$this->getAccountId();
         }
 
         return array_values(array_unique(array_filter($keys, static fn (string $key): bool => $key !== '')));
@@ -126,7 +126,7 @@ final class LegacyUser implements Authenticatable, AuthorizableContract, JsonSer
      *
      * @param  array<string, mixed>  $context
      */
-    public function withLegacyContext(array $context): self
+    public function withContext(array $context): self
     {
         $attributes = $this->attributes;
 

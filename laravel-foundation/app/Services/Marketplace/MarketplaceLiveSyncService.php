@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\Sync\SyncService;
 use DomainException;
 
@@ -96,7 +96,7 @@ final class MarketplaceLiveSyncService
      */
     private function run(string $companyKey, callable $callback): mixed
     {
-        $system = new LegacyUser(['id' => 'system', 'username' => 'system', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $companyKey]);
+        $system = new AuthenticatedUser(['id' => 'system', 'username' => 'system', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $companyKey]);
 
         $factory = $this->clientFactory;
 

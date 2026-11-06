@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Responses\LegacyResponse;
+use App\Http\Responses\UnavailableResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class LegacyMarketplaceAjaxController
+final class MarketplaceAjaxController
 {
     public function __construct(
         private readonly MarketplaceExpenseController $expenseCreate,
@@ -48,7 +48,7 @@ final class LegacyMarketplaceAjaxController
             'update_return_claim' => app()->call([$this->claimsAndSettlement, 'updateClaim']),
             'import_product_ad_report' => app()->call([$this->claimsAndSettlement, 'importAdReport']),
             'import_settlement_csv' => app()->call([$this->claimsAndSettlement, 'importSettlement']),
-            default => LegacyResponse::unavailable('rpc'),
+            default => UnavailableResponse::unavailable('rpc'),
         };
     }
 }

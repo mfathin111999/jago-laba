@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Http\Requests\MarketplaceExpenseRequest;
 use App\Http\Requests\MarketplaceHppBatchRequest;
 use App\Http\Requests\MarketplaceStockRequest;
@@ -15,7 +15,7 @@ final class RequestAuthorizationTest extends TestCase
 {
     private function authorized(string $class, string $role): bool
     {
-        $user = new LegacyUser(['id' => 'u', 'username' => 'u', 'role_id' => $role]);
+        $user = new AuthenticatedUser(['id' => 'u', 'username' => 'u', 'role_id' => $role]);
         $request = $class::createFromBase(Request::create('/x', 'POST'));
         $request->setUserResolver(fn () => $user);
 

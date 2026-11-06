@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
-use App\Http\Controllers\KonveksiLegacyAppController;
+use App\Auth\AuthenticatedUser;
+use App\Http\Controllers\KonveksiAppController;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -19,7 +19,7 @@ final class KonveksiLegacyAppTest extends TestCase
 
     private function login(string $workspace = 'konveksi'): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'name' => 'Bu </script>Rina', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'u1', 'username' => 'u1', 'name' => 'Bu </script>Rina', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'csrf-token-1', 'workspace' => $workspace]);
     }
 
@@ -62,10 +62,10 @@ final class KonveksiLegacyAppTest extends TestCase
     public function test_every_view_the_client_is_built_from_ships_with_laravel(): void
     {
         $this->assertSame(resource_path('konveksi/views'), config('jago.konveksi.views_path'));
-        foreach (['00_Base', '27_UI_Components', '28_Core', ...KonveksiLegacyAppController::VIEWS] as $view) {
+        foreach (['00_Base', '27_UI_Components', '28_Core', ...KonveksiAppController::VIEWS] as $view) {
             $this->assertFileExists(config('jago.konveksi.views_path').'/'.$view.'.html');
         }
-        $this->assertSame(array_values(array_unique(KonveksiLegacyAppController::VIEWS)), KonveksiLegacyAppController::VIEWS, 'no view is listed twice');
+        $this->assertSame(array_values(array_unique(KonveksiAppController::VIEWS)), KonveksiAppController::VIEWS, 'no view is listed twice');
     }
 
     public function test_other_workspaces_and_guests_do_not_get_the_client(): void

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -37,7 +37,7 @@ final class MarketplaceCatalogReadTest extends TestCase
         DB::table('marketplace_hpp_history')->insert(['id' => 1, 'store_id' => 'a', 'marketplace_sku' => 'SKU-1', 'effective_from' => '2026-01-01', 'unit_hpp' => 45000]);
         DB::table('marketplace_orders')->insert(['id' => 'O1', 'store_id' => 'a', 'order_date' => '2026-10-31 23:59:59', 'internal_state' => null, 'order_status' => 'Selesai']);
         DB::table('marketplace_order_items')->insert(['id' => 1, 'order_id' => 'O1', 'sku' => 'SKU-1', 'item_name' => 'Tas', 'qty' => 2, 'selling_price' => 100000, 'unit_cogs_hpp' => 45000]);
-        $this->actingAs(new LegacyUser(['id' => 'reader', 'role_id' => 'ROLE-PEMBACA', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'reader', 'role_id' => 'ROLE-PEMBACA', 'company_key' => 'A']), 'web');
         session(['workspace' => 'marketplace']);
     }
 
@@ -69,7 +69,7 @@ final class MarketplaceCatalogReadTest extends TestCase
             ->assertJsonPath('props.can_edit_hpp', false)
             ->assertJsonCount(1, 'props.stores');
 
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         $this->withHeaders($headers)->get('/marketplace/catalog')->assertJsonPath('props.can_edit_hpp', true);
     }
 
@@ -90,7 +90,7 @@ final class MarketplaceCatalogReadTest extends TestCase
     public function test_hpp_write_updates_sku_global_and_batch_via_legacy_and_pilot_routes(): void
     {
         // Switch to owner user with hpp.edit permissions
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'test-csrf-token', 'workspace' => 'marketplace']);
         $csrfToken = 'test-csrf-token';
 
@@ -175,7 +175,7 @@ final class MarketplaceCatalogReadTest extends TestCase
 
     public function test_hpp_refusals_keep_their_codes_statuses_and_request_id(): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'test-csrf-token', 'workspace' => 'marketplace']);
         $post = fn (string $url, array $payload) => $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')->postJson($url, $payload);
 
@@ -214,7 +214,7 @@ final class MarketplaceCatalogReadTest extends TestCase
 
     public function test_provider_inactive_actions_keep_legacy_contract_and_enforce_scope(): void
     {
-        $this->actingAs(new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'test-csrf-token', 'workspace' => 'marketplace']);
 
         foreach (['test_api_connection', 'sync_marketing_ads'] as $action) {
@@ -229,7 +229,7 @@ final class MarketplaceCatalogReadTest extends TestCase
                 ->assertForbidden();
         }
 
-        $this->actingAs(new LegacyUser(['id' => 'reader', 'role_id' => 'ROLE-PEMBACA', 'company_key' => 'A']), 'web');
+        $this->actingAs(new AuthenticatedUser(['id' => 'reader', 'role_id' => 'ROLE-PEMBACA', 'company_key' => 'A']), 'web');
         $this->withHeader('X-CSRF-TOKEN', 'test-csrf-token')
             ->postJson('/api/marketplace-ajax.php?action=test_api_connection', ['store_id' => 'a'])
             ->assertForbidden();

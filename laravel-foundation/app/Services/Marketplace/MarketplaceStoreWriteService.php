@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Exceptions\InvalidInput;
 use App\Exceptions\ResourceNotFound;
 use App\Exceptions\StoreForbidden;
@@ -23,7 +23,7 @@ final class MarketplaceStoreWriteService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function create(LegacyUser $user, string $companyKey, array $data): array
+    public function create(AuthenticatedUser $user, string $companyKey, array $data): array
     {
         $companyKey = trim($companyKey);
         if ($companyKey === '' || strlen($companyKey) > 120) {
@@ -116,7 +116,7 @@ final class MarketplaceStoreWriteService
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    public function update(LegacyUser $user, string $companyKey, string $storeId, array $data): array
+    public function update(AuthenticatedUser $user, string $companyKey, string $storeId, array $data): array
     {
         $companyKey = trim($companyKey);
         $storeId = trim($storeId);
@@ -200,7 +200,7 @@ final class MarketplaceStoreWriteService
     /**
      * @return array<string, mixed>
      */
-    public function toggleStatus(LegacyUser $user, string $companyKey, string $storeId, string $status): array
+    public function toggleStatus(AuthenticatedUser $user, string $companyKey, string $storeId, string $status): array
     {
         $status = trim($status);
         if ($status === 'Terhubung') {
@@ -246,7 +246,7 @@ final class MarketplaceStoreWriteService
         });
     }
 
-    public function archive(LegacyUser $user, string $companyKey, string $storeId): array
+    public function archive(AuthenticatedUser $user, string $companyKey, string $storeId): array
     {
         $connection = $this->database->connection();
 
@@ -298,7 +298,7 @@ final class MarketplaceStoreWriteService
         });
     }
 
-    public function restore(LegacyUser $user, string $companyKey, string $storeId): array
+    public function restore(AuthenticatedUser $user, string $companyKey, string $storeId): array
     {
         $connection = $this->database->connection();
 

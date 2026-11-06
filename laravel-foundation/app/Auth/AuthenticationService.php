@@ -8,9 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 
-final class LegacyAuthenticationService
+final class AuthenticationService
 {
-    public function attempt(Request $request, string $username, string $password): ?LegacyUser
+    public function attempt(Request $request, string $username, string $password): ?AuthenticatedUser
     {
         $key = 'legacy-login:'.hash('sha256', strtolower(trim($username)).'|'.$request->ip());
         if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -30,7 +30,7 @@ final class LegacyAuthenticationService
         $request->session()->forget(['workspace', 'store_id', 'workspace_filters']);
         $user = Auth::guard('web')->user();
 
-        return $user instanceof LegacyUser ? $user : null;
+        return $user instanceof AuthenticatedUser ? $user : null;
     }
 
     /**
@@ -38,7 +38,7 @@ final class LegacyAuthenticationService
      *
      * @return array<string, mixed>
      */
-    public function legacyResult(LegacyUser $user, Request $request): array
+    public function legacyResult(AuthenticatedUser $user, Request $request): array
     {
         return [
             'status' => 'success',

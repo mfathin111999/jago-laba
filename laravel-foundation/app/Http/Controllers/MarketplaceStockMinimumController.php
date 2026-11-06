@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\StoreContext;
 use App\Security\CsrfTokenValidator;
 use App\Services\Marketplace\MarketplaceStockMinimumService;
@@ -29,7 +29,7 @@ final class MarketplaceStockMinimumController
         $user = $request->user('web');
 
         try {
-            if (! $user instanceof LegacyUser) {
+            if (! $user instanceof AuthenticatedUser) {
                 throw new DomainException('Autentikasi diperlukan.');
             }
             if (! $this->csrf->valid($request)) {

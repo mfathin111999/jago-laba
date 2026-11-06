@@ -8,7 +8,7 @@
  * Needs the staging environment (. scripts/development/staging-env.sh) and a MySQL database set up by the staging scripts.
  */
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\MarketplaceLiveSyncService;
 use App\Services\Marketplace\TokenVault;
 use Illuminate\Contracts\Console\Kernel;
@@ -65,5 +65,5 @@ echo json_encode([
     'started' => $started, 'steps' => $steps, 'pending' => $state['pending'], 'jobs' => $jobs,
     'last_successful_sync_at' => $connection->last_successful_sync_at,
     'provider_calls' => count($calls), 'token_seen_by_provider' => $calls[0] ?? null,
-    'user' => (new LegacyUser(['id' => 'x']))->getAuthIdentifier(),
+    'user' => (new AuthenticatedUser(['id' => 'x']))->getAuthIdentifier(),
 ], JSON_UNESCAPED_SLASHES)."\n";

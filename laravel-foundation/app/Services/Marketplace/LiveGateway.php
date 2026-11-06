@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
 
 /**
@@ -28,7 +28,7 @@ final class LiveGateway
      * @param  callable(): T  $callback
      * @return T
      */
-    public function run(LegacyUser $user, string $companyKey, callable $callback): mixed
+    public function run(AuthenticatedUser $user, string $companyKey, callable $callback): mixed
     {
         return $this->scope->run($user, $companyKey, $callback);
     }

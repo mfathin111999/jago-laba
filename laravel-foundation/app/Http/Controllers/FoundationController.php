@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\WorkspaceContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,15 +17,15 @@ final class FoundationController
         $user = Auth::guard('web')->user();
 
         // The front controller reads a request for /index.php (the legacy Konveksi URL) as "/": send signed-in users on.
-        if ($user instanceof LegacyUser && parse_url((string) $request->server('REQUEST_URI'), PHP_URL_PATH) === '/index.php' && $workspace->active($user) === WorkspaceContext::KONVEKSI) {
+        if ($user instanceof AuthenticatedUser && parse_url((string) $request->server('REQUEST_URI'), PHP_URL_PATH) === '/index.php' && $workspace->active($user) === WorkspaceContext::KONVEKSI) {
             return redirect('/konveksi', 303);
         }
 
         return Inertia::render('Foundation', [
             'title' => 'Jago Laba Laravel Foundation',
             'status' => 'read-only',
-            'authenticated' => $user instanceof LegacyUser,
-            'user' => $user instanceof LegacyUser ? $user->toArray() : null,
+            'authenticated' => $user instanceof AuthenticatedUser,
+            'user' => $user instanceof AuthenticatedUser ? $user->toArray() : null,
             'workspaces' => $workspace->allowed($user),
             'active_workspace' => $workspace->active($user),
         ]);

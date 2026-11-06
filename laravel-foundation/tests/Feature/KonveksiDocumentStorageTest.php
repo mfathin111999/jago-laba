@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiDocumentAndAiService;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
@@ -48,7 +48,7 @@ final class KonveksiDocumentStorageTest extends TestCase
     private function save(string $base64, string $name = 'faktur.png', string $type = 'Faktur_Pembelian'): array
     {
         return app(KonveksiDocumentAndAiService::class)->saveBase64Document(
-            new LegacyUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']), 'A', $base64, $name, $type, 'TRX-1',
+            new AuthenticatedUser(['id' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']), 'A', $base64, $name, $type, 'TRX-1',
         );
     }
 

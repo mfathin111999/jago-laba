@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Responses\LegacyResponse;
+use App\Http\Responses\UnavailableResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class LegacyPilotPageController
+final class PilotPageController
 {
     public function marketplace(Request $request): RedirectResponse|Response
     {
@@ -18,7 +18,7 @@ final class LegacyPilotPageController
         }
 
         if ($tab !== 'dashboard') {
-            return LegacyResponse::unavailable('page');
+            return UnavailableResponse::unavailable('page');
         }
 
         return redirect()->route('pilot.marketplace', $this->query($request, [
@@ -31,7 +31,7 @@ final class LegacyPilotPageController
         $tab = strtolower(trim((string) $request->query('tab', 'dashboard')));
 
         if ($tab !== 'dashboard') {
-            return LegacyResponse::unavailable('page');
+            return UnavailableResponse::unavailable('page');
         }
 
         return redirect()->route('pilot.konveksi', ['tab' => 'dashboard'], 303);

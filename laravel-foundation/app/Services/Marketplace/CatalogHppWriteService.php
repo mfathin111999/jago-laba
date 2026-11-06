@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Marketplace\Catalog\CatalogService;
 use App\Services\Marketplace\Catalog\SkuHppUpdater;
 use InvalidArgumentException;
@@ -17,7 +17,7 @@ final class CatalogHppWriteService
         private readonly AuditLogger $audit,
     ) {}
 
-    public function updateSkuHpp(LegacyUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
+    public function updateSkuHpp(AuthenticatedUser $user, string $companyKey, string $storeId, string $sku, float $newHpp, ?string $variantId = null): array
     {
         $sku = trim($sku);
         if ($sku === '' || $newHpp <= 0) {
@@ -52,7 +52,7 @@ final class CatalogHppWriteService
     }
 
     public function updateGlobalProductHpp(
-        LegacyUser $user,
+        AuthenticatedUser $user,
         string $companyKey,
         string $storeId,
         string $amount,
@@ -111,7 +111,7 @@ final class CatalogHppWriteService
      * @param  array<int, array<string, mixed>>  $changes
      * @return array<string, mixed>
      */
-    public function saveHppBatch(LegacyUser $user, string $companyKey, array $changes): array
+    public function saveHppBatch(AuthenticatedUser $user, string $companyKey, array $changes): array
     {
         $result = $this->scope->run($user, $companyKey, fn (): array => $this->catalog->updateHppBatch($changes));
 

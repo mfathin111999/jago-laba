@@ -3,7 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
@@ -18,7 +18,7 @@ final class MarketplaceOrderWriteService
         private readonly AuditLogger $audit,
     ) {}
 
-    public function recordManualOrder(LegacyUser $user, string $companyKey, array $d): string
+    public function recordManualOrder(AuthenticatedUser $user, string $companyKey, array $d): string
     {
         $storeId = trim((string) ($d['store_id'] ?? ''));
         $orderId = trim((string) ($d['order_id'] ?? ''));
@@ -134,7 +134,7 @@ final class MarketplaceOrderWriteService
         return $orderId;
     }
 
-    public function updateManualOrder(LegacyUser $user, string $companyKey, string $orderId, string $storeId, array $data): array
+    public function updateManualOrder(AuthenticatedUser $user, string $companyKey, string $orderId, string $storeId, array $data): array
     {
         $connection = $this->database->connection();
         $order = $connection->table('marketplace_orders')
@@ -186,7 +186,7 @@ final class MarketplaceOrderWriteService
         return ['success' => true, 'order_id' => $orderId, 'message' => 'Pesanan manual berhasil diperbarui.'];
     }
 
-    public function archiveOrder(LegacyUser $user, string $companyKey, string $orderId, string $storeId, string $reason): array
+    public function archiveOrder(AuthenticatedUser $user, string $companyKey, string $orderId, string $storeId, string $reason): array
     {
         $reason = trim($reason);
         if ($reason === '') {

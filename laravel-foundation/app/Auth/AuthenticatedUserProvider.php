@@ -7,7 +7,7 @@ use Illuminate\Contracts\Auth\UserProvider;
 use Illuminate\Database\DatabaseManager;
 use Throwable;
 
-final class LegacyUserProvider implements UserProvider
+final class AuthenticatedUserProvider implements UserProvider
 {
     private const SOURCES = [
         'auth_users_v2',
@@ -68,7 +68,7 @@ final class LegacyUserProvider implements UserProvider
         $password = $credentials['password'] ?? null;
 
         return is_scalar($password)
-            && $user instanceof LegacyUser
+            && $user instanceof AuthenticatedUser
             && $user->getAuthPassword() !== ''
             && password_verify((string) $password, $user->getAuthPassword());
     }
@@ -82,7 +82,7 @@ final class LegacyUserProvider implements UserProvider
         // hash as read-only until that migration is explicitly approved.
     }
 
-    private function findByUsername(string $table, string $username): ?LegacyUser
+    private function findByUsername(string $table, string $username): ?AuthenticatedUser
     {
         try {
             $row = $this->connection()->table($table)
@@ -97,7 +97,7 @@ final class LegacyUserProvider implements UserProvider
         return $row ? $this->makeUser($table, $row) : null;
     }
 
-    private function findById(string $table, string $id): ?LegacyUser
+    private function findById(string $table, string $id): ?AuthenticatedUser
     {
         if ($id === '') {
             return null;
@@ -120,13 +120,13 @@ final class LegacyUserProvider implements UserProvider
         return $this->database->connection($this->connection);
     }
 
-    private function makeUser(string $source, object $row): LegacyUser
+    private function makeUser(string $source, object $row): AuthenticatedUser
     {
         $attributes = get_object_vars($row);
         $attributes['source'] = $source;
         $attributes['auth_identifier'] = 'legacy:'.$source.':'.(string) ($attributes['id'] ?? '');
 
-        return new LegacyUser($attributes);
+        return new AuthenticatedUser($attributes);
     }
 
     /**

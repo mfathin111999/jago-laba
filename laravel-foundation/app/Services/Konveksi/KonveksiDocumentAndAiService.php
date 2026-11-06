@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use finfo;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
@@ -18,7 +18,7 @@ final class KonveksiDocumentAndAiService
         private readonly KonveksiCollections $collections,
     ) {}
 
-    public function saveBase64Document(LegacyUser $user, string $companyKey, string $base64, string $fileName, string $type = 'General', string $referenceId = ''): array
+    public function saveBase64Document(AuthenticatedUser $user, string $companyKey, string $base64, string $fileName, string $type = 'General', string $referenceId = ''): array
     {
         if (strlen($base64) > 15000000) {
             throw new InvalidArgumentException('Dokumen maksimal 10 MB.');
@@ -166,7 +166,7 @@ final class KonveksiDocumentAndAiService
         ]);
     }
 
-    public function saveTemplate(LegacyUser $user, string $companyKey, array $p): array
+    public function saveTemplate(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $id = (string) ($p['id'] ?? ($p['id_template'] ?? 'TPL-DEFAULT'));
         if (! $this->collections->mapped('template_dokumen')) {
@@ -224,7 +224,7 @@ final class KonveksiDocumentAndAiService
         ];
     }
 
-    public function saveGeminiKey(LegacyUser $user, string $key): array
+    public function saveGeminiKey(AuthenticatedUser $user, string $key): array
     {
         $key = trim($key);
         if ($key === '') {

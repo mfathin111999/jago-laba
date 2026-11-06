@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use RuntimeException;
 
 final class KonveksiHutangService
@@ -14,7 +14,7 @@ final class KonveksiHutangService
         private readonly KonveksiCollections $collections,
     ) {}
 
-    public function createManual(LegacyUser $user, string $companyKey, array $p): array
+    public function createManual(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $pegawai = trim((string) ($p['id_pegawai'] ?? ''));
         $nom = round((float) ($p['nominal'] ?? 0));
@@ -79,7 +79,7 @@ final class KonveksiHutangService
         ];
     }
 
-    public function pay(LegacyUser $user, string $companyKey, array $p): array
+    public function pay(AuthenticatedUser $user, string $companyKey, array $p): array
     {
         $idp = trim((string) ($p['id_pegawai'] ?? ''));
         $nom = round((float) ($p['nominal_bayar'] ?? 0));

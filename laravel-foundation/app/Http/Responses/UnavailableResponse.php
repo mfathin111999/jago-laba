@@ -5,7 +5,7 @@ namespace App\Http\Responses;
 use App\Support\RequestId;
 use Illuminate\Http\JsonResponse;
 
-final class LegacyResponse
+final class UnavailableResponse
 {
     public static function unavailable(string $contract): JsonResponse
     {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use RuntimeException;
@@ -12,7 +12,7 @@ use RuntimeException;
  * workspace checks. It assembles the same view files, in the same order, as the legacy index.php (served at /konveksi: a request for /index.php is read as "/" by the front controller); every data call
  * the page makes goes to the Laravel RPC gate at /api/rpc.php with the Laravel CSRF token.
  */
-final class KonveksiLegacyAppController
+final class KonveksiAppController
 {
     /** Same order as KonveksiModule::viewNames() in the legacy module; a test keeps the two in step. */
     public const VIEWS = [
@@ -39,7 +39,7 @@ final class KonveksiLegacyAppController
             'authenticated' => true,
             'workspace' => 'konveksi',
             'csrf' => $request->session()->token(),
-            'name' => $user instanceof LegacyUser ? $user->getDisplayName() : '',
+            'name' => $user instanceof AuthenticatedUser ? $user->getDisplayName() : '',
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT).';'
             .'window.jlConfirmWorkspaceSwitch=function(e){if(window.jlUnsavedForm&&!confirm("Ada formulir yang belum disimpan. Ganti ruang kerja?")){e.preventDefault();return false;}return true};'
             .'window.jlUnsavedForm=false;document.addEventListener("input",function(e){if(e.target.closest("form"))window.jlUnsavedForm=true});'

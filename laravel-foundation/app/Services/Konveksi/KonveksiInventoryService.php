@@ -3,7 +3,7 @@
 namespace App\Services\Konveksi;
 
 use App\Audit\AuditLogger;
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 
 final class KonveksiInventoryService
 {
@@ -13,7 +13,7 @@ final class KonveksiInventoryService
         private readonly KonveksiCollections $collections,
     ) {}
 
-    public function audit(LegacyUser $user, string $companyKey): array
+    public function audit(AuthenticatedUser $user, string $companyKey): array
     {
         $produk = $this->collections->mapped('produk') ? array_values(array_filter($this->collections->documents('produk'))) : [];
         $master = $this->collections->mapped('master_stok') ? array_values(array_filter($this->collections->documents('master_stok'))) : [];
@@ -97,7 +97,7 @@ final class KonveksiInventoryService
         return $report;
     }
 
-    public function migrateIds(LegacyUser $user, string $companyKey): array
+    public function migrateIds(AuthenticatedUser $user, string $companyKey): array
     {
         if (! $this->collections->mapped('produk') || ! $this->collections->mapped('master_stok')) {
             return ['status' => 'success', 'updated' => 0, 'message' => 'Tabel inventori belum dipetakan.'];

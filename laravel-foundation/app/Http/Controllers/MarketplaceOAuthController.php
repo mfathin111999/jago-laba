@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\CompanyContext;
 use App\Authorization\StoreContext;
 use App\Authorization\WorkspaceContext;
 use App\Exceptions\MarketplaceOAuthException;
-use App\Http\Responses\LegacyResponse;
+use App\Http\Responses\UnavailableResponse;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
 use App\Services\Marketplace\MarketplaceOAuthService;
@@ -39,7 +39,7 @@ final class MarketplaceOAuthController
         $action = trim((string) ($request->route('oauth_action') ?: $request->query('action', $request->input('action', 'callback'))));
         $user = Auth::guard('web')->user();
 
-        if (! $user instanceof LegacyUser) {
+        if (! $user instanceof AuthenticatedUser) {
             return $this->error('Sesi login berakhir. Silakan login kembali.', 'AUTH_REQUIRED', 401, $request);
         }
 
@@ -89,7 +89,7 @@ final class MarketplaceOAuthController
             };
 
             if ($result === null) {
-                return LegacyResponse::unavailable('oauth');
+                return UnavailableResponse::unavailable('oauth');
             }
 
             if ($action === 'callback' && ! $request->expectsJson()) {
@@ -118,7 +118,7 @@ final class MarketplaceOAuthController
      *
      * @return array<string, mixed>
      */
-    private function sync(Request $request, LegacyUser $user, string $companyKey): array
+    private function sync(Request $request, AuthenticatedUser $user, string $companyKey): array
     {
         $storeId = trim((string) $request->input('store_id'));
         if ($storeId === '' || ! $this->stores->canAccess($user, $storeId)) {
@@ -139,7 +139,7 @@ final class MarketplaceOAuthController
     }
 
     /** @return array<string, mixed> */
-    private function start(Request $request, LegacyUser $user, string $companyKey): array
+    private function start(Request $request, AuthenticatedUser $user, string $companyKey): array
     {
         $this->oauth->assertOrigin($request->header('Origin'));
 
@@ -156,7 +156,7 @@ final class MarketplaceOAuthController
     }
 
     /** @return array<string, mixed> */
-    private function callback(Request $request, LegacyUser $user, string $companyKey): array
+    private function callback(Request $request, AuthenticatedUser $user, string $companyKey): array
     {
         return [
             'success' => true,

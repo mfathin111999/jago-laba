@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiCollections;
 use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Konveksi\KonveksiPurchaseWriteService;
@@ -145,7 +145,7 @@ final class KonveksiTypedLayoutTest extends TestCase
     {
         $this->install();
         $service = app(KonveksiPurchaseWriteService::class);
-        $user = new LegacyUser(['id' => 'u1', 'username' => 'gudang', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        $user = new AuthenticatedUser(['id' => 'u1', 'username' => 'gudang', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
         $payload = ['id_bahan' => 'BHN-UJI', 'nama_bahan' => 'Kain Uji', 'kode_bahan' => 'KU-1', 'stok_awal' => 12, 'harga_beli' => 40000, 'isi_satuan_beli' => 4];
 
         $onJson = $service->saveMaterial($user, 'A', $payload);
@@ -169,7 +169,7 @@ final class KonveksiTypedLayoutTest extends TestCase
     {
         $this->install();
         $collections = app(KonveksiCollections::class);
-        $user = new LegacyUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        $user = new AuthenticatedUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
         $written = ['pembelian', 'pembelian_item', 'bahan', 'bahan_hpp', 'mutasi_stok', 'keuangan', 'hutang_supplier', 'penjualan', 'penjualan_item', 'master_stok', 'produk'];
         $seed = function () use ($collections, $written): void {
             foreach ($written as $key) {

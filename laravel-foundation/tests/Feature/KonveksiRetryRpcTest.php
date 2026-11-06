@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Services\Konveksi\KonveksiBackupService;
 use App\Services\Konveksi\KonveksiPurchaseWriteService;
 use App\Services\Konveksi\KonveksiSalesWriteService;
@@ -77,9 +77,9 @@ final class KonveksiRetryRpcTest extends TestCase
         parent::tearDown();
     }
 
-    private function user(): LegacyUser
+    private function user(): AuthenticatedUser
     {
-        return new LegacyUser(['id' => 'owner', 'username' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        return new AuthenticatedUser(['id' => 'owner', 'username' => 'owner', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
     }
 
     public function test_retry_sale_backup_marks_only_that_sale_pending_and_keeps_its_data(): void

@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Auth\LegacyUser;
+use App\Auth\AuthenticatedUser;
 use App\Authorization\RequestContext;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
@@ -54,7 +54,7 @@ final class MarketplaceScope
     }
 
     /** Runs $callback as $user inside $companyKey (jobs, commands, and calls that must not depend on the request). */
-    public function run(LegacyUser $user, string $companyKey, callable $callback): mixed
+    public function run(AuthenticatedUser $user, string $companyKey, callable $callback): mixed
     {
         if (trim($companyKey) === '') {
             throw new DomainException('Company context wajib tersedia.');
@@ -114,7 +114,7 @@ final class MarketplaceScope
             return $this->actor;
         }
         $user = Auth::guard('web')->user();
-        if ($user instanceof LegacyUser) {
+        if ($user instanceof AuthenticatedUser) {
             return ['id' => (string) $user->getAuthIdentifier(), 'username' => $user->getUsername(), 'role' => (string) $user->getRole()];
         }
 
