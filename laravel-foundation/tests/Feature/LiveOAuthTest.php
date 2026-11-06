@@ -3,16 +3,15 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Marketplace\OAuth\LegacyClientOAuthProvider;
-use App\Services\Marketplace\MarketplaceOAuthService;
-use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
-/** Live OAuth: the legacy Shopee / TikTok clients run behind the Laravel flow; the provider's HTTP is faked here. */
+/** Live OAuth: the Shopee / TikTok providers run behind the Laravel flow; the platform's HTTP is faked with Http::fake. */
 final class LiveOAuthTest extends TestCase
 {
     /** @var list<array{string, string}> */
@@ -90,8 +89,8 @@ final class LiveOAuthTest extends TestCase
 
         config([
             'jago.oauth.mode' => 'live',
-            'jago.integration.shopee' => ['partner_id' => '100001', 'partner_key' => 'test-partner-key-not-real', 'region' => 'live', 'auth_url' => 'https://open.shopee.com/auth', 'api_base_url' => 'https://partner.shopeemobile.com'],
-            'jago.integration.tiktok_shop' => ['app_key' => '', 'app_secret' => '', 'service_id' => '', 'auth_url' => 'https://services.tiktokshop.com/open/authorize', 'api_base_url' => 'https://open-api.tiktokglobalshop.com'],
+            'services.shopee' => ['partner_id' => '100001', 'partner_key' => 'test-partner-key-not-real', 'region' => 'live', 'auth_url' => 'https://open.shopee.com/auth', 'api_base_url' => 'https://partner.shopeemobile.com'],
+            'services.tiktok_shop' => ['app_key' => '', 'app_secret' => '', 'service_id' => '', 'auth_url' => 'https://services.tiktokshop.com/open/authorize', 'api_base_url' => 'https://open-api.tiktokglobalshop.com'],
         ]);
         $this->actingAs(new LegacyUser(['id' => 'u1', 'username' => 'u1', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => 'A']), 'web');
         session(['_token' => 'tok', 'workspace' => 'marketplace']);
@@ -103,16 +102,14 @@ final class LiveOAuthTest extends TestCase
         parent::tearDown();
     }
 
-    /** Installs a Shopee provider whose HTTP calls are answered by $answer(method, url, body). */
+    /** Answers every outgoing platform call with $answer(method, url, body); the calls are recorded in $this->calls. */
     private function fakeShopee(callable $answer): void
     {
-        $service = new MarketplaceOAuthService(app('db'), app(MarketplaceStoreDeletionService::class));
-        app()->instance(MarketplaceOAuthService::class, $service);
-        $service->registerProvider(new LegacyClientOAuthProvider('Shopee', null, null, function (string $method, string $url, array $headers = [], ?array $body = null) use ($answer): array {
-            $this->calls[] = [$method, $url];
+        Http::fake(function (Request $request) use ($answer) {
+            $this->calls[] = [$request->method(), $request->url()];
 
-            return $answer($method, $url, $body);
-        }));
+            return Http::response($answer($request->method(), $request->url(), $request->data()));
+        });
     }
 
     /** @param array<string, mixed> $payload */

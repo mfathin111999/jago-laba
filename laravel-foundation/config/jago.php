@@ -1,17 +1,6 @@
 <?php
 
 $appBaseUrl = rtrim((string) env('JL_APP_BASE_URL', ''), '/');
-$shopeeRegion = strtolower((string) env('JL_SHOPEE_REGION', 'live'));
-$shopeeAuthDefault = $shopeeRegion === 'sandbox'
-    ? 'https://open.sandbox.test-stable.shopee.com/auth'
-    : 'https://open.shopee.com/auth';
-$shopeeApiDefault = $shopeeRegion === 'sandbox'
-    ? 'https://openplatform.sandbox.test-stable.shopee.sg'
-    : 'https://partner.shopeemobile.com';
-$tiktokRegion = strtolower((string) env('JL_TIKTOK_SHOP_REGION', 'row'));
-$tiktokAuthHost = $tiktokRegion === 'us'
-    ? 'services.us.tiktokshop.com'
-    : 'services.tiktokshop.com';
 $konveksiDatabaseConfigPath = (string) env(
     'JL_KONVEKSI_DATABASE_CONFIG',
     storage_path('private/konveksi/database.php'),
@@ -68,26 +57,7 @@ return [
         'webhook_url' => env('JL_MARKETPLACE_WEBHOOK_URL'),
         'catalog_reconcile_seconds' => max(900, (int) env('JL_MARKETPLACE_CATALOG_RECONCILE_SECONDS', 86400)),
         'returns_reconcile_seconds' => max(900, (int) env('JL_MARKETPLACE_RETURNS_RECONCILE_SECONDS', 86400)),
-        'shopee' => [
-            'partner_id' => env('JL_SHOPEE_PARTNER_ID'),
-            'partner_key' => env('JL_SHOPEE_PARTNER_KEY'),
-            'region' => $shopeeRegion,
-            'auth_url' => env('JL_SHOPEE_AUTH_URL', $shopeeAuthDefault),
-            'api_base_url' => rtrim((string) env('JL_SHOPEE_API_BASE_URL', $shopeeApiDefault), '/'),
-        ],
-        'tiktok_shop' => [
-            'app_key' => env('JL_TIKTOK_SHOP_APP_KEY'),
-            'app_secret' => env('JL_TIKTOK_SHOP_APP_SECRET'),
-            'service_id' => env('JL_TIKTOK_SHOP_SERVICE_ID'),
-            'market' => env('JL_TIKTOK_SHOP_MARKET'),
-            'region' => $tiktokRegion,
-            'auth_url' => env('JL_TIKTOK_SHOP_AUTH_URL', 'https://'.$tiktokAuthHost.'/open/authorize'),
-            'api_base_url' => rtrim((string) env('JL_TIKTOK_SHOP_API_BASE_URL', 'https://open-api.tiktokglobalshop.com'), '/'),
-            'required_scopes' => array_values(array_filter(array_map(
-                'trim',
-                explode(',', (string) env('JL_TIKTOK_SHOP_REQUIRED_SCOPES', 'seller.authorization.info')),
-            ))),
-        ],
+        // Provider credentials and hosts are in config/services.php ('shopee', 'tiktok_shop').
     ],
     'oauth' => [
         // The modernization boundary is sandbox-only until provider URLs are

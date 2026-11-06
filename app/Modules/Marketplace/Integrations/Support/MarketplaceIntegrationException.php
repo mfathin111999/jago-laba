@@ -1,10 +1,6 @@
 <?php
 declare(strict_types=1);
 
-final class MarketplaceIntegrationException extends RuntimeException
-{
-    public function __construct(string $message, public readonly string $errorCode = 'MARKETPLACE_API_ERROR', public readonly ?int $retryAfterSeconds = null)
-    {
-        parent::__construct($message);
-    }
-}
+// The class now lives in Laravel (App\Exceptions\MarketplaceIntegrationException); the legacy services that still run
+// inside Laravel keep using the global name, which is an alias of it until they are ported.
+class_alias(\App\Exceptions\MarketplaceIntegrationException::class, 'MarketplaceIntegrationException');

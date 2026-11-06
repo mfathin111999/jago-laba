@@ -27,6 +27,37 @@ final class IntegrationPolicy
         ];
     }
 
+    /** @param array<string, mixed> $config */
+    public static function environment(string $platform, array $config): string
+    {
+        if ($platform === 'Shopee') {
+            return ($config['region'] ?? '') === 'sandbox' ? 'sandbox' : 'live';
+        }
+
+        return in_array($config['environment'] ?? '', ['live', 'development'], true) ? $config['environment'] : 'unspecified';
+    }
+
+    /** A hash of the settings that identify one partner application; a stored token is only valid for the same fingerprint. */
+    public static function fingerprint(string $platform, array $config): string
+    {
+        $values = ['platform' => $platform];
+        foreach (['region', 'environment', 'api_base_url', 'auth_url', 'partner_id', 'partner_key', 'app_key', 'app_secret', 'service_id'] as $key) {
+            $values[$key] = (string) ($config[$key] ?? '');
+        }
+
+        return hash('sha256', json_encode($values, JSON_THROW_ON_ERROR));
+    }
+
+    /** Seconds to wait before the next attempt, or null when the failure should not be retried (max 3 attempts). */
+    public static function retry(string $code, int $attempt, ?int $retryAfter = null): ?int
+    {
+        if ($attempt >= 3 || ! in_array(self::classify($code), ['rate_limit', 'temporary'], true)) {
+            return null;
+        }
+
+        return max($retryAfter ?? 0, min(300, 5 * (2 ** $attempt)) + random_int(0, 3));
+    }
+
     /** Buckets a machine error code: authorization, permission, rate_limit, temporary, unsupported or request. */
     public static function classify(string $code): string
     {

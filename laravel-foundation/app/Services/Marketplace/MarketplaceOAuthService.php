@@ -4,9 +4,9 @@ namespace App\Services\Marketplace;
 
 use App\Auth\LegacyUser;
 use App\Exceptions\MarketplaceOAuthException;
-use App\Marketplace\OAuth\LegacyClientOAuthProvider;
+use App\Marketplace\OAuth\LiveOAuthProvider;
 use App\Marketplace\OAuth\MarketplaceOAuthProvider;
-use App\Marketplace\OAuth\SandboxMarketplaceOAuthProvider;
+use App\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
 use App\Marketplace\TokenVault;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
@@ -21,12 +21,13 @@ final class MarketplaceOAuthService
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly MarketplaceStoreDeletionService $deletion,
+        private readonly MarketplaceOAuthProviderFactory $providerFactory,
     ) {}
 
-    /** Live mode runs the legacy Shopee / TikTok Shop OAuth clients; everything else stays in the sandbox. */
+    /** Live mode runs the real Shopee / TikTok Shop authorization; everything else stays in the sandbox. */
     public function isLive(): bool
     {
-        return strtolower((string) config('jago.oauth.mode', 'sandbox')) === 'live';
+        return $this->providerFactory->live();
     }
 
     /** Replaces the provider for its platform (used by tests to avoid real network calls). */
@@ -44,7 +45,7 @@ final class MarketplaceOAuthService
             is_array($platforms) ? $platforms : [],
         ))));
 
-        return $this->isLive() ? array_values(array_intersect($platforms, LegacyClientOAuthProvider::PLATFORMS)) : $platforms;
+        return $this->isLive() ? array_values(array_intersect($platforms, MarketplaceOAuthProviderFactory::LIVE_PLATFORMS)) : $platforms;
     }
 
     /** @return array<string, mixed> */
@@ -88,8 +89,8 @@ final class MarketplaceOAuthService
 
         foreach ($this->platforms() as $platform) {
             $provider = $this->providerFor($platform);
-            $missing = $provider instanceof LegacyClientOAuthProvider ? $provider->configurationMissing() : [];
-            $environment = $provider instanceof LegacyClientOAuthProvider ? (string) ($provider->context()['environment'] ?? 'live') : 'live';
+            $missing = $provider instanceof LiveOAuthProvider ? $provider->configurationMissing() : [];
+            $environment = $provider instanceof LiveOAuthProvider ? (string) ($provider->context()['environment'] ?? 'live') : 'live';
             $platforms[$platform] = [
                 'platform' => $platform,
                 'environment' => $environment,
@@ -570,7 +571,7 @@ final class MarketplaceOAuthService
 
     private function providerFor(string $platform): MarketplaceOAuthProvider
     {
-        return $this->providers[$platform] ??= $this->isLive() ? new LegacyClientOAuthProvider($platform) : new SandboxMarketplaceOAuthProvider($platform);
+        return $this->providers[$platform] ??= $this->providerFactory->for($platform);
     }
 
     private function assertPlatform(string $platform): string
