@@ -75,7 +75,9 @@ final class KonveksiTypedLayoutTest extends TestCase
         $row = $mapper->toRow($record);
         $stored = json_decode(json_encode($row), true); // what the database hands back
 
-        $this->assertSame($this->canonical($record), $this->canonical($mapper->toRecord($stored)));
+        // The reference is the JSON layout: a record stored as JSON text comes back as json_decode(json_encode(record)).
+        $viaJson = json_decode(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), true);
+        $this->assertSame($this->canonical($viaJson), $this->canonical($mapper->toRecord($stored)));
     }
 
     // ---- real data, whole pipeline ---------------------------------------------------------------------------
@@ -157,6 +159,74 @@ final class KonveksiTypedLayoutTest extends TestCase
         $this->assertSame($this->canonical($onJson), $this->canonical($onTyped));
         $this->assertTrue(collect(app(KonveksiCollections::class)->documents('bahan'))->contains('id_bahan', 'BHN-UJI'));
         $this->assertTrue(collect(app(KonveksiCollections::class)->documents('mutasi_stok'))->contains('id_bahan', 'BHN-UJI'));
+    }
+
+    public function test_posting_a_purchase_and_a_sale_stores_the_same_records_on_every_typed_table(): void
+    {
+        $this->install();
+        $collections = app(KonveksiCollections::class);
+        $user = new LegacyUser(['id' => 'u1', 'username' => 'kasir', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN']);
+        $written = ['pembelian', 'pembelian_item', 'bahan', 'bahan_hpp', 'mutasi_stok', 'keuangan', 'hutang_supplier', 'penjualan', 'penjualan_item', 'master_stok', 'produk'];
+        $seed = function () use ($collections, $written): void {
+            foreach ($written as $key) {
+                $collections->replace($key, []);
+            }
+            $collections->replace('bahan', [
+                ['id_bahan' => 'B1', 'id' => 'B1', 'kode_bahan' => 'KAIN-1', 'nama_bahan' => 'Kain Katun', 'stok' => 10, 'harga_beli' => 40000],
+                ['id_bahan' => 'B2', 'id' => 'B2', 'kode_bahan' => 'BTN-1', 'nama_bahan' => 'Kancing', 'stok' => 100, 'harga_beli' => 100],
+            ]);
+            $collections->replace('bahan_hpp', [['id_bahan_hpp' => 'HPP-B1', 'id_bahan' => 'B1', 'harga_aktif' => 4000]]);
+            $collections->replace('produk', [['id' => 'P1', 'id_stok_item' => 'STK-1', 'kode' => 'KMJ-01', 'nama' => 'Kemeja', 'stok' => 10, 'hpp_produk' => 50000]]);
+            $collections->replace('master_stok', [['id_stok_item' => 'STK-1', 'id_produk' => 'P1', 'kode_sku' => 'KMJ-01', 'nama_produk' => 'Kemeja', 'stok_akhir' => 10, 'stok' => 10, 'keluar_penjualan' => 0, 'stok_minimum' => 3]]);
+        };
+        $flow = function () use ($collections, $user, $written): array {
+            app(KonveksiPurchaseWriteService::class)->saveInvoice($user, 'A', [
+                'id_transaksi' => 'PBL-1', 'no_faktur_supplier' => 'INV-001', 'id_supplier' => 'SUP-1', 'nama_supplier' => 'Toko Kain', 'tanggal' => '2026-11-04',
+                'id_rekening' => 'KAS-1', 'nominal_bayar' => 500000, 'jatuh_tempo' => '2026-12-04',
+                'items' => [
+                    ['id_bahan' => 'B1', 'qty' => 5, 'conversion_factor' => 40, 'harga_satuan' => 200000, 'subtotal' => 1000000],
+                    ['id_bahan' => 'B2', 'qty' => 2, 'qty_satuan_pakai' => 500, 'harga_satuan' => 50000, 'subtotal' => 100000],
+                ],
+            ]);
+            app(\App\Services\Konveksi\KonveksiSalesWriteService::class)->post($user, 'A', [
+                'tanggal' => '2026-11-04', 'id_rekening' => 'KAS-1', 'diskon_transaksi' => 0, 'ongkir' => 5000, 'nominal_dibayar' => 300000,
+                'items' => [['kode_sku' => 'KMJ-01', 'nama_produk' => 'Kemeja', 'qty' => 3, 'harga_jual' => 100000, 'diskon_item' => 10000]],
+            ]);
+            $out = [];
+            foreach ($written as $key) {
+                $out[$key] = $this->masked($collections->documents($key));
+            }
+
+            return $out;
+        };
+
+        $seed();
+        $onJson = $flow();
+        $this->assertNotEmpty($onJson['penjualan'], 'the flow must have written something to compare');
+
+        $seed();
+        $this->assertSame(0, Artisan::call('konveksi:typed', ['action' => 'migrate', '--all' => true, '--replace' => true]), Artisan::output());
+        foreach (['penjualan', 'penjualan_item', 'pembelian', 'pembelian_item', 'bahan_hpp'] as $key) {
+            $this->assertStringStartsWith('kv_', DB::table('system_table_map')->where('api_key', $key)->value('table_name'), $key.' must be typed now');
+        }
+        $onTyped = $flow();
+
+        $this->assertSame($this->canonical($onJson), $this->canonical($onTyped));
+        $this->assertGreaterThan(0, DB::table('kv_penjualan')->count());
+        $this->assertGreaterThan(0, DB::table('kv_pembelian_item')->count());
+    }
+
+    /** Replaces what changes on every run (generated ids, clock values) so two runs can be compared. */
+    private function masked(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn ($item) => $this->masked($item), $value);
+        }
+        if (is_string($value)) {
+            $value = preg_replace(['/\d{8}-[0-9A-F]{8}/', '/\d{4}-\d{2}-\d{2}T[\d:.+Z-]+/', '/\d{8}-\d{6}/', '/^\d{2}:\d{2}:\d{2}$/', '/[0-9a-f]{64}/'], ['<id>', '<ts>', '<no>', '<time>', '<hash>'], $value);
+        }
+
+        return $value;
     }
 
     public function test_a_failed_verification_never_switches_the_collection(): void

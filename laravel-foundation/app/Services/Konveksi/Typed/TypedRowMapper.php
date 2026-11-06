@@ -22,6 +22,9 @@ final class TypedRowMapper
      */
     public function toRow(array $record): array
     {
+        // The reference behaviour is the JSON layout, which stores a record as JSON text: 10.0 comes back as 10.
+        // Normalising the same way keeps both layouts returning identical records (and keeps _extra_json small).
+        $record = (array) json_decode(json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
         $row = [];
         $originals = [];
         $absent = [];
