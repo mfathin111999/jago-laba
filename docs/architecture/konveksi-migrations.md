@@ -33,7 +33,7 @@ php artisan konveksi:schema-check     # hanya membaca; exit 1 bila ada tabel/kol
 - `php artisan konveksi:import-snapshot` memuat data awal spreadsheet (`database/legacy/current_database_snapshot.json`) ke tabel hasil migrasi. Menolak menimpa tabel yang sudah berisi data kecuali `--replace` (di production butuh `--force`); `--only=produk,bahan` membatasi koleksi. Terbukti identik dengan hasil `SnapshotImporter` legacy pada 39 tabel (38 sheet, 226 baris).
 - `scripts/development/run-local.ps1` menjalankan `php artisan migrate --force` dan `konveksi:schema-check` pada setiap peluncuran.
 - `php artisan jago:create-owner` membuat/mereset login Owner (pengganti `SchemaManager::ensureOwner`). `run-local.ps1` pada database kosong kini hanya memakai artisan: `migrate`, `konveksi:import-snapshot`, `jago:create-owner` (terverifikasi di MariaDB kosong: kedua schema-check sesuai).
-- Belum dikerjakan: `konveksi:isolate` (port `bin/konveksi-setup.php`) dan runbook cutover.
+- `php artisan konveksi:isolate --prepare [--activate]` memisahkan database Konveksi (port `bin/konveksi-setup.php`); lihat `database-cutover-runbook.md`.
 
 ## Tabel Marketplace dan sistem (migrasi 2026_11_10_000003)
 - 46 tabel (`marketplace_*`, `system_users`, `auth_users_v2`, `migration_log`) dibuat dari DDL emas `laravel-foundation/database/schema/marketplace.sql`, diambil dari database hasil installer legacy (termasuk kolom generated `net_margin_profit`, `roas`, `source_order_status`). `CREATE TABLE IF NOT EXISTS`: tabel yang ada tidak diubah. Hanya MySQL/MariaDB; test SQLite membuat tabelnya sendiri.
