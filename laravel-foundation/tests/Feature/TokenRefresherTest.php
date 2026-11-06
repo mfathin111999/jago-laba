@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Exceptions\MarketplaceIntegrationException;
-use App\Marketplace\TokenVault;
 use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Sync\TokenRefresher;
+use App\Services\Marketplace\TokenVault;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;

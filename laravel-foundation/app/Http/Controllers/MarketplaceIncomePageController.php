@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceIncomeRequest;
-use App\Marketplace\IncomeReadService;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\IncomeReadService;
 use App\Services\Marketplace\MarketplaceStoreReadService;
 use Inertia\Inertia;
 

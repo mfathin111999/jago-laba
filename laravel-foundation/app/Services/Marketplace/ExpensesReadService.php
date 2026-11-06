@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Services\Marketplace\Expenses\ExpenseListing;
-use App\Services\Marketplace\MarketplaceScope;
 
 final class ExpensesReadService
 {

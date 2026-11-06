@@ -4,9 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
 use App\Http\Controllers\KonveksiLegacyAppController;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 final class KonveksiLegacyAppTest extends TestCase

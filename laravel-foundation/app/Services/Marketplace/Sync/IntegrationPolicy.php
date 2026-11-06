@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace\Sync;
 
 /**
  * Application policy for integration health. It is never a claim about a platform's official quota.

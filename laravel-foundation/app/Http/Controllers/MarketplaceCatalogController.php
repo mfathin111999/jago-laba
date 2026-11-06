@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceCatalogRequest;
 use App\Http\Responses\CsvDownload;
-use App\Marketplace\CatalogReadService;
-use App\Marketplace\LiveGateway;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\CatalogReadService;
+use App\Services\Marketplace\LiveGateway;
 use App\Services\Marketplace\MarketplaceStoreReadService;
 use Inertia\Inertia;
 

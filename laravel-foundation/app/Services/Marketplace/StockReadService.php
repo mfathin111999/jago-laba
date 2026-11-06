@@ -1,8 +1,7 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
-use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Stock\StockService;
 
 /** Reads the store stock listing; never returns the raw provider payload. */

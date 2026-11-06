@@ -3,9 +3,9 @@
 namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
-use App\Marketplace\TokenVault;
 use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Http\MarketplaceHttp;
+use App\Services\Marketplace\TokenVault;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 use Throwable;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use Illuminate\Support\Facades\Crypt;
 

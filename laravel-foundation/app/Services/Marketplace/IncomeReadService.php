@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Services\Marketplace\Income\IncomeService;
-use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Withdrawal\WithdrawalService;
 
 /** Income overview and withdrawal history, trimmed to what the page displays. */

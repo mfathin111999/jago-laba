@@ -3,7 +3,6 @@
 namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
-use App\Marketplace\IntegrationPolicy;
 use App\Services\Marketplace\Concerns\RunsSql;
 use Illuminate\Database\DatabaseManager;
 

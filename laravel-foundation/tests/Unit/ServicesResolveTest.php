@@ -16,7 +16,7 @@ final class ServicesResolveTest extends TestCase
     private function classes(): array
     {
         $found = [];
-        foreach (['Services/Marketplace', 'Marketplace'] as $folder) {
+        foreach (['Services/Marketplace'] as $folder) {
             $base = dirname(__DIR__, 2).'/app/'.$folder;
             $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($base, \FilesystemIterator::SKIP_DOTS));
             foreach ($iterator as $file) {

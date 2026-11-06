@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
-use App\Marketplace\TokenVault;
+use App\Services\Marketplace\TokenVault;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;

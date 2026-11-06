@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
 use App\Services\Konveksi\KonveksiDocumentAndAiService;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -86,7 +87,7 @@ final class KonveksiDocumentStorageTest extends TestCase
             $table->string('file_id')->unique();
         });
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         try {
             $this->save('data:image/png;base64,'.self::PNG);
         } finally {

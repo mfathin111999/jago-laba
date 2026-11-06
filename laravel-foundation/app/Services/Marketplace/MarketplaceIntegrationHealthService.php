@@ -2,7 +2,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Marketplace\IntegrationPolicy;
+use App\Services\Marketplace\Sync\IntegrationPolicy;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Support\Facades\Schema;

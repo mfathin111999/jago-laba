@@ -3,12 +3,12 @@
 namespace App\Services\Marketplace\Shipping;
 
 use App\Exceptions\MarketplaceIntegrationException;
-use App\Marketplace\TokenVault;
 use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Integrations\TikTokDataClient;
 use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Sync\PartnerSettings;
 use App\Services\Marketplace\Sync\TokenRefresher;
+use App\Services\Marketplace\TokenVault;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use Throwable;

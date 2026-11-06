@@ -947,7 +947,7 @@ final class PilotReadOnlyTest extends TestCase
         $this->assertSame('konveksi', $props['workspace']);
         $this->assertSame('LOCAL-COMPANY', $props['scope']['company_key']);
         $this->assertSame('dashboard', $props['tab']);
-        $this->assertSame(\App\Services\Konveksi\KonveksiPilotReadService::COLLECTIONS, $props['query']['tables']);
+        $this->assertSame(KonveksiPilotReadService::COLLECTIONS, $props['query']['tables']);
         $this->assertSame(['_row_order', '_row_id'], $props['query']['order_by']);
         $this->assertSame('loadSemuaData', $props['query']['method']);
         $this->assertLessThan(2.0, $laravelElapsed, 'Laravel/Inertia Konveksi fixture read took unexpectedly long.');

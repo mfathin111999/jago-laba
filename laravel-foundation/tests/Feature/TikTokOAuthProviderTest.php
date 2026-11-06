@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Exceptions\MarketplaceOAuthException;
-use App\Marketplace\IntegrationPolicy;
-use App\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
-use App\Marketplace\OAuth\ShopeeOAuthProvider;
-use App\Marketplace\OAuth\TikTokShopOAuthProvider;
+use App\Services\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
+use App\Services\Marketplace\OAuth\ShopeeOAuthProvider;
+use App\Services\Marketplace\OAuth\TikTokShopOAuthProvider;
+use App\Services\Marketplace\Sync\IntegrationPolicy;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;

@@ -3,8 +3,6 @@
 namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
-use App\Marketplace\IntegrationPolicy;
-use App\Marketplace\TokenVault;
 use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Integrations\MarketplaceReadAdapter;
 use App\Services\Marketplace\Integrations\ShopeeReadAdapter;
@@ -12,6 +10,7 @@ use App\Services\Marketplace\Integrations\TikTokDataClient;
 use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\MarketplaceStoreDeletionService;
 use App\Services\Marketplace\Stock\StockService;
+use App\Services\Marketplace\TokenVault;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;

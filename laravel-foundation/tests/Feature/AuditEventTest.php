@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Audit\AuditLogger;
 use App\Audit\AuditRecorded;
 use App\Auth\LegacyUser;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;

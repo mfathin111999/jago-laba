@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Services\Marketplace\Marketing\MarketingDashboard;
-use App\Services\Marketplace\MarketplaceScope;
 
 /** Product advertising performance from imported ad reports. */
 final class MarketingReadService

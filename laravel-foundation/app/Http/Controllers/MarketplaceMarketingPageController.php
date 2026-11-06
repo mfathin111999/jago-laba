@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Marketplace\MarketingReadService;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\MarketingReadService;
 use App\Services\Marketplace\MarketplaceStoreReadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;

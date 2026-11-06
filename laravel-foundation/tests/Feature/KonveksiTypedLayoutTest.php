@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Auth\LegacyUser;
 use App\Services\Konveksi\KonveksiCollections;
+use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Konveksi\KonveksiPurchaseWriteService;
+use App\Services\Konveksi\KonveksiSalesWriteService;
 use App\Services\Konveksi\Storage\JsonCollectionDriver;
 use App\Services\Konveksi\Typed\KonveksiTypedMigrator;
 use App\Services\Konveksi\Typed\TypedColumn;
@@ -13,6 +15,8 @@ use App\Services\Konveksi\Typed\TypedRowMapper;
 use App\Services\Konveksi\TypedCollections;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 final class KonveksiTypedLayoutTest extends TestCase
@@ -66,7 +70,7 @@ final class KonveksiTypedLayoutTest extends TestCase
     }
 
     /** @param array<string, mixed> $record */
-    #[\PHPUnit\Framework\Attributes\DataProvider('records')]
+    #[DataProvider('records')]
     public function test_a_record_comes_back_exactly_as_written(array $record): void
     {
         $definition = TypedDefinition::fromArray('uji', ['columns' => ['id' => 'bigint', 'nama' => 'string:60', 'nominal' => 'decimal:18,2', 'tanggal' => 'date', 'catatan' => 'text']]);
@@ -93,7 +97,7 @@ final class KonveksiTypedLayoutTest extends TestCase
 
         $this->assertSame(0, Artisan::call('konveksi:typed', ['action' => 'migrate', '--all' => true]), Artisan::output());
 
-        $collections = new KonveksiCollections(app(\App\Services\Konveksi\KonveksiConnection::class), app(TypedCollections::class));
+        $collections = new KonveksiCollections(app(KonveksiConnection::class), app(TypedCollections::class));
         foreach ($keys as $key) {
             $this->assertSame('kv_'.$key, DB::table('system_table_map')->where('api_key', $key)->value('table_name'), $key);
             $this->assertSame($this->canonical($before[$key]), $this->canonical($collections->documents($key)), $key);
@@ -123,7 +127,7 @@ final class KonveksiTypedLayoutTest extends TestCase
         $rows = $collections->rows('rekening');
         $created = collect($rows)->firstWhere('data.id', 99);
         $collections->update('rekening', $created['id'], ['id' => 99, 'kode' => 'BCA', 'nama' => 'BCA Diubah', 'saldo_awal' => 2500.5, 'baru' => 'ya']);
-        $first = collect($rows)->firstWhere("data.kode", "KS002SB");
+        $first = collect($rows)->firstWhere('data.kode', 'KS002SB');
         $collections->delete('rekening', $first['id']);
 
         $this->assertSame('BCA Diubah', collect($collections->documents('rekening'))->firstWhere('id', 99)['nama']);
@@ -188,7 +192,7 @@ final class KonveksiTypedLayoutTest extends TestCase
                     ['id_bahan' => 'B2', 'qty' => 2, 'qty_satuan_pakai' => 500, 'harga_satuan' => 50000, 'subtotal' => 100000],
                 ],
             ]);
-            app(\App\Services\Konveksi\KonveksiSalesWriteService::class)->post($user, 'A', [
+            app(KonveksiSalesWriteService::class)->post($user, 'A', [
                 'tanggal' => '2026-11-04', 'id_rekening' => 'KAS-1', 'diskon_transaksi' => 0, 'ongkir' => 5000, 'nominal_dibayar' => 300000,
                 'items' => [['kode_sku' => 'KMJ-01', 'nama_produk' => 'Kemeja', 'qty' => 3, 'harga_jual' => 100000, 'diskon_item' => 10000]],
             ]);
@@ -261,7 +265,7 @@ final class KonveksiTypedLayoutTest extends TestCase
         Artisan::call('konveksi:typed', ['action' => 'migrate', '--all' => true]);
         $this->assertSame(0, Artisan::call('konveksi:schema-check'), 'a collection mapped to its typed table is correct: '.Artisan::output());
 
-        \Illuminate\Support\Facades\Schema::drop('kv_produk');
+        Schema::drop('kv_produk');
         $this->assertSame(1, Artisan::call('konveksi:schema-check'));
         $this->assertStringContainsString('Tabel hilang: kv_produk', Artisan::output());
     }

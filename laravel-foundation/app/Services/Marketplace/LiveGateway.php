@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Auth\LegacyUser;
-use App\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
-use App\Services\Marketplace\MarketplaceScope;
+use App\Services\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
 
 /**
  * Door to the features that talk to a real marketplace (fulfillment, shipping documents, price editor, order finance).

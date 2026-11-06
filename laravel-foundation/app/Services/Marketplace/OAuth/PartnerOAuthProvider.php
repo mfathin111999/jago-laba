@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Marketplace\OAuth;
+namespace App\Services\Marketplace\OAuth;
 
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Exceptions\MarketplaceOAuthException;
-use App\Marketplace\IntegrationPolicy;
 use App\Services\Marketplace\Http\MarketplaceHttp;
+use App\Services\Marketplace\Sync\IntegrationPolicy;
 use Throwable;
 
 /**

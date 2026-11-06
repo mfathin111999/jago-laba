@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Services\Marketplace\Catalog\CatalogService;
-use App\Services\Marketplace\MarketplaceScope;
 
 final class CatalogReadService
 {

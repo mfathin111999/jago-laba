@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
-use App\Marketplace\LiveGateway;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\LiveGateway;
 use App\Services\Marketplace\MarketplaceAutoSyncService;
 use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Services\Marketplace\MarketplaceSyncStatusService;

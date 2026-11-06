@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Database\KonveksiSchema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -119,6 +120,6 @@ final class KonveksiSchemaHelper
     /** @return list<string> */
     public static function tables(): array
     {
-        return \App\Database\KonveksiSchema::collectionTables();
+        return KonveksiSchema::collectionTables();
     }
 }

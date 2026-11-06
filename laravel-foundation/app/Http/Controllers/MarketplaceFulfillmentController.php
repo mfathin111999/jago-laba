@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\ProviderConnectorInactive;
-use App\Marketplace\LiveGateway;
+use App\Services\Marketplace\LiveGateway;
 use App\Services\Marketplace\MarketplaceFulfillmentWriteService;
 use App\Services\Marketplace\Shipping\FulfillmentService;
 use DomainException;

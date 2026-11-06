@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Marketplace\OAuth;
+namespace App\Services\Marketplace\OAuth;
 
 /** A provider that talks to the real platform: it can say which settings are still missing and which environment it targets. */
 interface LiveOAuthProvider extends MarketplaceOAuthProvider

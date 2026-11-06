@@ -24,5 +24,4 @@ final class HostingContractTest extends TestCase
         $this->assertStringNotContainsString('/public/', $callback);
         $this->assertStringNotContainsString('/public/', $laravelCallback);
     }
-
 }

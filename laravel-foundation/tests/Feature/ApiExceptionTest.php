@@ -17,7 +17,7 @@ final class ApiExceptionTest extends TestCase
     {
         parent::setUp();
 
-        Route::get('/__test/store-forbidden', fn () => throw new StoreForbidden());
+        Route::get('/__test/store-forbidden', fn () => throw new StoreForbidden);
         Route::get('/__test/not-found', fn () => throw new ResourceNotFound('Data tidak ada.', 'THING_NOT_FOUND'));
         Route::get('/__test/idempotency', fn () => throw new IdempotencyConflict('Kunci sudah dipakai.'));
         Route::get('/__test/guarded-failure', fn () => ApiResponse::guard(
@@ -88,7 +88,7 @@ final class ApiExceptionTest extends TestCase
 
     public function test_api_exceptions_stay_compatible_with_plain_domain_exception_handling(): void
     {
-        $exception = new StoreForbidden();
+        $exception = new StoreForbidden;
 
         $this->assertInstanceOf(\DomainException::class, $exception);
         $this->assertInstanceOf(ApiException::class, $exception);

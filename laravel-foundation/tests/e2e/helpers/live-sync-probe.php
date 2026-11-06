@@ -9,8 +9,8 @@
  */
 
 use App\Auth\LegacyUser;
-use App\Marketplace\TokenVault;
 use App\Services\Marketplace\MarketplaceLiveSyncService;
+use App\Services\Marketplace\TokenVault;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 

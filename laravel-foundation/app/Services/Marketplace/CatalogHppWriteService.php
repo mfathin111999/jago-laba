@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Marketplace;
+namespace App\Services\Marketplace;
 
 use App\Audit\AuditLogger;
 use App\Auth\LegacyUser;
 use App\Services\Marketplace\Catalog\CatalogService;
 use App\Services\Marketplace\Catalog\SkuHppUpdater;
-use App\Services\Marketplace\MarketplaceScope;
 use InvalidArgumentException;
 
 final class CatalogHppWriteService

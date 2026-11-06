@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Marketplace\OAuth;
+namespace App\Services\Marketplace\OAuth;
 
 use App\Exceptions\MarketplaceOAuthException;
 use Illuminate\Support\Str;
