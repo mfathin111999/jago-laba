@@ -71,6 +71,8 @@ return [
         ],
     ],
     'sync' => [
+        // Conservative Jago Laba concurrency policy per platform, not an official API quota.
+        'platform_concurrency' => ['Shopee' => 2, 'TikTok Shop' => 2],
         'queue' => env('JL_MARKETPLACE_SYNC_QUEUE', 'marketplace'),
         'page_size' => max(1, (int) env('JL_MARKETPLACE_SYNC_PAGE_SIZE', 50)),
         'page_size_max' => max(1, (int) env('JL_MARKETPLACE_SYNC_PAGE_SIZE_MAX', 100)),

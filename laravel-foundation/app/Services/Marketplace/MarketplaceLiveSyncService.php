@@ -3,14 +3,11 @@
 namespace App\Services\Marketplace;
 
 use App\Auth\LegacyUser;
-use App\Marketplace\LegacyExecutionContext;
-use App\Marketplace\LegacyRuntime;
+use App\Services\Marketplace\Sync\SyncService;
 use DomainException;
-use MarketplaceSyncService;
-use PDO;
 
 /**
- * Live synchronisation: runs the LEGACY sync engine (MarketplaceSyncService) unchanged. It reads products, orders,
+ * Live synchronisation. It reads products, orders,
  * transactions and returns from the official Shopee / TikTok Shop APIs with the same paging, checkpoints, retry and
  * cool-down rules as the legacy application, writing into the same tables. Laravel only supplies the queue that
  * drives it one step at a time.
@@ -23,7 +20,7 @@ final class MarketplaceLiveSyncService
     /** @var (callable(array<string, mixed>): object)|null provider client factory; tests inject a fake, production leaves it null */
     private $clientFactory = null;
 
-    public function __construct(private readonly LegacyExecutionContext $context) {}
+    public function __construct(private readonly MarketplaceScope $scope, private readonly SyncService $sync) {}
 
     /** @param callable(array<string, mixed>): object|null $factory */
     public function useClientFactory(?callable $factory): void
@@ -43,7 +40,7 @@ final class MarketplaceLiveSyncService
      */
     public function enqueue(string $companyKey, string $storeId, string $requestId): array
     {
-        $state = $this->run($companyKey, static function (MarketplaceSyncService $sync) use ($storeId): array {
+        $state = $this->run($companyKey, static function (SyncService $sync) use ($storeId): array {
             $before = $sync->status($storeId)['jobs'] ?? [];
             $pendingBefore = array_filter($before, static fn (array $job): bool => in_array($job['status'], ['queued', 'running'], true));
             $after = $sync->enqueueAll($storeId);
@@ -74,7 +71,7 @@ final class MarketplaceLiveSyncService
      */
     public function step(string $companyKey, string $storeId, string $runKey): array
     {
-        $state = $this->run($companyKey, static fn (MarketplaceSyncService $sync): array => $sync->step($storeId, $runKey));
+        $state = $this->run($companyKey, static fn (SyncService $sync): array => $sync->step($storeId, $runKey));
         $jobs = array_values(array_filter($state['jobs'] ?? [], static fn (array $job): bool => (string) $job['run_key'] === $runKey));
         $pending = false;
         $retryIn = 1;
@@ -94,20 +91,16 @@ final class MarketplaceLiveSyncService
     /**
      * @template T
      *
-     * @param  callable(MarketplaceSyncService): T  $callback
+     * @param  callable(SyncService): T  $callback
      * @return T
      */
     private function run(string $companyKey, callable $callback): mixed
     {
-        LegacyRuntime::prepare();
-        LegacyRuntime::service('MarketplaceSyncService');
         $system = new LegacyUser(['id' => 'system', 'username' => 'system', 'role_id' => 'ROLE-OWNER_SUPER_ADMIN', 'company_key' => $companyKey]);
 
         $factory = $this->clientFactory;
 
-        return $this->context->run($system, $companyKey, static function (PDO $pdo) use ($callback, $factory): mixed {
-            // connectedManual: serve real connected stores (not only sandbox ones), same as the legacy manual sync.
-            return $callback(new MarketplaceSyncService($pdo, $factory, false, false, true));
-        });
+        // connectedManual: serve real connected stores (not only sandbox ones), same as the manual sync.
+        return $this->scope->run($system, $companyKey, fn (): mixed => $callback($this->sync->with(connectedManual: true, factory: $factory)));
     }
 }
