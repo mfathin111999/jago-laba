@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
+use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\LiveGateway;
+use App\Services\Marketplace\Price\PriceService;
 use App\Security\CsrfTokenValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +23,7 @@ final class MarketplacePriceController
         private readonly StoreContext $stores,
         private readonly CsrfTokenValidator $csrf,
         private readonly LiveGateway $live,
+        private readonly PriceService $prices,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -55,11 +58,9 @@ final class MarketplacePriceController
     {
         $productId = (string) $request->input('product_id', '');
         try {
-            $data = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplacePriceService.php'], static function (\PDO $pdo) use ($action, $storeId, $productId, $request): mixed {
-                $service = new \MarketplacePriceService($pdo);
-
-                return $action === 'prepare' ? $service->prepare($storeId, $productId) : $service->save($storeId, $productId, (array) $request->input('payload', []));
-            });
+            $data = $this->live->run($request->user('web'), $request->companyKey(), fn (): mixed => $action === 'prepare'
+                ? $this->prices->prepare($storeId, $productId)
+                : $this->prices->save($storeId, $productId, (array) $request->input('payload', [])));
 
             return response()->json(['success' => true, 'data' => $data])->header('Cache-Control', 'no-store, private');
         } catch (\Throwable $e) {
@@ -68,7 +69,7 @@ final class MarketplacePriceController
             return response()->json([
                 'success' => false,
                 'message' => $safe ? $e->getMessage() : 'API marketplace belum dapat memproses perubahan.',
-                'error_code' => $e instanceof \MarketplaceIntegrationException ? $e->errorCode : null,
+                'error_code' => $e instanceof MarketplaceIntegrationException ? $e->errorCode : null,
             ], $e instanceof \DomainException ? 403 : 400)->header('Cache-Control', 'no-store, private');
         }
     }

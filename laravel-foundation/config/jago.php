@@ -56,7 +56,7 @@ return [
         'base_url' => $appBaseUrl !== '' ? $appBaseUrl : null,
         'webhook_url' => env('JL_MARKETPLACE_WEBHOOK_URL'),
         'catalog_reconcile_seconds' => max(900, (int) env('JL_MARKETPLACE_CATALOG_RECONCILE_SECONDS', 86400)),
-        'returns_reconcile_seconds' => max(900, (int) env('JL_MARKETPLACE_RETURNS_RECONCILE_SECONDS', 86400)),
+        'returns_reconcile_seconds' => max(900, (int) env('JL_MARKETPLACE_RETURNS_RECONCILE_SECONDS', 900)),
         // Provider credentials and hosts are in config/services.php ('shopee', 'tiktok_shop').
     ],
     'oauth' => [

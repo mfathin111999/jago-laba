@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Marketplace\LegacyRuntime;
 use App\Exceptions\ProviderConnectorInactive;
 use App\Marketplace\LiveGateway;
+use App\Services\Marketplace\Shipping\FulfillmentService;
 use App\Services\Marketplace\MarketplaceFulfillmentWriteService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +17,7 @@ use InvalidArgumentException;
  */
 final class MarketplaceFulfillmentController
 {
-    public function __construct(private readonly MarketplaceFulfillmentWriteService $service, private readonly LiveGateway $live) {}
+    public function __construct(private readonly MarketplaceFulfillmentWriteService $service, private readonly LiveGateway $live, private readonly FulfillmentService $fulfillment) {}
 
     public function handle(Request $request): JsonResponse
     {
@@ -73,24 +73,14 @@ final class MarketplaceFulfillmentController
         }
 
         try {
-            $data = $this->liveGateway()->run($request->user('web'), $companyKey, ['MarketplaceFulfillmentService.php'], static function (\PDO $pdo) use ($action, $storeId, $orderId, $package, $request, $slot): mixed {
-                $service = new \MarketplaceFulfillmentService($pdo);
-
-                return $action === 'options'
-                    ? ['packages' => $service->options($storeId, $orderId, $package !== '' ? $package : null)]
-                    : $service->confirm($storeId, $orderId, $package, (string) $request->input('offer_token', ''), (string) $request->input('method', ''), $slot);
-            });
+            $data = $this->live->run($request->user('web'), $companyKey, fn (): mixed => $action === 'options'
+                ? ['packages' => $this->fulfillment->options($storeId, $orderId, $package !== '' ? $package : null)]
+                : $this->fulfillment->confirm($storeId, $orderId, $package, (string) $request->input('offer_token', ''), (string) $request->input('method', ''), $slot));
 
             return response()->json(['success' => true, 'data' => $data])->header('Cache-Control', 'no-store, private');
         } catch (\Throwable $e) {
-            LegacyRuntime::service('MarketplaceFulfillmentService');
-
-            return response()->json(['success' => false, 'message' => \MarketplaceFulfillmentService::safeError($e)], $e instanceof DomainException ? 403 : 400)->header('Cache-Control', 'no-store, private');
+            return response()->json(['success' => false, 'message' => FulfillmentService::safeError($e)], $e instanceof DomainException ? 403 : 400)->header('Cache-Control', 'no-store, private');
         }
     }
 
-    private function liveGateway(): LiveGateway
-    {
-        return $this->live;
-    }
 }

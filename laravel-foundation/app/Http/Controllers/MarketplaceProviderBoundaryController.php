@@ -81,7 +81,7 @@ final class MarketplaceProviderBoundaryController
         try {
             $snapshot = (array) ($detail['presentation'] ?? []);
             $fresh = ! empty($snapshot['finance_updated_at']) && strtotime((string) $snapshot['finance_updated_at']) > time() - 30;
-            $synced = $fresh || $this->live->run($request->user('web'), $companyKey, ['MarketplaceSyncService.php'], static fn (\PDO $pdo): bool => (new \MarketplaceSyncService($pdo, null, true))->refreshOrderFinance($storeId, $orderId));
+            $synced = $fresh || $this->live->runLegacy($request->user('web'), $companyKey, ['MarketplaceSyncService.php'], static fn (\PDO $pdo): bool => (new \MarketplaceSyncService($pdo, null, true))->refreshOrderFinance($storeId, $orderId));
             $current = $this->orders->detail($companyKey, $storeId, $orderId);
 
             return $this->json([

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
 use App\Marketplace\LiveGateway;
+use App\Services\Marketplace\Shipping\ShippingDocumentService;
 use App\Services\Marketplace\OrderReadService;
 use App\Security\CsrfTokenValidator;
 use DomainException;
@@ -28,6 +29,7 @@ final class MarketplaceShippingDocumentController
         private readonly StoreContext $stores,
         private readonly CsrfTokenValidator $csrf,
         private readonly LiveGateway $live,
+        private readonly ShippingDocumentService $documents,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -86,8 +88,8 @@ final class MarketplaceShippingDocumentController
         }
 
         if ($this->live->enabled()) {
-            $documents = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplaceShippingDocumentService.php'], static function (\PDO $pdo) use ($storeId, $orderId): array {
-                $documents = (new \MarketplaceShippingDocumentService($pdo))->prepare($storeId, $orderId);
+            $documents = $this->live->run($request->user('web'), $request->companyKey(), function () use ($storeId, $orderId): array {
+                $documents = $this->documents->prepare($storeId, $orderId);
                 foreach ($documents as &$document) {
                     if (! empty($document['success'])) {
                         $document['download_url'] = 'api/marketplace-shipping-document.php?id='.$document['document_id'];
@@ -113,7 +115,7 @@ final class MarketplaceShippingDocumentController
     private function liveDownload(Request $request): Response
     {
         $preview = (string) $request->query('preview', '') === '1';
-        $document = $this->live->run($request->user('web'), $request->companyKey(), ['MarketplaceShippingDocumentService.php'], static fn (\PDO $pdo): array => (new \MarketplaceShippingDocumentService($pdo))->read((string) $request->query('id', ''), $preview));
+        $document = $this->live->run($request->user('web'), $request->companyKey(), fn (): array => $this->documents->read((string) $request->query('id', ''), $preview));
 
         return response((string) $document['pdf'], 200, [
             'Content-Type' => 'application/pdf',
