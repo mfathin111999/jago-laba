@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
 use App\Marketplace\LiveGateway;
-use App\Services\Marketplace\Shipping\ShippingDocumentService;
-use App\Services\Marketplace\OrderReadService;
 use App\Security\CsrfTokenValidator;
+use App\Services\Marketplace\OrderReadService;
+use App\Services\Marketplace\Shipping\ShippingDocumentService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

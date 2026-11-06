@@ -15,7 +15,6 @@ use Throwable;
  */
 final class KonveksiBackupService
 {
-
     private const DUMP_TIMEOUT_SECONDS = 300;
 
     private const MIN_DUMP_BYTES = 100;
@@ -198,7 +197,7 @@ final class KonveksiBackupService
 
         try {
             $write('{"metadata":'.json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR).',"tables":{');
-            $connection->transaction(function () use ($connection, $write, &$total, &$missing): void {
+            $connection->transaction(function () use ($write, &$total, &$missing): void {
                 $first = true;
                 foreach ($this->collections->eachSheet($missing) as $sheet => $rows) {
                     $total += count($rows);

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MarketplaceExpensesPageRequest;
 use App\Http\Responses\MarketplaceReportResponse;
 use App\Marketplace\ExpensesReadService;
-use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use Inertia\Inertia;
 
 final class MarketplaceExpensesReadController

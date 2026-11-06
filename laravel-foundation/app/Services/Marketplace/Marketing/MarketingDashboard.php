@@ -2,14 +2,16 @@
 
 namespace App\Services\Marketplace\Marketing;
 
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\MarketplaceScope;
 use DateTimeImmutable;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
-use PDO;
 
 final class MarketingDashboard
 {
+    use RunsSql;
+
     public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     public function report(string $storeId, ?string $filter = null, ?string $search = null, ?string $platform = null, string $adType = 'Semua', bool $includePpn = false, array $dates = []): array
@@ -65,9 +67,7 @@ final class MarketingDashboard
                 $where
                 ORDER BY pa.ad_spend DESC";
 
-        $stmt = $this->pdo()->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->rows($sql, $params);
 
         $totalAdSpend = 0;
         $totalRevenue = 0;
@@ -238,10 +238,5 @@ final class MarketingDashboard
     private function inClause(array $ids): array
     {
         return [implode(',', array_fill(0, count($ids), '?')), array_values($ids)];
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MarketplaceStockRequest;
 use App\Marketplace\StockReadService;
-use App\Services\Marketplace\MarketplaceStoreReadService;
 use App\Policies\RolePolicy;
+use App\Services\Marketplace\MarketplaceStoreReadService;
 use Inertia\Inertia;
 
 /** The Marketplace "Stok" page: marketplace inventory per variant, separate from factory stock. */

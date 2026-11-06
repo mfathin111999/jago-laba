@@ -36,7 +36,6 @@ final class LegacyUserProvider implements UserProvider
         return null;
     }
 
-
     public function retrieveByToken($identifier, #[\SensitiveParameter] $token): ?Authenticatable
     {
         return null;

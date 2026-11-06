@@ -2,12 +2,14 @@
 
 namespace App\Services\Marketplace\Expenses;
 
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\MarketplaceScope;
 use Illuminate\Database\DatabaseManager;
-use PDO;
 
 final class ExpenseListing
 {
+    use RunsSql;
+
     public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     public function list(string $storeId, ?string $category = null, ?string $search = null, ?string $date = null): array
@@ -37,9 +39,7 @@ final class ExpenseListing
                 FROM marketplace_expenses e
                 $where 
                 ORDER BY e.expense_date DESC, e.id DESC";
-        $stmt = $this->pdo()->prepare($sql);
-        $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->rows($sql, $params);
 
         $total = 0;
         $profitAffect = 0;
@@ -63,10 +63,5 @@ final class ExpenseListing
             'count' => count($rows),
             'expenses' => $rows,
         ];
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

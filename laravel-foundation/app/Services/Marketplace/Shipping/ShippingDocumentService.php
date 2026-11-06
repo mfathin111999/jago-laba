@@ -4,17 +4,19 @@ namespace App\Services\Marketplace\Shipping;
 
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\TokenVault;
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Integrations\TikTokDataClient;
 use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Sync\PartnerSettings;
 use App\Services\Marketplace\Sync\TokenRefresher;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
-use PDO;
 use Throwable;
 
 class ShippingDocumentService
 {
+    use RunsSql;
+
     public const DOCUMENT_TYPE = 'SHIPPING_LABEL_AND_PACKING_SLIP';
 
     public function __construct(
@@ -43,16 +45,14 @@ class ShippingDocumentService
         if ($s['platform'] !== 'TikTok Shop') {
             throw new DomainException('Konektor PDF resi Shopee belum tersedia. Gunakan Seller Center Shopee.');
         }
-        $q = $this->pdo()->prepare("SELECT * FROM marketplace_oauth_connections WHERE store_id=? AND company_key=? AND status='verified'");
-        $q->execute([$store, $scope->companyKey()]);
-        $c = $q->fetch(PDO::FETCH_ASSOC);
+        $connection = fn (): ?array => $this->row("SELECT * FROM marketplace_oauth_connections WHERE store_id=? AND company_key=? AND status='verified'", [$store, $scope->companyKey()]);
+        $c = $connection();
         if (! $c) {
             throw new DomainException('Toko perlu diotorisasi ulang sebelum mengambil resi.');
         }
         if (! empty($c['token_expires_at']) && strtotime($c['token_expires_at']) <= time() + 30) {
             $this->tokens->refresh($store, false);
-            $q->execute([$store, $scope->companyKey()]);
-            $c = $q->fetch(PDO::FETCH_ASSOC);
+            $c = $connection();
         }
 
         return $c;
@@ -95,16 +95,13 @@ class ShippingDocumentService
 
     protected function audit(string $store, string $order, string $package, string $event, ?string $code = null): void
     {
-        $q = $this->pdo()->prepare('INSERT INTO marketplace_shipping_document_audit(company_key,store_id,order_id,package_id,user_key,event_type,error_code,created_at) VALUES(?,?,?,?,?,?,?,NOW())');
-        $q->execute([$this->scope->companyKey(), $store, $order, $package, $this->user(), $event, $code]);
+        $this->run('INSERT INTO marketplace_shipping_document_audit(company_key,store_id,order_id,package_id,user_key,event_type,error_code,created_at) VALUES(?,?,?,?,?,?,?,NOW())', [$this->scope->companyKey(), $store, $order, $package, $this->user(), $event, $code]);
     }
 
     public function prepare(string $store, string $order): array
     {
         $c = $this->connection($store);
-        $q = $this->pdo()->prepare("SELECT o.transaction_detail_json,o.source_order_status,r.payload_json FROM marketplace_orders o LEFT JOIN marketplace_sync_records r ON r.store_id=o.store_id AND r.external_id=o.id AND r.resource_type='order' WHERE o.store_id=? AND o.id=? AND o.source_kind='api' AND (o.internal_state IS NULL OR o.internal_state='active')");
-        $q->execute([$store, $order]);
-        $o = $q->fetch(PDO::FETCH_ASSOC);
+        $o = $this->row("SELECT o.transaction_detail_json,o.source_order_status,r.payload_json FROM marketplace_orders o LEFT JOIN marketplace_sync_records r ON r.store_id=o.store_id AND r.external_id=o.id AND r.resource_type='order' WHERE o.store_id=? AND o.id=? AND o.source_kind='api' AND (o.internal_state IS NULL OR o.internal_state='active')", [$store, $order]);
         if (! $o) {
             throw new DomainException('Pesanan tidak ditemukan di toko aktif.');
         }
@@ -125,7 +122,8 @@ class ShippingDocumentService
                 throw new DomainException('Rincian pesanan terbaru belum tersedia.');
             }if (in_array($raw['status'] ?? '', ['UNPAID', 'CANCELLED'], true)) {
                 throw new DomainException('Marketplace menyatakan pesanan belum dibayar atau batal.');
-            }$packages = self::packages($raw);
+            }
+            $packages = self::packages($raw);
         }
         if (! $packages) {
             throw new DomainException('ID paket belum tersedia. Atur pengiriman di Seller Center lalu sinkronkan kembali.');
@@ -138,20 +136,18 @@ class ShippingDocumentService
         $result = [];
         foreach ($packages as $package) {
             try {
-                $cache = $this->pdo()->prepare('SELECT id,byte_size,expires_at FROM marketplace_shipping_documents WHERE company_key=? AND store_id=? AND order_id=? AND package_id=? AND user_key=? AND document_type=? AND expires_at>NOW() ORDER BY created_at DESC LIMIT 1');
-                $cache->execute([$company, $store, $order, $package, $user, self::DOCUMENT_TYPE]);
-                $ready = $cache->fetch(PDO::FETCH_ASSOC);
+                $ready = $this->row('SELECT id,byte_size,expires_at FROM marketplace_shipping_documents WHERE company_key=? AND store_id=? AND order_id=? AND package_id=? AND user_key=? AND document_type=? AND expires_at>NOW() ORDER BY created_at DESC LIMIT 1', [$company, $store, $order, $package, $user, self::DOCUMENT_TYPE]);
                 if (! $ready) {
                     $data = $this->call($c, '/fulfillment/202309/packages/'.rawurlencode($package).'/shipping_documents', ['document_type' => self::DOCUMENT_TYPE, 'document_size' => 'A6', 'document_format' => 'PDF']);
                     $url = $data['doc_url'] ?? null;
                     if (! is_string($url) || $url === '') {
                         throw new MarketplaceIntegrationException('Dokumen belum tersedia dari marketplace.', 'DOCUMENT_NOT_READY');
-                    }$pdf = $this->download($url);
+                    }
+                    $pdf = $this->download($url);
                     self::validatePdf($pdf);
                     $id = bin2hex(random_bytes(24));
                     $expires = date('Y-m-d H:i:s', time() + 900);
-                    $insert = $this->pdo()->prepare('INSERT INTO marketplace_shipping_documents(id,company_key,store_id,order_id,package_id,user_key,pdf_encrypted,pdf_hash,byte_size,expires_at,document_type,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,NOW())');
-                    $insert->execute([$id, $company, $store, $order, $package, $user, $this->vault->encrypt($pdf), hash('sha256', $pdf), strlen($pdf), $expires, self::DOCUMENT_TYPE]);
+                    $this->run('INSERT INTO marketplace_shipping_documents(id,company_key,store_id,order_id,package_id,user_key,pdf_encrypted,pdf_hash,byte_size,expires_at,document_type,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,NOW())', [$id, $company, $store, $order, $package, $user, $this->vault->encrypt($pdf), hash('sha256', $pdf), strlen($pdf), $expires, self::DOCUMENT_TYPE]);
                     $ready = ['id' => $id, 'byte_size' => strlen($pdf), 'expires_at' => $expires];
                     $this->audit($store, $order, $package, 'prepared');
                 } else {
@@ -162,12 +158,12 @@ class ShippingDocumentService
                 $code = $e instanceof MarketplaceIntegrationException ? $e->errorCode : 'DOCUMENT_FETCH_FAILED';
                 if (str_starts_with($code, 'HTTP_') && preg_match('/Code: (\d{1,12})/', $e->getMessage(), $match)) {
                     $code = 'TIKTOK_API_'.$match[1];
-                }$this->audit($store, $order, $package, 'failed', $code);
+                }
+                $this->audit($store, $order, $package, 'failed', $code);
                 $result[] = ['package_id' => $package, 'success' => false, 'code' => $code, 'message' => self::message($code)];
             }
         }
-        $clean = $this->pdo()->prepare('DELETE FROM marketplace_shipping_documents WHERE company_key=? AND expires_at<NOW() LIMIT 100');
-        $clean->execute([$company]);
+        $this->run('DELETE FROM marketplace_shipping_documents WHERE company_key=? AND expires_at<NOW() LIMIT 100', [$company]);
 
         return $result;
     }
@@ -176,17 +172,18 @@ class ShippingDocumentService
     {
         if (! preg_match('/^[a-f0-9]{48}$/', $id)) {
             throw new DomainException('Dokumen tidak tersedia.');
-        }$q = $this->pdo()->prepare('SELECT * FROM marketplace_shipping_documents WHERE id=? AND company_key=? AND user_key=? AND expires_at>NOW()');
-        $q->execute([$id, $this->scope->companyKey(), $this->user()]);
-        $row = $q->fetch(PDO::FETCH_ASSOC);
+        }
+        $row = $this->row('SELECT * FROM marketplace_shipping_documents WHERE id=? AND company_key=? AND user_key=? AND expires_at>NOW()', [$id, $this->scope->companyKey(), $this->user()]);
         if (! $row) {
             throw new DomainException('Dokumen kedaluwarsa atau tidak tersedia. Klik Cetak Resi untuk mengambil ulang.');
-        }$this->scope->assertStoreAccess($row['store_id']);
+        }
+        $this->scope->assertStoreAccess($row['store_id']);
         $pdf = $this->vault->decrypt($row['pdf_encrypted']);
         self::validatePdf($pdf);
         if (! hash_equals($row['pdf_hash'], hash('sha256', $pdf))) {
             throw new DomainException('Dokumen tidak dapat diverifikasi.');
-        }$this->audit($row['store_id'], $row['order_id'], $row['package_id'], $preview ? 'preview_opened' : 'downloaded');
+        }
+        $this->audit($row['store_id'], $row['order_id'], $row['package_id'], $preview ? 'preview_opened' : 'downloaded');
 
         return ['pdf' => $pdf, 'filename' => 'resi-'.preg_replace('/[^a-zA-Z0-9_-]/', '', $row['order_id']).'-'.preg_replace('/[^a-zA-Z0-9_-]/', '', $row['package_id']).'.pdf'];
     }
@@ -211,7 +208,8 @@ class ShippingDocumentService
             $parts = parse_url($url);
             if (! $parts || ($parts['scheme'] ?? '') !== 'https' || isset($parts['user']) || isset($parts['pass']) || (($parts['port'] ?? 443) !== 443)) {
                 throw new MarketplaceIntegrationException('Alamat dokumen ditolak.', 'LABEL_URL_INVALID');
-            }$host = $parts['host'] ?? '';
+            }
+            $host = $parts['host'] ?? '';
             if (! preg_match('/^[a-zA-Z0-9.-]+$/', $host)) {
                 throw new MarketplaceIntegrationException('Alamat dokumen ditolak.', 'LABEL_URL_INVALID');
             }
@@ -222,7 +220,8 @@ class ShippingDocumentService
                 if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                     throw new MarketplaceIntegrationException('Alamat dokumen ditolak.', 'LABEL_URL_INVALID');
                 }
-            }$body = '';
+            }
+            $body = '';
             $location = '';
             $tooLarge = false;
             $curl = curl_init($url);
@@ -250,7 +249,8 @@ class ShippingDocumentService
             }if ($status >= 300 && $status < 400 && $location !== '') {
                 if (str_starts_with($location, '/')) {
                     $location = 'https://'.$host.$location;
-                }$url = $location;
+                }
+                $url = $location;
 
                 continue;
             }if ($ok === false || $status !== 200) {
@@ -259,10 +259,5 @@ class ShippingDocumentService
 
             return $body;
         }throw new MarketplaceIntegrationException('Pengalihan dokumen terlalu banyak.', 'LABEL_REDIRECT_LIMIT');
-    }
-
-    protected function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

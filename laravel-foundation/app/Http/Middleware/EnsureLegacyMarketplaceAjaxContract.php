@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Authorization\RequestContext;
 use App\Authorization\StoreContext;
 use App\Http\Responses\LegacyResponse;
 use App\Policies\RolePolicy;
@@ -89,7 +90,7 @@ final class EnsureLegacyMarketplaceAjaxContract
             }
 
             $request->attributes->set('store_id', $storeId);
-            app(\App\Authorization\RequestContext::class)->setStoreId($storeId);
+            app(RequestContext::class)->setStoreId($storeId);
             $request->session()->put('store_id', $storeId);
         }
 

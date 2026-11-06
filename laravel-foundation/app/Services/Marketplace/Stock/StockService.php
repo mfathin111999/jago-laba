@@ -2,16 +2,19 @@
 
 namespace App\Services\Marketplace\Stock;
 
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\MarketplaceScope;
 use DateTimeImmutable;
 use DomainException;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
-use PDO;
 use Throwable;
 
 final class StockService
 {
+    use RunsSql;
+
     public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     /** Null aggregate if any warehouse fact is missing/duplicated; never guess physical stock. */
@@ -21,7 +24,8 @@ final class StockService
         $inventory = $sku['inventory'] ?? null;
         if (! is_array($inventory) || ! $inventory) {
             return $result;
-        }$seen = [];
+        }
+        $seen = [];
         $total = 0;
         $complete = true;
         foreach ($inventory as $item) {
@@ -50,20 +54,20 @@ final class StockService
         return $result;
     }
 
-    public static function capture(PDO $pdo, string $store, array $product): void
+    public static function capture(Connection $db, string $store, array $product): void
     {
         // Older isolated test schemas can run core sync without the optional stock-history migration.
-        if (! $pdo->query("SHOW TABLES LIKE 'marketplace_stock_snapshots'")->fetchColumn()) {
+        if (! $db->getSchemaBuilder()->hasTable('marketplace_stock_snapshots')) {
             return;
         }
         foreach ($product['skus'] ?? [] as $sku) {
             foreach (self::quantities($sku) as $warehouse => $qty) {
-                $q = $pdo->prepare('SELECT quantity,observed_at FROM marketplace_stock_snapshots WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=? ORDER BY observed_at DESC,id DESC LIMIT 1');
-                $q->execute([$store, (string) $product['id'], (string) $sku['id'], (string) $warehouse]);
-                $old = $q->fetch(PDO::FETCH_ASSOC);
+                $old = $db->selectOne('SELECT quantity,observed_at FROM marketplace_stock_snapshots WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=? ORDER BY observed_at DESC,id DESC LIMIT 1', [$store, (string) $product['id'], (string) $sku['id'], (string) $warehouse]);
+                $old = $old === null ? null : (array) $old;
                 if ($old && substr($old['observed_at'], 0, 10) === date('Y-m-d') && (($old['quantity'] === null && $qty === null) || ($old['quantity'] !== null && $qty !== null && (float) $old['quantity'] === $qty))) {
                     continue;
-                }$pdo->prepare('INSERT INTO marketplace_stock_snapshots(store_id,product_id,variant_id,warehouse_id,quantity,observed_at) VALUES (?,?,?,?,?,NOW())')->execute([$store, (string) $product['id'], (string) $sku['id'], (string) $warehouse, $qty]);
+                }
+                $db->statement('INSERT INTO marketplace_stock_snapshots(store_id,product_id,variant_id,warehouse_id,quantity,observed_at) VALUES (?,?,?,?,?,NOW())', [$store, (string) $product['id'], (string) $sku['id'], (string) $warehouse, $qty]);
             }
         }
     }
@@ -80,16 +84,13 @@ final class StockService
             }
         }if ($start > $end) {
             throw new InvalidArgumentException('Tanggal akhir mendahului awal.');
-        }$warehouse = (string) ($filters['warehouse'] ?? '');
-        $q = $this->pdo()->prepare("SELECT v.*,r.payload_json,r.fetched_at FROM marketplace_catalog_variants v LEFT JOIN marketplace_sync_records r ON r.store_id=v.store_id AND r.resource_type='product' AND r.external_id=v.external_product_id WHERE v.store_id=? AND v.catalog_visible=1 AND UPPER(COALESCE(v.source_status,'')) IN ('ACTIVATE','NORMAL','AKTIF','ACTIVE') ORDER BY v.product_name,v.variant_name");
-        $q->execute([$store]);
-        $catalog = $q->fetchAll(PDO::FETCH_ASSOC);
+        }
+        $warehouse = (string) ($filters['warehouse'] ?? '');
+        $catalog = $this->rows("SELECT v.*,r.payload_json,r.fetched_at FROM marketplace_catalog_variants v LEFT JOIN marketplace_sync_records r ON r.store_id=v.store_id AND r.resource_type='product' AND r.external_id=v.external_product_id WHERE v.store_id=? AND v.catalog_visible=1 AND UPPER(COALESCE(v.source_status,'')) IN ('ACTIVATE','NORMAL','AKTIF','ACTIVE') ORDER BY v.product_name,v.variant_name", [$store]);
         $identityCounts = array_count_values(array_column($catalog, 'external_variant_id'));
-        $q = $this->pdo()->prepare("SELECT r.payload_json FROM marketplace_sync_records r JOIN marketplace_orders o ON o.store_id=r.store_id AND o.id=r.external_id WHERE r.store_id=? AND r.resource_type='order' AND o.source_kind='api' AND (o.internal_state IS NULL OR o.internal_state='active') AND o.order_date>=? AND o.order_date<?");
-        $q->execute([$store, $start, (new DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d')]);
         $sold = [];
         $knownOrders = false;
-        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $json) {
+        foreach ($this->column("SELECT r.payload_json FROM marketplace_sync_records r JOIN marketplace_orders o ON o.store_id=r.store_id AND o.id=r.external_id WHERE r.store_id=? AND r.resource_type='order' AND o.source_kind='api' AND (o.internal_state IS NULL OR o.internal_state='active') AND o.order_date>=? AND o.order_date<?", [$store, $start, (new DateTimeImmutable($end))->modify('+1 day')->format('Y-m-d')]) as $json) {
             $o = json_decode($json, true) ?: [];
             $knownOrders = true;
             if (! in_array($o['status'] ?? '', ['AWAITING_SHIPMENT', 'AWAITING_COLLECTION', 'PARTIALLY_SHIPPING', 'IN_TRANSIT', 'DELIVERED', 'COMPLETED', 'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'TO_CONFIRM_RECEIVE'], true)) {
@@ -98,7 +99,8 @@ final class StockService
                 $vid = (string) ($line['sku_id'] ?? '');
                 if ($vid === '' || ! is_numeric($line['quantity'] ?? 1)) {
                     continue;
-                }$sold[$vid] = ($sold[$vid] ?? 0) + (float) ($line['quantity'] ?? 1);
+                }
+                $sold[$vid] = ($sold[$vid] ?? 0) + (float) ($line['quantity'] ?? 1);
             }
         }
         $rows = [];
@@ -121,14 +123,11 @@ final class StockService
             }
             if ($warehouse !== '' && ! array_key_exists($warehouse, $quantities)) {
                 continue;
-            }$qty = $quantities[$warehouse] ?? null;
-            $q = $this->pdo()->prepare('SELECT minimum_qty FROM marketplace_stock_minimums WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=?');
-            $q->execute([$store, $v['external_product_id'], $v['external_variant_id'], $warehouse]);
-            $min = $q->fetchColumn();
-            $min = $min === false ? null : (float) $min;
-            $q = $this->pdo()->prepare('SELECT quantity FROM marketplace_stock_snapshots WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=? AND observed_at<=? ORDER BY observed_at DESC,id DESC LIMIT 1');
-            $q->execute([$store, $v['external_product_id'], $v['external_variant_id'], $warehouse, $start.' 00:00:00']);
-            $initial = $q->fetchColumn();
+            }
+            $qty = $quantities[$warehouse] ?? null;
+            $min = $this->value('SELECT minimum_qty FROM marketplace_stock_minimums WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=?', [$store, $v['external_product_id'], $v['external_variant_id'], $warehouse]);
+            $min = $min === null ? null : (float) $min;
+            $initial = $this->value('SELECT quantity FROM marketplace_stock_snapshots WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=? AND observed_at<=? ORDER BY observed_at DESC,id DESC LIMIT 1', [$store, $v['external_product_id'], $v['external_variant_id'], $warehouse, $start.' 00:00:00']);
             $initial = $initial === false || $initial === null ? null : (float) $initial;
             $state = $qty === null ? 'unknown' : ($qty <= 0 ? 'out' : ($min === null ? 'unconfigured' : ($qty <= $min ? 'low' : 'safe')));
             $search = mb_strtolower(trim((string) ($filters['search'] ?? '')));
@@ -161,15 +160,12 @@ final class StockService
         $scope->assertStoreAccess($store);
         if (! preg_match('/^\d{1,10}(?:\.\d{1,3})?$/', $amount)) {
             throw new InvalidArgumentException('Minimum stok harus nol atau angka positif, maksimal 3 desimal.');
-        }$q = $this->pdo()->prepare('SELECT id FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? AND external_variant_id=? AND catalog_visible=1');
-        $q->execute([$store, $product, $variant]);
-        if (! $q->fetchColumn()) {
+        }
+        if (! $this->value('SELECT id FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? AND external_variant_id=? AND catalog_visible=1', [$store, $product, $variant])) {
             throw new DomainException('Varian aktif tidak ditemukan di toko ini.');
         }
         if ($warehouse !== '') {
-            $q = $this->pdo()->prepare("SELECT payload_json FROM marketplace_sync_records WHERE store_id=? AND resource_type='product' AND external_id=?");
-            $q->execute([$store, $product]);
-            $p = json_decode((string) $q->fetchColumn(), true) ?: [];
+            $p = json_decode((string) $this->value("SELECT payload_json FROM marketplace_sync_records WHERE store_id=? AND resource_type='product' AND external_id=?", [$store, $product]), true) ?: [];
             $valid = false;
             foreach ($p['skus'] ?? [] as $s) {
                 if ((string) ($s['id'] ?? '') === $variant) {
@@ -179,24 +175,17 @@ final class StockService
                 throw new DomainException('Gudang tidak cocok dengan varian toko.');
             }
         }
-        $this->pdo()->beginTransaction();
+        $this->db()->beginTransaction();
         try {
-            $this->pdo()->prepare('SELECT id FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? AND external_variant_id=? FOR UPDATE')->execute([$store, $product, $variant]);
-            $q = $this->pdo()->prepare('SELECT minimum_qty FROM marketplace_stock_minimums WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=?');
-            $q->execute([$store, $product, $variant, $warehouse]);
-            $old = $q->fetchColumn();
+            $this->run('SELECT id FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? AND external_variant_id=? FOR UPDATE', [$store, $product, $variant]);
+            $old = $this->value('SELECT minimum_qty FROM marketplace_stock_minimums WHERE store_id=? AND product_id=? AND variant_id=? AND warehouse_id=?', [$store, $product, $variant, $warehouse]);
             $actor = (string) ($this->scope->userId());
-            $this->pdo()->prepare('INSERT INTO marketplace_stock_minimums(store_id,product_id,variant_id,warehouse_id,minimum_qty,changed_by,changed_at) VALUES (?,?,?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE minimum_qty=VALUES(minimum_qty),changed_by=VALUES(changed_by),changed_at=NOW()')->execute([$store, $product, $variant, $warehouse, $amount, $actor]);
-            $this->pdo()->prepare('INSERT INTO marketplace_stock_minimum_audit(company_key,store_id,product_id,variant_id,warehouse_id,previous_qty,new_qty,actor,created_at) VALUES (?,?,?,?,?,?,?,?,NOW())')->execute([$scope->companyKey(), $store, $product, $variant, $warehouse, $old === false ? null : $old, $amount, $actor]);
-            $this->pdo()->commit();
+            $this->run('INSERT INTO marketplace_stock_minimums(store_id,product_id,variant_id,warehouse_id,minimum_qty,changed_by,changed_at) VALUES (?,?,?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE minimum_qty=VALUES(minimum_qty),changed_by=VALUES(changed_by),changed_at=NOW()', [$store, $product, $variant, $warehouse, $amount, $actor]);
+            $this->run('INSERT INTO marketplace_stock_minimum_audit(company_key,store_id,product_id,variant_id,warehouse_id,previous_qty,new_qty,actor,created_at) VALUES (?,?,?,?,?,?,?,?,NOW())', [$scope->companyKey(), $store, $product, $variant, $warehouse, $old === false ? null : $old, $amount, $actor]);
+            $this->db()->commit();
         } catch (Throwable $e) {
-            $this->pdo()->rollBack();
+            $this->db()->rollBack();
             throw $e;
         }
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

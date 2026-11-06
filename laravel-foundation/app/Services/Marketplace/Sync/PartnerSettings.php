@@ -4,14 +4,16 @@ namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\TokenVault;
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Http\MarketplaceHttp;
 use Illuminate\Database\DatabaseManager;
-use PDO;
 use RuntimeException;
 use Throwable;
 
 final class PartnerSettings
 {
+    use RunsSql;
+
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly TokenVault $vault,
@@ -102,9 +104,8 @@ final class PartnerSettings
         }
         $this->ensureTable();
         $encrypted = $this->vault->encrypt(json_encode($settings, JSON_THROW_ON_ERROR));
-        $statement = $this->pdo()->prepare('INSERT INTO marketplace_partner_settings (platform, settings_encrypted, last_test_status, last_tested_at) VALUES (?, ?, NULL, NULL)
-            ON DUPLICATE KEY UPDATE settings_encrypted=VALUES(settings_encrypted), last_test_status=NULL, last_tested_at=NULL');
-        $statement->execute([$platform, $encrypted]);
+        $this->run('INSERT INTO marketplace_partner_settings (platform, settings_encrypted, last_test_status, last_tested_at) VALUES (?, ?, NULL, NULL)
+            ON DUPLICATE KEY UPDATE settings_encrypted=VALUES(settings_encrypted), last_test_status=NULL, last_tested_at=NULL', [$platform, $encrypted]);
 
         try {
             $message = $platform === 'Shopee'
@@ -114,8 +115,7 @@ final class PartnerSettings
         } catch (Throwable $error) {
             $result = ['ok' => false, 'message' => $error instanceof MarketplaceIntegrationException ? $error->getMessage() : 'Uji API gagal. Periksa kredensial dan lingkungan partner.', 'error_code' => $error instanceof MarketplaceIntegrationException ? $error->errorCode : 'PARTNER_TEST_FAILED'];
         }
-        $this->pdo()->prepare('UPDATE marketplace_partner_settings SET last_test_status=?, last_tested_at=NOW() WHERE platform=?')
-            ->execute([$result['ok'] ? 'passed' : 'failed', $platform]);
+        $this->run('UPDATE marketplace_partner_settings SET last_test_status=?, last_tested_at=NOW() WHERE platform=?', [$result['ok'] ? 'passed' : 'failed', $platform]);
 
         return ['saved' => true, 'test' => $result, 'status' => $this->status($platform)];
     }
@@ -131,8 +131,7 @@ final class PartnerSettings
         $profiles = $current['previous_profiles'] ?? [];
         $profiles[(string) ($current['region'] ?? 'sandbox')] = ['partner_id' => $current['partner_id'] ?? '', 'partner_key' => $current['partner_key'] ?? ''];
         $settings = ['region' => 'live', 'partner_id' => '', 'partner_key' => '', 'previous_profiles' => $profiles];
-        $q = $this->pdo()->prepare("INSERT INTO marketplace_partner_settings(platform,settings_encrypted,last_test_status,last_tested_at) VALUES('Shopee',?,NULL,NULL) ON DUPLICATE KEY UPDATE settings_encrypted=VALUES(settings_encrypted),last_test_status=NULL,last_tested_at=NULL");
-        $q->execute([$this->vault->encrypt(json_encode($settings, JSON_THROW_ON_ERROR))]);
+        $this->run("INSERT INTO marketplace_partner_settings(platform,settings_encrypted,last_test_status,last_tested_at) VALUES('Shopee',?,NULL,NULL) ON DUPLICATE KEY UPDATE settings_encrypted=VALUES(settings_encrypted),last_test_status=NULL,last_tested_at=NULL", [$this->vault->encrypt(json_encode($settings, JSON_THROW_ON_ERROR))]);
     }
 
     private function testShopee(array $config): string
@@ -182,9 +181,7 @@ final class PartnerSettings
     private function saved(string $platform): ?array
     {
         $this->ensureTable();
-        $statement = $this->pdo()->prepare('SELECT settings_encrypted, last_test_status, last_tested_at FROM marketplace_partner_settings WHERE platform=?');
-        $statement->execute([$platform]);
-        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        $row = $this->row('SELECT settings_encrypted, last_test_status, last_tested_at FROM marketplace_partner_settings WHERE platform=?', [$platform]);
         if (! $row) {
             return null;
         }
@@ -214,10 +211,5 @@ final class PartnerSettings
         if (! in_array($platform, ['Shopee', 'TikTok Shop'], true)) {
             throw new MarketplaceIntegrationException('Platform tidak dikenal.', 'PARTNER_PLATFORM_INVALID');
         }
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

@@ -3,13 +3,15 @@
 namespace App\Services\Marketplace\Shipping;
 
 use App\Exceptions\MarketplaceIntegrationException;
+use App\Services\Marketplace\Concerns\RunsSql;
 use DomainException;
 use InvalidArgumentException;
-use PDO;
 use Throwable;
 
 final class FulfillmentService extends ShippingDocumentService
 {
+    use RunsSql;
+
     private function writable(): void
     {
         if (! preg_match('/OWNER|ADMIN/i', (string) ($this->scope->role()))) {
@@ -19,9 +21,7 @@ final class FulfillmentService extends ShippingDocumentService
 
     private function order(array $connection, string $store, string $order): array
     {
-        $q = $this->pdo()->prepare("SELECT id FROM marketplace_orders WHERE store_id=? AND id=? AND source_kind='api' AND (internal_state IS NULL OR internal_state='active')");
-        $q->execute([$store, $order]);
-        if (! $q->fetchColumn()) {
+        if (! $this->value("SELECT id FROM marketplace_orders WHERE store_id=? AND id=? AND source_kind='api' AND (internal_state IS NULL OR internal_state='active')", [$store, $order])) {
             throw new DomainException('Pesanan tidak ditemukan di toko aktif.');
         }
         $data = $this->call($connection, '/order/202309/orders', ['ids' => $order]);
@@ -42,16 +42,13 @@ final class FulfillmentService extends ShippingDocumentService
 
     private function action(string $store, string $package): ?array
     {
-        $q = $this->pdo()->prepare('SELECT * FROM marketplace_fulfillment_actions WHERE company_key=? AND store_id=? AND package_id=?');
-        $q->execute([$this->scope->companyKey(), $store, $package]);
 
-        return $q->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $this->row('SELECT * FROM marketplace_fulfillment_actions WHERE company_key=? AND store_id=? AND package_id=?', [$this->scope->companyKey(), $store, $package]) ?: null;
     }
 
     private function state(string $store, string $package, string $state, ?string $error = null): void
     {
-        $q = $this->pdo()->prepare('UPDATE marketplace_fulfillment_actions SET state=?,last_error=?,updated_at=NOW() WHERE company_key=? AND store_id=? AND package_id=?');
-        $q->execute([$state, $error, $this->scope->companyKey(), $store, $package]);
+        $this->run('UPDATE marketplace_fulfillment_actions SET state=?,last_error=?,updated_at=NOW() WHERE company_key=? AND store_id=? AND package_id=?', [$state, $error, $this->scope->companyKey(), $store, $package]);
     }
 
     private function detail(array $c, string $package, string $order): array
@@ -137,8 +134,7 @@ final class FulfillmentService extends ShippingDocumentService
                 }
                 $token = bin2hex(random_bytes(24));
                 $offer = ['methods' => $methods];
-                $q = $this->pdo()->prepare("INSERT INTO marketplace_fulfillment_actions(company_key,store_id,package_id,order_id,user_key,state,offer_hash,offer_json,offer_expires_at) VALUES(?,?,?,?,?,'offered',?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE)) ON DUPLICATE KEY UPDATE order_id=VALUES(order_id),user_key=VALUES(user_key),state=IF(state IN ('requested','uncertain','confirmed'),state,'offered'),offer_hash=VALUES(offer_hash),offer_json=VALUES(offer_json),offer_expires_at=VALUES(offer_expires_at)");
-                $q->execute([$this->scope->companyKey(), $store, $package, $order, $this->user(), hash('sha256', $token), json_encode($offer, JSON_THROW_ON_ERROR)]);
+                $this->run("INSERT INTO marketplace_fulfillment_actions(company_key,store_id,package_id,order_id,user_key,state,offer_hash,offer_json,offer_expires_at) VALUES(?,?,?,?,?,'offered',?,?,DATE_ADD(NOW(),INTERVAL 10 MINUTE)) ON DUPLICATE KEY UPDATE order_id=VALUES(order_id),user_key=VALUES(user_key),state=IF(state IN ('requested','uncertain','confirmed'),state,'offered'),offer_hash=VALUES(offer_hash),offer_json=VALUES(offer_json),offer_expires_at=VALUES(offer_expires_at)", [$this->scope->companyKey(), $store, $package, $order, $this->user(), hash('sha256', $token), json_encode($offer, JSON_THROW_ON_ERROR)]);
                 $point = (string) ($slots['drop_off_point_url'] ?? '');
                 if (! preg_match('~^https://[^\s]+$~', $point)) {
                     $point = '';
@@ -158,9 +154,7 @@ final class FulfillmentService extends ShippingDocumentService
         $c = $this->connection($store);
         $company = $this->scope->companyKey();
         $lock = 'jlship:'.substr(hash('sha256', $company.'|'.$store.'|'.$package), 0, 48);
-        $q = $this->pdo()->prepare('SELECT GET_LOCK(?,0)');
-        $q->execute([$lock]);
-        if ((int) $q->fetchColumn() !== 1) {
+        if ((int) $this->value('SELECT GET_LOCK(?,0)', [$lock]) !== 1) {
             throw new DomainException('Paket sedang diproses. Periksa status beberapa saat lagi.');
         }
         try {
@@ -215,8 +209,7 @@ final class FulfillmentService extends ShippingDocumentService
                     throw new DomainException('Jadwal pickup tidak tersedia. Pilih jadwal terbaru.');
                 }$body['pickup_slot'] = $valid;
             }
-            $q = $this->pdo()->prepare("UPDATE marketplace_fulfillment_actions SET state='requested',handover_method=?,requested_at=NOW(),last_error=NULL WHERE id=?");
-            $q->execute([$method, $action['id']]);
+            $this->run("UPDATE marketplace_fulfillment_actions SET state='requested',handover_method=?,requested_at=NOW(),last_error=NULL WHERE id=?", [$method, $action['id']]);
             $this->audit($store, $order, $package, 'shipment_requested');
             try {
                 $this->call($c, '/fulfillment/202309/packages/'.rawurlencode($package).'/ship', [], 'POST', $body);
@@ -233,8 +226,7 @@ final class FulfillmentService extends ShippingDocumentService
                 return ['confirmed' => false, 'pending' => $uncertain, 'message' => $uncertain ? 'Hasil pengaturan belum pasti. Periksa Status; permintaan tidak akan dikirim ulang otomatis.' : self::safeError($e)];
             }
         } finally {
-            $q = $this->pdo()->prepare('SELECT RELEASE_LOCK(?)');
-            $q->execute([$lock]);
+            $this->run('SELECT RELEASE_LOCK(?)', [$lock]);
         }
     }
 

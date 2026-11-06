@@ -9,6 +9,7 @@ use App\Exceptions\ResourceNotFound;
 use App\Exceptions\StoreForbidden;
 use App\Models\Marketplace\MarketplaceStore;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 final class MarketplaceStoreWriteService
@@ -153,21 +154,21 @@ final class MarketplaceStoreWriteService
             $store = MarketplaceStore::query()->forCompany($companyKey)->active()->whereKey($storeId)->lockForUpdate()->first();
 
             if ($store === null) {
-                throw new StoreForbidden();
+                throw new StoreForbidden;
             }
 
             MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
-                    'platform' => $platform,
-                    'store_name' => $storeName,
-                    'store_identifier' => $identifier,
-                    'default_account_id' => $defaultAccId,
-                    'default_admin_fee_pct' => $adminFee,
-                    'default_free_shipping_pct' => $freeShipping,
-                    'default_payment_fee_pct' => $paymentFee,
-                    'sync_mode' => $syncMode,
-                    'status' => $status,
-                    'updated_at' => now(),
-                ]);
+                'platform' => $platform,
+                'store_name' => $storeName,
+                'store_identifier' => $identifier,
+                'default_account_id' => $defaultAccId,
+                'default_admin_fee_pct' => $adminFee,
+                'default_free_shipping_pct' => $freeShipping,
+                'default_payment_fee_pct' => $paymentFee,
+                'sync_mode' => $syncMode,
+                'status' => $status,
+                'updated_at' => now(),
+            ]);
 
             $this->audit->record(
                 $user,
@@ -212,7 +213,7 @@ final class MarketplaceStoreWriteService
             $store = MarketplaceStore::query()->forCompany($companyKey)->active()->whereKey($storeId)->lockForUpdate()->first();
 
             if ($store === null) {
-                throw new StoreForbidden();
+                throw new StoreForbidden;
             }
 
             $updates = [
@@ -260,14 +261,14 @@ final class MarketplaceStoreWriteService
             $now = now();
 
             MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
-                    'archived_at' => $now,
-                    'archived_by' => $userId,
-                    'status' => 'Terputus',
-                    'authorization_status' => 'disconnected',
-                    'updated_at' => $now,
-                ]);
+                'archived_at' => $now,
+                'archived_by' => $userId,
+                'status' => 'Terputus',
+                'authorization_status' => 'disconnected',
+                'updated_at' => $now,
+            ]);
 
-            if (\Illuminate\Support\Facades\Schema::hasTable('marketplace_oauth_connections')) {
+            if (Schema::hasTable('marketplace_oauth_connections')) {
                 $connection->table('marketplace_oauth_connections')
                     ->where('store_id', $storeId)
                     ->where('company_key', $companyKey)
@@ -310,12 +311,12 @@ final class MarketplaceStoreWriteService
 
             $now = now();
             MarketplaceStore::query()->forCompany($companyKey)->whereKey($storeId)->update([
-                    'archived_at' => null,
-                    'archived_by' => null,
-                    'status' => 'Terputus',
-                    'authorization_status' => 'disconnected',
-                    'updated_at' => $now,
-                ]);
+                'archived_at' => null,
+                'archived_by' => null,
+                'status' => 'Terputus',
+                'authorization_status' => 'disconnected',
+                'updated_at' => $now,
+            ]);
 
             $this->audit->record(
                 $user,

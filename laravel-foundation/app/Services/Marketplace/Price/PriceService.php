@@ -5,6 +5,7 @@ namespace App\Services\Marketplace\Price;
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\TokenVault;
 use App\Services\Marketplace\Analytics\OrderPresentation;
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\Integrations\TikTokDataClient;
 use App\Services\Marketplace\MarketplaceScope;
 use App\Services\Marketplace\Sync\PartnerSettings;
@@ -12,20 +13,20 @@ use App\Services\Marketplace\Sync\TokenRefresher;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
-use PDO;
 use Throwable;
 
 final class PriceService
 {
+    use RunsSql;
+
     public function __construct(private readonly DatabaseManager $database, private readonly PartnerSettings $settings, private readonly TokenRefresher $tokens, private readonly MarketplaceScope $scope, private readonly TokenVault $vault) {}
 
     private function context(string $store): array
     {
         $scope = $this->scope;
         $shop = $scope->assertStoreAccess($store);
-        $stmt = $this->pdo()->prepare("SELECT * FROM marketplace_oauth_connections WHERE store_id=? AND company_key=? AND platform='TikTok Shop' AND status='verified'");
-        $stmt->execute([$store, $scope->companyKey()]);
-        $c = $stmt->fetch(PDO::FETCH_ASSOC);
+        $connection = fn (): ?array => $this->row("SELECT * FROM marketplace_oauth_connections WHERE store_id=? AND company_key=? AND platform='TikTok Shop' AND status='verified'", [$store, $scope->companyKey()]);
+        $c = $connection();
         if ($shop['platform'] !== 'TikTok Shop') {
             throw new DomainException('Konektor harga untuk platform ini belum tersedia. Harga katalog terakhir tetap dapat dilihat pada daftar produk.');
         }
@@ -34,8 +35,7 @@ final class PriceService
         }
         if (! empty($c['token_expires_at']) && strtotime($c['token_expires_at']) < time() + 60) {
             $this->tokens->refresh($store, false);
-            $stmt->execute([$store, $scope->companyKey()]);
-            $c = $stmt->fetch(PDO::FETCH_ASSOC);
+            $c = $connection();
         }
         if (empty($c['external_shop_cipher'])) {
             throw new DomainException('Cipher toko tidak tersedia. Hubungkan ulang toko.');
@@ -52,9 +52,7 @@ final class PriceService
 
     private function rows(string $store, string $product): array
     {
-        $stmt = $this->pdo()->prepare('SELECT * FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? ORDER BY id');
-        $stmt->execute([$store, $product]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->rows('SELECT * FROM marketplace_catalog_variants WHERE store_id=? AND external_product_id=? ORDER BY id', [$store, $product]);
         if (! $rows) {
             throw new DomainException('Produk/varian katalog resmi tidak ditemukan di toko ini. Sinkronkan produk terlebih dahulu.');
         }
@@ -125,7 +123,8 @@ final class PriceService
                 $page = (string) ($list['next_page_token'] ?? '');
                 if ($page !== '' && isset($seen[$page])) {
                     throw new MarketplaceIntegrationException('Halaman promo berulang.', 'PROMO_PAGINATION_INVALID');
-                }$seen[$page] = true;
+                }
+                $seen[$page] = true;
                 if (count($seen) > 20) {
                     throw new MarketplaceIntegrationException('Terlalu banyak halaman promo. Persempit pengaturan di Seller Center.', 'PROMO_LIST_LIMIT');
                 }
@@ -161,15 +160,11 @@ final class PriceService
                 return $p['product_level'] === 'PRODUCT' || in_array($row['external_variant_id'], array_map(static fn ($s) => (string) $s['id'], $p['product']['skus'] ?? []), true);
             }));
             $row['promotion_caption'] = self::promotionCaption($row, $promoError !== null);
-            $stmt = $this->pdo()->prepare('SELECT unit_hpp FROM marketplace_hpp_history WHERE store_id=? AND marketplace_sku=? AND effective_from<=CURDATE() ORDER BY effective_from DESC,id DESC LIMIT 1');
-            $stmt->execute([$store, $row['sku']]);
-            $hpp = $stmt->fetchColumn();
-            $row['hpp'] = $hpp === false ? null : (float) $hpp;
-            $stmt = $this->pdo()->prepare("SELECT DISTINCT o.* FROM marketplace_orders o JOIN marketplace_order_items oi ON oi.order_id=o.id WHERE o.store_id=? AND oi.sku=? AND o.order_date>=DATE_SUB(NOW(),INTERVAL 30 DAY) AND (o.internal_state IS NULL OR o.internal_state='active') AND (SELECT COUNT(DISTINCT sq.sku) FROM marketplace_order_items sq WHERE sq.order_id=o.id)=1");
-            $stmt->execute([$store, $row['sku']]);
+            $hpp = $this->value('SELECT unit_hpp FROM marketplace_hpp_history WHERE store_id=? AND marketplace_sku=? AND effective_from<=CURDATE() ORDER BY effective_from DESC,id DESC LIMIT 1', [$store, $row['sku']]);
+            $row['hpp'] = $hpp === null ? null : (float) $hpp;
             $fees = 0.0;
             $gross = 0.0;
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $o) {
+            foreach ($this->rows("SELECT DISTINCT o.* FROM marketplace_orders o JOIN marketplace_order_items oi ON oi.order_id=o.id WHERE o.store_id=? AND oi.sku=? AND o.order_date>=DATE_SUB(NOW(),INTERVAL 30 DAY) AND (o.internal_state IS NULL OR o.internal_state='active') AND (SELECT COUNT(DISTINCT sq.sku) FROM marketplace_order_items sq WHERE sq.order_id=o.id)=1", [$store, $row['sku']]) as $o) {
                 $p = OrderPresentation::build($o);
                 if ($p['net_income'] !== null && $p['gross_amount'] > 0 && ! in_array($p['source_status'], ['CANCELLED', 'Dibatalkan'], true)) {
                     $gross += $p['gross_amount'];
@@ -252,21 +247,18 @@ final class PriceService
             $id = (string) ($change['variant_id'] ?? '');
             if (! in_array($id, $allowed, true) || isset($prices[$id])) {
                 throw new DomainException('Varian tidak cocok dengan produk/toko.');
-            }$prices[$id] = $this->money((string) ($change['price'] ?? ''));
+            }
+            $prices[$id] = $this->money((string) ($change['price'] ?? ''));
         }
         $lock = 'jl-price-'.substr(hash('sha256', $store.':'.$product), 0, 50);
-        $stmt = $this->pdo()->prepare('SELECT GET_LOCK(?,0)');
-        $stmt->execute([$lock]);
-        if ((int) $stmt->fetchColumn() !== 1) {
+        if ((int) $this->value('SELECT GET_LOCK(?,0)', [$lock]) !== 1) {
             throw new DomainException('Produk sedang diperbarui. Tunggu lalu coba lagi.');
         }
         $actionId = null;
         $writeStarted = false;
         try {
             $hash = hash('sha256', json_encode([$product, $input], JSON_THROW_ON_ERROR));
-            $stmt = $this->pdo()->prepare('SELECT * FROM marketplace_price_actions WHERE store_id=? AND operation_key=?');
-            $stmt->execute([$store, $key]);
-            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+            $existing = $this->row('SELECT * FROM marketplace_price_actions WHERE store_id=? AND operation_key=?', [$store, $key]);
             if ($existing) {
                 if ($existing['request_hash'] !== $hash) {
                     throw new DomainException('ID operasi sudah digunakan untuk perubahan berbeda.');
@@ -330,9 +322,8 @@ final class PriceService
                 }
             }
             $actor = (string) ($this->scope->userId());
-            $stmt = $this->pdo()->prepare("INSERT INTO marketplace_price_actions(store_id,product_id,operation_key,mode,request_hash,payload_json,status,changed_by) VALUES (?,?,?,?,?,?,'sending',?)");
-            $stmt->execute([$store, $product, $key, $mode, $hash, json_encode($input, JSON_THROW_ON_ERROR), $actor]);
-            $actionId = (int) $this->pdo()->lastInsertId();
+            $this->run("INSERT INTO marketplace_price_actions(store_id,product_id,operation_key,mode,request_hash,payload_json,status,changed_by) VALUES (?,?,?,?,?,?,'sending',?)", [$store, $product, $key, $mode, $hash, json_encode($input, JSON_THROW_ON_ERROR), $actor]);
+            $actionId = (int) $this->db()->getPdo()->lastInsertId();
             if ($mode === 'base') {
                 $skus = [];
                 foreach ($prices as $id => $price) {
@@ -340,7 +331,7 @@ final class PriceService
                 }
                 $writeStarted = true;
                 $this->api($c, 'POST', '/product/202309/products/'.rawurlencode($product).'/prices/update', ['skus' => $skus]);
-                $this->pdo()->prepare("UPDATE marketplace_price_actions SET status='remote_applied' WHERE id=?")->execute([$actionId]);
+                $this->run("UPDATE marketplace_price_actions SET status='remote_applied' WHERE id=?", [$actionId]);
                 $updated = $this->remoteProduct($c, $product);
                 $verified = [];
                 foreach ($updated['skus'] as $sku) {
@@ -351,7 +342,7 @@ final class PriceService
                     $ok = isset($verified[$id]) && $verified[$id] === $price;
                     $result[] = ['variant_id' => (string) $id, 'status' => $ok ? 'verified' : 'pending_verification', 'price' => $verified[$id] ?? null];
                     if ($ok) {
-                        $this->pdo()->prepare('UPDATE marketplace_catalog_variants SET base_price=?,price=?,source_updated_at=NOW() WHERE store_id=? AND external_product_id=? AND external_variant_id=?')->execute([$price, $price, $store, $product, $id]);
+                        $this->run('UPDATE marketplace_catalog_variants SET base_price=?,price=?,source_updated_at=NOW() WHERE store_id=? AND external_product_id=? AND external_variant_id=?', [$price, $price, $store, $product, $id]);
                     }
                 }
             } else {
@@ -361,7 +352,7 @@ final class PriceService
                 if ($activityId === '') {
                     throw new MarketplaceIntegrationException('ID promo belum diterima. Periksa Seller Center sebelum mengulang.', 'PROMO_CREATE_UNCERTAIN');
                 }
-                $this->pdo()->prepare("UPDATE marketplace_price_actions SET remote_activity_id=?,status='created' WHERE id=?")->execute([$activityId, $actionId]);
+                $this->run("UPDATE marketplace_price_actions SET remote_activity_id=?,status='created' WHERE id=?", [$activityId, $actionId]);
                 foreach ($conflicts as $promo) {
                     $remove = $promo['product_level'] === 'PRODUCT' ? ['product_ids' => [$product]] : ['sku_ids' => array_map('strval', $promo['selected_skus'])];
                     $this->api($c, 'DELETE', '/promotion/202309/activities/'.rawurlencode($promo['id']).'/products', $remove);
@@ -371,7 +362,7 @@ final class PriceService
                     $skus[] = ['id' => (string) $id, 'activity_price_amount' => $price, 'quantity_limit' => -1, 'quantity_per_user' => -1];
                 }
                 $this->api($c, 'PUT', '/promotion/202309/activities/'.rawurlencode($activityId).'/products', ['activity_id' => $activityId, 'products' => [['id' => $product, 'skus' => $skus, 'quantity_limit' => -1, 'quantity_per_user' => -1]]]);
-                $this->pdo()->prepare("UPDATE marketplace_price_actions SET status='remote_applied' WHERE id=?")->execute([$actionId]);
+                $this->run("UPDATE marketplace_price_actions SET status='remote_applied' WHERE id=?", [$actionId]);
                 $confirmed = $this->api($c, 'GET', '/promotion/202309/activities/'.rawurlencode($activityId));
                 $verified = [];
                 foreach (($confirmed['products'] ?? []) as $p) {
@@ -389,7 +380,7 @@ final class PriceService
             }
             $status = count(array_filter($result, static fn ($r) => $r['status'] === 'pending_verification')) ? 'pending_verification' : 'verified';
             $output = ['status' => $status, 'rows' => $result, 'activity_id' => $activityId ?? null, 'message' => $mode === 'base' ? 'Harga dikirim ke marketplace; lihat status setiap varian.' : 'Promo dikirim ke marketplace dan berlaku sesuai periode; harga dasar dipertahankan.'];
-            $this->pdo()->prepare('UPDATE marketplace_price_actions SET status=?,result_json=? WHERE id=?')->execute([$status, json_encode($output, JSON_THROW_ON_ERROR), $actionId]);
+            $this->run('UPDATE marketplace_price_actions SET status=?,result_json=? WHERE id=?', [$status, json_encode($output, JSON_THROW_ON_ERROR), $actionId]);
 
             return $output;
         } catch (Throwable $e) {
@@ -397,18 +388,13 @@ final class PriceService
                 $code = $e instanceof MarketplaceIntegrationException ? $e->errorCode : 'PRICE_OPERATION_FAILED';
                 $rejected = $e instanceof MarketplaceIntegrationException && (in_array($code, ['HTTP_400', 'HTTP_401', 'HTTP_403', 'HTTP_404', 'HTTP_429'], true) || str_starts_with($code, 'TIKTOK_API_'));
                 $status = ($writeStarted && ! $rejected) || ! empty($activityId) ? 'needs_review' : 'failed';
-                $this->pdo()->prepare('UPDATE marketplace_price_actions SET status=?,error_code=? WHERE id=?')->execute([$status, $code, $actionId]);
+                $this->run('UPDATE marketplace_price_actions SET status=?,error_code=? WHERE id=?', [$status, $code, $actionId]);
 
                 return ['status' => $status, 'error_code' => $code, 'activity_id' => $activityId ?? null, 'message' => $rejected ? ('Marketplace menolak perubahan. '.$e->getMessage().' Periksa data promo dan kode penolakan; otorisasi ulang hanya diperlukan untuk masalah izin/token.') : 'Perubahan belum terkonfirmasi sepenuhnya. Periksa Seller Center sebelum mengirim ulang.'];
             }
             throw $e;
         } finally {
-            $this->pdo()->prepare('SELECT RELEASE_LOCK(?)')->execute([$lock]);
+            $this->run('SELECT RELEASE_LOCK(?)', [$lock]);
         }
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

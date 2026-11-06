@@ -14,7 +14,7 @@ trait ScopedToCompany
 {
     public static function bootScopedToCompany(): void
     {
-        static::addGlobalScope(new CompanyScope());
+        static::addGlobalScope(new CompanyScope);
     }
 
     /**

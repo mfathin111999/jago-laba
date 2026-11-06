@@ -4,11 +4,13 @@ namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\IntegrationPolicy;
+use App\Services\Marketplace\Concerns\RunsSql;
 use Illuminate\Database\DatabaseManager;
-use PDO;
 
 final class IncrementalSync
 {
+    use RunsSql;
+
     public function __construct(
         private readonly DatabaseManager $database,
         private readonly PartnerSettings $settings,
@@ -28,23 +30,19 @@ final class IncrementalSync
         $config = $this->settings->configFor($c['platform']);
         $environment = IntegrationPolicy::environment($c['platform'], $config);
         $scope = hash('sha256', implode('|', [$c['company_key'], $c['platform'], $environment, $c['store_id'], $c['external_store_id'], $dataset]));
-        $this->pdo()->prepare('INSERT IGNORE INTO marketplace_sync_checkpoints(scope_key,company_key,store_id,platform,environment,dataset,history_start) VALUES (?,?,?,?,?,?,?)')->execute([$scope, $c['company_key'], $c['store_id'], $c['platform'], $environment, $dataset, $anchor['window_start']]);
-        $q = $this->pdo()->prepare('SELECT * FROM marketplace_sync_checkpoints WHERE scope_key=? FOR UPDATE');
-        $q->execute([$scope]);
-        $saved = $q->fetch(PDO::FETCH_ASSOC);
+        $this->run('INSERT IGNORE INTO marketplace_sync_checkpoints(scope_key,company_key,store_id,platform,environment,dataset,history_start) VALUES (?,?,?,?,?,?,?)', [$scope, $c['company_key'], $c['store_id'], $c['platform'], $environment, $dataset, $anchor['window_start']]);
+        $saved = $this->row('SELECT * FROM marketplace_sync_checkpoints WHERE scope_key=? FOR UPDATE', [$scope]);
         if (! $saved) {
             throw new MarketplaceIntegrationException('Identitas checkpoint berubah.', 'CHECKPOINT_CONTEXT_CONFLICT');
         }
         // Only completed legacy order/catalog ranges are eligible for adoption. Old finance jobs swallowed errors.
         if ($saved['completed_until'] === null && in_array($dataset, ['orders', 'products'], true)) {
-            $q = $this->pdo()->prepare("SELECT checkpoint,id FROM marketplace_sync_jobs WHERE connection_id=? AND company_key=? AND job_type=? AND status='succeeded' AND run_key NOT LIKE 'auto-unpaid-%' ORDER BY finished_at DESC,id DESC LIMIT 1");
-            $q->execute([$c['id'], $c['company_key'], $type]);
-            $legacy = $q->fetch(PDO::FETCH_ASSOC);
+            $legacy = $this->row("SELECT checkpoint,id FROM marketplace_sync_jobs WHERE connection_id=? AND company_key=? AND job_type=? AND status='succeeded' AND run_key NOT LIKE 'auto-unpaid-%' ORDER BY finished_at DESC,id DESC LIMIT 1", [$c['id'], $c['company_key'], $type]);
             if ($legacy) {
                 $old = json_decode($legacy['checkpoint'] ?? '', true) ?: [];
                 if (! empty($old['window_end']) && empty($old['sync_v2'])) {
                     $saved['completed_until'] = (int) $old['window_end'];
-                    $this->pdo()->prepare('UPDATE marketplace_sync_checkpoints SET completed_until=?,last_success_at=NOW(),last_job_id=? WHERE scope_key=?')->execute([$saved['completed_until'], $legacy['id'], $scope]);
+                    $this->run('UPDATE marketplace_sync_checkpoints SET completed_until=?,last_success_at=NOW(),last_job_id=? WHERE scope_key=?', [$saved['completed_until'], $legacy['id'], $scope]);
                 }
             }
         }
@@ -78,13 +76,13 @@ final class IncrementalSync
             return;
         }
         if (empty($cp['not_due'])) {
-            $this->pdo()->prepare('UPDATE marketplace_sync_checkpoints SET completed_until=GREATEST(COALESCE(completed_until,0),?),last_success_at=NOW(),last_job_id=? WHERE scope_key=?')->execute([$cp['window_end'], $job, $cp['scope_key']]);
+            $this->run('UPDATE marketplace_sync_checkpoints SET completed_until=GREATEST(COALESCE(completed_until,0),?),last_success_at=NOW(),last_job_id=? WHERE scope_key=?', [$cp['window_end'], $job, $cp['scope_key']]);
         }
     }
 
     public function checked(string $store, string $resource, string $id, int $delay): void
     {
-        $this->pdo()->prepare('INSERT INTO marketplace_sync_object_checks(store_id,resource_type,external_id,checked_at,next_check_at) VALUES (?,?,?,NOW(),DATE_ADD(NOW(),INTERVAL ? SECOND)) ON DUPLICATE KEY UPDATE checked_at=NOW(),next_check_at=VALUES(next_check_at)')->execute([$store, $resource, $id, $delay]);
+        $this->run('INSERT INTO marketplace_sync_object_checks(store_id,resource_type,external_id,checked_at,next_check_at) VALUES (?,?,?,NOW(),DATE_ADD(NOW(),INTERVAL ? SECOND)) ON DUPLICATE KEY UPDATE checked_at=NOW(),next_check_at=VALUES(next_check_at)', [$store, $resource, $id, $delay]);
     }
 
     public static function digest(array $data): string
@@ -102,10 +100,5 @@ final class IncrementalSync
         };
 
         return hash('sha256', json_encode($sort($data), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
     }
 }

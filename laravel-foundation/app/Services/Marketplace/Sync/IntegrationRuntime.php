@@ -4,11 +4,13 @@ namespace App\Services\Marketplace\Sync;
 
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\IntegrationPolicy;
+use App\Services\Marketplace\Concerns\RunsSql;
 use Illuminate\Database\DatabaseManager;
-use PDO;
 
 final class IntegrationRuntime
 {
+    use RunsSql;
+
     private ?bool $ready = null;
 
     public function __construct(private readonly DatabaseManager $database) {}
@@ -23,10 +25,8 @@ final class IntegrationRuntime
         if (! $this->ready()) {
             return null;
         }
-        $q = $this->pdo()->prepare('SELECT environment,context_hash,verified_at FROM marketplace_integration_bindings WHERE connection_id=?');
-        $q->execute([$connection]);
 
-        return $q->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $this->row('SELECT environment,context_hash,verified_at FROM marketplace_integration_bindings WHERE connection_id=?', [$connection]) ?: null;
     }
 
     public function assertContext(array $connection, array $config): void
@@ -45,10 +45,10 @@ final class IntegrationRuntime
         if (! $reauthorized) {
             $this->assertContext($connection, $config);
         }
-        $this->pdo()->prepare('INSERT INTO marketplace_integration_bindings(connection_id,environment,context_hash,verified_at) VALUES (?,?,?,NOW()) ON DUPLICATE KEY UPDATE environment=VALUES(environment),context_hash=VALUES(context_hash),verified_at=NOW()')->execute([
+        $this->run('INSERT INTO marketplace_integration_bindings(connection_id,environment,context_hash,verified_at) VALUES (?,?,?,NOW()) ON DUPLICATE KEY UPDATE environment=VALUES(environment),context_hash=VALUES(context_hash),verified_at=NOW()', [
             $connection['id'], IntegrationPolicy::environment($connection['platform'], $config), IntegrationPolicy::fingerprint($connection['platform'], $config)]);
         if ($reauthorized) {
-            $this->pdo()->prepare('DELETE FROM marketplace_api_capabilities WHERE connection_id=?')->execute([$connection['id']]);
+            $this->run('DELETE FROM marketplace_api_capabilities WHERE connection_id=?', [$connection['id']]);
         }
     }
 
@@ -60,7 +60,7 @@ final class IntegrationRuntime
         $state = $code ? match (IntegrationPolicy::classify($code)) {
             'authorization' => 'reauthorize','permission' => 'permission','unsupported' => 'unsupported',default => 'temporary'
         } : 'available';
-        $this->pdo()->prepare('INSERT INTO marketplace_api_capabilities(connection_id,resource,state,last_verified_at,last_attempt_at,last_error_code) VALUES (?,?,?,IF(?=1,NOW(),NULL),NOW(),?) ON DUPLICATE KEY UPDATE state=VALUES(state),last_verified_at=IF(?=1,NOW(),last_verified_at),last_attempt_at=NOW(),last_error_code=VALUES(last_error_code)')->execute([$connection, $resource, $state, $code === null ? 1 : 0, $code, $code === null ? 1 : 0]);
+        $this->run('INSERT INTO marketplace_api_capabilities(connection_id,resource,state,last_verified_at,last_attempt_at,last_error_code) VALUES (?,?,?,IF(?=1,NOW(),NULL),NOW(),?) ON DUPLICATE KEY UPDATE state=VALUES(state),last_verified_at=IF(?=1,NOW(),last_verified_at),last_attempt_at=NOW(),last_error_code=VALUES(last_error_code)', [$connection, $resource, $state, $code === null ? 1 : 0, $code, $code === null ? 1 : 0]);
     }
 
     public function evidence(int $connection): array
@@ -68,10 +68,8 @@ final class IntegrationRuntime
         if (! $this->ready()) {
             return [];
         }
-        $q = $this->pdo()->prepare('SELECT resource,state,last_verified_at,last_attempt_at,last_error_code FROM marketplace_api_capabilities WHERE connection_id=?');
-        $q->execute([$connection]);
 
-        return array_column($q->fetchAll(PDO::FETCH_ASSOC), null, 'resource');
+        return array_column($this->rows('SELECT resource,state,last_verified_at,last_attempt_at,last_error_code FROM marketplace_api_capabilities WHERE connection_id=?', [$connection]), null, 'resource');
     }
 
     public static function scope(string $platform, array $config): string
@@ -84,10 +82,8 @@ final class IntegrationRuntime
         if (! $this->ready()) {
             return 0;
         }
-        $q = $this->pdo()->prepare('SELECT GREATEST(0,TIMESTAMPDIFF(SECOND,NOW(),next_allowed_at)) FROM marketplace_platform_cooldowns WHERE scope_hash=?');
-        $q->execute([$scope]);
 
-        return (int) $q->fetchColumn();
+        return (int) $this->value('SELECT GREATEST(0,TIMESTAMPDIFF(SECOND,NOW(),next_allowed_at)) FROM marketplace_platform_cooldowns WHERE scope_hash=?', [$scope]);
     }
 
     public function cooldown(string $scope, int $seconds): void
@@ -95,11 +91,6 @@ final class IntegrationRuntime
         if (! $this->ready()) {
             return;
         }
-        $this->pdo()->prepare('INSERT INTO marketplace_platform_cooldowns(scope_hash,next_allowed_at) VALUES (?,DATE_ADD(NOW(),INTERVAL ? SECOND)) ON DUPLICATE KEY UPDATE next_allowed_at=GREATEST(next_allowed_at,VALUES(next_allowed_at))')->execute([$scope, $seconds]);
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
+        $this->run('INSERT INTO marketplace_platform_cooldowns(scope_hash,next_allowed_at) VALUES (?,DATE_ADD(NOW(),INTERVAL ? SECOND)) ON DUPLICATE KEY UPDATE next_allowed_at=GREATEST(next_allowed_at,VALUES(next_allowed_at))', [$scope, $seconds]);
     }
 }

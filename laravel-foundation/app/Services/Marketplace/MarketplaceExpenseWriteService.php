@@ -61,7 +61,7 @@ final class MarketplaceExpenseWriteService
                     ->first();
 
                 if ($store === null) {
-                    throw new StoreForbidden();
+                    throw new StoreForbidden;
                 }
 
                 $expenseId = $connection->table('marketplace_expenses')->insertGetId([
@@ -165,7 +165,7 @@ final class MarketplaceExpenseWriteService
                 ->first();
 
             if ($store === null) {
-                throw new StoreForbidden();
+                throw new StoreForbidden;
             }
 
             $expense = $connection->table('marketplace_expenses')

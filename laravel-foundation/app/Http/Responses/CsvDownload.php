@@ -22,7 +22,7 @@ final class CsvDownload
      */
     public static function stream(string $filename, array $header, iterable $rows, bool $bom = true): StreamedResponse
     {
-        return response()->streamDownload(function () use ($header, $rows, $bom): void {
+        return response()->streamDownload(function () use ($header, $rows): void {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, $header, ',', '"', '');

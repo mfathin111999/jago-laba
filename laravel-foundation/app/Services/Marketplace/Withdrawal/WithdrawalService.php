@@ -2,16 +2,18 @@
 
 namespace App\Services\Marketplace\Withdrawal;
 
+use App\Services\Marketplace\Concerns\RunsSql;
 use App\Services\Marketplace\MarketplaceScope;
 use DateTimeImmutable;
 use DateTimeZone;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
-use PDO;
 use Throwable;
 
 final class WithdrawalService
 {
+    use RunsSql;
+
     public function __construct(private readonly DatabaseManager $database, private readonly MarketplaceScope $scope) {}
 
     private static function money(string $v, bool $nullable = false): ?string
@@ -21,7 +23,8 @@ final class WithdrawalService
             return null;
         }if (! preg_match('/^\d{1,15}(?:\.\d{1,2})?$/', $v)) {
             throw new InvalidArgumentException('Nominal harus angka tanpa pemisah ribuan, desimal memakai titik.');
-        }$parts = explode('.', $v);
+        }
+        $parts = explode('.', $v);
 
         return ltrim($parts[0], '0').(ltrim($parts[0], '0') === '' ? '0' : '').'.'.str_pad($parts[1] ?? '', 2, '0');
     }
@@ -42,10 +45,12 @@ final class WithdrawalService
     {
         if (strlen($csv) > 2097152) {
             throw new InvalidArgumentException('Maksimal berkas 2 MB.');
-        }$csv = preg_replace('/^\xEF\xBB\xBF/', '', $csv);
+        }
+        $csv = preg_replace('/^\xEF\xBB\xBF/', '', $csv);
         if (str_contains($csv, "\0")) {
             throw new InvalidArgumentException('Gunakan CSV UTF-8, bukan berkas Excel biner.');
-        }$f = fopen('php://temp', 'w+');
+        }
+        $f = fopen('php://temp', 'w+');
         fwrite($f, $csv);
         rewind($f);
         $first = strtok($csv, "\n") ?: '';
@@ -53,7 +58,8 @@ final class WithdrawalService
         $headers = fgetcsv($f, 0, $sep, '"', '');
         if (! $headers) {
             throw new InvalidArgumentException('CSV kosong.');
-        }$headers = array_map(static fn ($s) => strtolower(trim($s)), $headers);
+        }
+        $headers = array_map(static fn ($s) => strtolower(trim($s)), $headers);
         $required = ['withdrawal_id', 'requested_at', 'amount', 'currency', 'status'];
         foreach ($required as $h) {
             if (! in_array($h, $headers, true)) {
@@ -61,7 +67,8 @@ final class WithdrawalService
             }
         }if (count($headers) !== count(array_unique($headers))) {
             throw new InvalidArgumentException('Nama kolom berulang.');
-        }$rows = [];
+        }
+        $rows = [];
         $line = 1;
         while (($values = fgetcsv($f, 0, $sep, '"', '')) !== false) {
             $line++;
@@ -71,27 +78,32 @@ final class WithdrawalService
                 throw new InvalidArgumentException('Maksimal 2.000 baris per impor.');
             }if (count($values) !== count($headers)) {
                 throw new InvalidArgumentException('Jumlah kolom tidak sesuai pada baris '.$line);
-            }$r = array_combine($headers, $values);
+            }
+            $r = array_combine($headers, $values);
             try {
                 $id = trim($r['withdrawal_id']);
                 if (! preg_match('/^[A-Za-z0-9._:\/-]{1,120}$/', $id)) {
                     throw new InvalidArgumentException('ID penarikan tidak valid.');
                 }if (isset($rows[$id])) {
                     throw new InvalidArgumentException('ID penarikan berulang dalam berkas.');
-                }$status = trim($r['status']);
+                }
+                $status = trim($r['status']);
                 if ($status === '' || mb_strlen($status) > 100) {
                     throw new InvalidArgumentException('Status wajib diisi, maksimal 100 karakter.');
-                }$normalized = match (strtoupper($status)) {
+                }
+                $normalized = match (strtoupper($status)) {
                     'PAID','COMPLETED','SUCCESS','SUCCESSFUL','BERHASIL','SELESAI' => 'succeeded','PROCESSING','PENDING','IN_PROGRESS','DIPROSES','MENUNGGU' => 'processing','FAILED','REJECTED','GAGAL','DITOLAK' => 'failed','CANCELLED','CANCELED','DIBATALKAN' => 'cancelled',default => 'unknown'
                 };
                 $currency = strtoupper(trim($r['currency']));
                 if (! preg_match('/^[A-Z]{3}$/', $currency)) {
                     throw new InvalidArgumentException('Mata uang tidak valid.');
-                }$account = preg_replace('/\D/', '', $r['account_number'] ?? '');
+                }
+                $account = preg_replace('/\D/', '', $r['account_number'] ?? '');
                 $row = ['external_id' => $id, 'withdrawal_type' => mb_substr(trim($r['type'] ?? ''), 0, 30) ?: null, 'requested_at' => self::date($r['requested_at']), 'completed_at' => self::date($r['completed_at'] ?? '', true), 'amount' => self::money($r['amount']), 'fee' => self::money($r['fee'] ?? '', true), 'net_amount' => self::money($r['net_amount'] ?? '', true), 'currency' => $currency, 'source_status' => $status, 'normalized_status' => $normalized, 'bank_name' => mb_substr(trim($r['bank_name'] ?? ''), 0, 100) ?: null, 'account_mask' => $account !== '' ? '•••• '.substr($account, -4) : null, 'failure_reason' => mb_substr(trim($r['failure_reason'] ?? ''), 0, 500) ?: null];
                 if ($row['completed_at'] !== null && $row['completed_at'] < $row['requested_at']) {
                     throw new InvalidArgumentException('Tanggal selesai mendahului pengajuan.');
-                }$row['row_hash'] = hash('sha256', json_encode($row, JSON_THROW_ON_ERROR));
+                }
+                $row['row_hash'] = hash('sha256', json_encode($row, JSON_THROW_ON_ERROR));
                 $rows[$id] = $row;
             } catch (InvalidArgumentException $e) {
                 throw new InvalidArgumentException('Baris '.$line.': '.$e->getMessage());
@@ -102,7 +114,7 @@ final class WithdrawalService
             throw new InvalidArgumentException('Tidak ada data penarikan.');
         }
 
-return array_values($rows);
+        return array_values($rows);
     }
 
     public function import(string $store, array $rows, string $hash): array
@@ -112,14 +124,11 @@ return array_values($rows);
         $company = $scope->companyKey();
         $actor = (string) ($this->scope->userId());
         $counts = ['inserted' => 0, 'updated' => 0, 'unchanged' => 0];
-        $this->pdo()->beginTransaction();
+        $this->db()->beginTransaction();
         try {
-            $lock = $this->pdo()->prepare('SELECT id FROM marketplace_stores WHERE id=? AND company_key=? FOR UPDATE');
-            $lock->execute([$store, $company]);
+            $this->run('SELECT id FROM marketplace_stores WHERE id=? AND company_key=? FOR UPDATE', [$store, $company]);
             foreach ($rows as $r) {
-                $q = $this->pdo()->prepare('SELECT id,row_hash FROM marketplace_withdrawals WHERE company_key=? AND store_id=? AND external_id=? FOR UPDATE');
-                $q->execute([$company, $store, $r['external_id']]);
-                $old = $q->fetch(PDO::FETCH_ASSOC);
+                $old = $this->row('SELECT id,row_hash FROM marketplace_withdrawals WHERE company_key=? AND store_id=? AND external_id=? FOR UPDATE', [$company, $store, $r['external_id']]);
                 if ($old && $old['row_hash'] === $r['row_hash']) {
                     $counts['unchanged']++;
 
@@ -128,15 +137,15 @@ return array_values($rows);
                 $data = $r + ['company_key' => $company, 'store_id' => $store, 'source_kind' => 'import', 'source_hash' => $hash, 'imported_by' => $actor, 'imported_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s')];
                 $cols = array_keys($data);
                 $sql = 'INSERT INTO marketplace_withdrawals ('.implode(',', $cols).') VALUES ('.implode(',', array_fill(0, count($cols), '?')).') ON DUPLICATE KEY UPDATE '.implode(',', array_map(static fn ($c) => $c.'=VALUES('.$c.')', array_diff($cols, ['company_key', 'store_id', 'external_id'])));
-                $this->pdo()->prepare($sql)->execute(array_values($data));
-                $this->pdo()->prepare('INSERT INTO marketplace_withdrawal_audit(company_key,store_id,external_id,actor,previous_hash,new_hash,source_hash,created_at) VALUES (?,?,?,?,?,?,?,NOW())')->execute([$company, $store, $r['external_id'], $actor, $old['row_hash'] ?? null, $r['row_hash'], $hash]);
+                $this->run($sql, array_values($data));
+                $this->run('INSERT INTO marketplace_withdrawal_audit(company_key,store_id,external_id,actor,previous_hash,new_hash,source_hash,created_at) VALUES (?,?,?,?,?,?,?,NOW())', [$company, $store, $r['external_id'], $actor, $old['row_hash'] ?? null, $r['row_hash'], $hash]);
                 $counts[$old ? 'updated' : 'inserted']++;
             }
-            $this->pdo()->commit();
+            $this->db()->commit();
 
             return $counts;
         } catch (Throwable $e) {
-            $this->pdo()->rollBack();
+            $this->db()->rollBack();
             throw $e;
         }
     }
@@ -170,18 +179,9 @@ return array_values($rows);
             $args[] = '%'.$filters['search'].'%';
         }
         $from = ' FROM marketplace_withdrawals w JOIN marketplace_stores s ON s.id=w.store_id AND s.company_key=w.company_key WHERE '.implode(' AND ', $where);
-        $q = $this->pdo()->prepare('SELECT COUNT(*) total,SUM(CASE WHEN normalized_status=\'succeeded\' AND currency=\'IDR\' THEN net_amount END) paid,SUM(CASE WHEN normalized_status=\'succeeded\' AND currency=\'IDR\' THEN amount END) paid_nominal,SUM(normalized_status=\'processing\') processing,SUM(normalized_status=\'failed\') failed'.$from);
-        $q->execute($args);
-        $summary = $q->fetch(PDO::FETCH_ASSOC);
+        $summary = $this->row('SELECT COUNT(*) total,SUM(CASE WHEN normalized_status=\'succeeded\' AND currency=\'IDR\' THEN net_amount END) paid,SUM(CASE WHEN normalized_status=\'succeeded\' AND currency=\'IDR\' THEN amount END) paid_nominal,SUM(normalized_status=\'processing\') processing,SUM(normalized_status=\'failed\') failed'.$from, $args);
         $page = max(1, (int) ($filters['page'] ?? 1));
-        $q = $this->pdo()->prepare('SELECT w.*,s.store_name,s.platform'.$from.' ORDER BY w.requested_at DESC,w.id DESC LIMIT 50 OFFSET '.(($page - 1) * 50));
-        $q->execute($args);
 
-        return ['rows' => $q->fetchAll(PDO::FETCH_ASSOC), 'summary' => $summary, 'page' => $page, 'pages' => max(1,(int) ceil($summary['total'] / 50))];
-    }
-
-    private function pdo(): PDO
-    {
-        return $this->database->connection()->getPdo();
+        return ['rows' => $this->rows('SELECT w.*,s.store_name,s.platform'.$from.' ORDER BY w.requested_at DESC,w.id DESC LIMIT 50 OFFSET '.(($page - 1) * 50), $args), 'summary' => $summary, 'page' => $page, 'pages' => max(1, (int) ceil($summary['total'] / 50))];
     }
 }

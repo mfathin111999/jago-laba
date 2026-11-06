@@ -75,7 +75,7 @@ final class MarketplaceOrderWriteService
 
         $connection->transaction(function () use (
             $connection, $orderId, $storeId, $orderDate, $completionDate, $buyer, $status,
-            $gross, $adminFee, $serviceFee, $paymentFee, $shipAdj, $net, $cogs, $margin,
+            $gross, $adminFee, $serviceFee, $paymentFee, $shipAdj, $net, $cogs,
             $sku, $itemName, $qty, $variantId, $user
         ): void {
             $connection->table('marketplace_orders')->insert([

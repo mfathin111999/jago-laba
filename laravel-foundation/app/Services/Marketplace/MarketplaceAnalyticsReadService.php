@@ -188,5 +188,4 @@ final class MarketplaceAnalyticsReadService
 
         return [$dates[0], $dates[1]];
     }
-
 }

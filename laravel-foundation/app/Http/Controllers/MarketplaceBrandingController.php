@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Auth\LegacyUser;
-use App\Services\Marketplace\MarketplaceBrandingService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
+use App\Services\Marketplace\MarketplaceBrandingService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

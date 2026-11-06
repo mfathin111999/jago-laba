@@ -47,6 +47,7 @@ final class MarketplaceSettingsController
 
         return response()->json($res);
     }
+
     /** Legacy contract: no provider call is made until the official connector is approved. */
     public function testConnection(Request $request): JsonResponse
     {

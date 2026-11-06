@@ -7,7 +7,6 @@ use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Konveksi\Storage\JsonCollectionDriver;
 use App\Services\Konveksi\TypedCollections;
 use Illuminate\Database\Connection;
-use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 
 /**

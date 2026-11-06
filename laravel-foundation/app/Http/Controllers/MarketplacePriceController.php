@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Authorization\StoreContext;
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Marketplace\LiveGateway;
-use App\Services\Marketplace\Price\PriceService;
 use App\Security\CsrfTokenValidator;
+use App\Services\Marketplace\Price\PriceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

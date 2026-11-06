@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\ProviderConnectorInactive;
 use App\Marketplace\LiveGateway;
-use App\Services\Marketplace\Shipping\FulfillmentService;
 use App\Services\Marketplace\MarketplaceFulfillmentWriteService;
+use App\Services\Marketplace\Shipping\FulfillmentService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,5 +82,4 @@ final class MarketplaceFulfillmentController
             return response()->json(['success' => false, 'message' => FulfillmentService::safeError($e)], $e instanceof DomainException ? 403 : 400)->header('Cache-Control', 'no-store, private');
         }
     }
-
 }

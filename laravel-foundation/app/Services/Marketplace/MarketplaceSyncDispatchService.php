@@ -2,8 +2,8 @@
 
 namespace App\Services\Marketplace;
 
-use App\Jobs\MarketplaceSyncJob;
 use App\Jobs\MarketplaceLiveSyncJob;
+use App\Jobs\MarketplaceSyncJob;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

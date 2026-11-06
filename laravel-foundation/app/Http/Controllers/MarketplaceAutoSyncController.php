@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Authorization\StoreContext;
-use App\Services\Marketplace\MarketplaceAutoSyncService;
 use App\Policies\RolePolicy;
 use App\Security\CsrfTokenValidator;
+use App\Services\Marketplace\MarketplaceAutoSyncService;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

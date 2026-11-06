@@ -5,7 +5,7 @@ namespace App\Services\Marketplace\Sync;
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
-use PDO;
+use Illuminate\Database\Connection;
 
 final class SyncWindow
 {
@@ -17,13 +17,11 @@ final class SyncWindow
         return ['policy' => 'calendar_month', 'window_start' => $start, 'window_end' => $end, 'filter' => ['create_time_ge' => $start, 'create_time_lt' => $end + 1]];
     }
 
-    public static function forStore(PDO $pdo, string $storeId): array
+    public static function forStore(Connection $db, string $storeId): array
     {
         $window = self::checkpoint();
-        $pdo->prepare('UPDATE marketplace_stores SET sync_history_start_at=COALESCE(sync_history_start_at,?) WHERE id=?')->execute([date('Y-m-d H:i:s', $window['window_start']), $storeId]);
-        $q = $pdo->prepare('SELECT sync_history_start_at FROM marketplace_stores WHERE id=?');
-        $q->execute([$storeId]);
-        $start = $q->fetchColumn();
+        $db->statement('UPDATE marketplace_stores SET sync_history_start_at=COALESCE(sync_history_start_at,?) WHERE id=?', [date('Y-m-d H:i:s', $window['window_start']), $storeId]);
+        $start = $db->selectOne('SELECT sync_history_start_at FROM marketplace_stores WHERE id=?', [$storeId])?->sync_history_start_at;
         if (! $start) {
             throw new DomainException('Toko sinkronisasi tidak ditemukan.');
         }
