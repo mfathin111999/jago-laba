@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Prompt Refactor Jago Laba — PHP + MySQL
 
 Gunakan prompt berikut untuk mengembangkan Jago Laba secara konsisten di website resmi.

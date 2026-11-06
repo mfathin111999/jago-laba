@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Auto sync pesanan
 
 Pengaturan berada di Pengaturan Global → Tambah Toko, per toko. Nilai awal seluruhnya nonaktif. Mengaktifkan pengaturan menyimpan pilihan dan meminta Task Scheduler menjalankan worker segera. Browser hanya membaca progres; penarikan API tetap berlangsung setelah halaman ditutup.

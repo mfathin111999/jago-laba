@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Inventori & Stok per toko
 
 Route: marketplace.php?store=<id>&tab=produk&product_section=stok. Legacy tab=inventori redirects (303) to this route. Shared product tabs retain HPP and price workflows.

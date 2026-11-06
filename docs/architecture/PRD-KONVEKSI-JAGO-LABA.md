@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](legacy-removal.md) dan [arsitektur aktif](../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # PRD Jago Laba — Manajemen Konveksi
 
 Versi 1.0 • 28 Oktober 2026 • Status: rancangan pengembangan berdasarkan audit sumber lokal.

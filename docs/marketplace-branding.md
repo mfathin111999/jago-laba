@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Identitas dan logo Marketplace
 
 Brand navigasi: Jago Laba / MARKETPLACE MARKETING SYSTEM. Satu partial marketplace_brand.php digunakan sidebar toko, pemilih toko, pengaturan dan topbar ponsel. Logo tampil bulat (border-radius 50%), default 32px dan 28px pada ponsel. Ukuran lama 44/52px ditampilkan sebagai 32/36px tanpa mengubah gambar tersimpan. Logo awal JL tetap menjadi fallback sampai pengguna mengunggah gambar.

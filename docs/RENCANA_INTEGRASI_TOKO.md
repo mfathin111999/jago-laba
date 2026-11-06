@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Integrasi toko terotorisasi: hasil audit dan tahapan
 
 Status 24 Oktober 2026: alur seller OAuth resmi Shopee dan TikTok Shop, state satu kali, pertukaran token, verifikasi identitas toko, penyimpanan token terenkripsi, reconnect/disconnect, dan antrean sinkronisasi awal sudah diimplementasikan. **Kredensial/approval platform dan worker resource live masih diperlukan sebelum operasi produksi.** Jangan mendaftarkan URL webhook lokal atau menganggap status `Terhubung` lama sebagai bukti otorisasi.

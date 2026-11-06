@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](legacy-removal.md) dan [arsitektur aktif](../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Lembar keputusan pemilik — 4 November 2026
 
 > **Keputusan pemilik (4 Nov 2026):** semua rekomendasi disetujui, dengan satu syarat tegas: **tidak boleh mengubah logika bisnis**.

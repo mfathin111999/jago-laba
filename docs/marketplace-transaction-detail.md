@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Rincian transaksi dari konektor resmi
 
 Jalankan migrasi additive `database/migration_marketplace_transaction_detail.php` sebelum memakai filter COD. Migrasi menambahkan kolom nullable; transaksi lama dipertahankan.

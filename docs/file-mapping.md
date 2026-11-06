@@ -1,19 +1,15 @@
-# Mapping File Refaktor
+# Pemetaan dari PHP lama ke Laravel
 
-| Area lama | Boundary baru | Status |
-| --- | --- | --- |
-| `app/Database.php` | `app/Core/Database.php` | Implementasi dipindah; file lama menjadi adapter kompatibilitas |
-| `app/config.php` | `config/app.php`, `config/database.php`, `config/security.php`, `config/backup.php`, `config/marketplace.php` | Komposisi baru, bentuk konfigurasi lama dipertahankan |
-| daftar require di `app/bootstrap.php` | `app/Shared/Runtime.php` + `app/Modules/Konveksi/Module.php` | Loader dipisah berdasarkan tanggung jawab |
-| service Marketplace yang di-require langsung oleh halaman | `app/Modules/Marketplace/Module.php` | Module loader aktif, class implementation lama tetap kompatibel |
-| daftar view hard-coded di `public/index.php` | `KonveksiModule::viewNames()` | Manifest view aktif |
-| parsing JSON di `public/api/rpc.php` | `app/Http/RpcRequest.php` | Request boundary aktif |
-| serialisasi JSON di `public/api/rpc.php` | `app/Http/JsonResponse.php` | Response boundary aktif |
-| `public/assets/js/jl-api.js` | client HTTP MySQL-backed RPC | Aktif; tidak ada `google.script.run` |
-| `app/Services/MarketplaceScopeService.php` | `MarketplaceModule` dan policy scope aktif | Scope toko/perusahaan tetap dijaga oleh service existing |
-| transfer stok lintas modul | `app/Bridges/KonveksiMarketplace/ExplicitStockTransfer.php` | DTO boundary; tidak mengaktifkan pemotongan stok otomatis |
-| webhook/cron marketplace yang belum terverifikasi | endpoint/worker status belum aktif | Tidak membuat fake success |
+Pemetaan lengkap ada di [legacy-removal.md](architecture/legacy-removal.md). Ringkasnya:
 
-## Adapter yang sengaja dipertahankan
-
-Adapter hanya mempertahankan path publik dan include path internal. Adapter tidak menyimpan data, tidak memanggil Google API, dan tidak mengubah aturan bisnis. Penghapusan adapter dilakukan setelah semua referensi repository sudah dipindahkan dan smoke test lulus.
+| Area lama | Sekarang |
+| --- | --- |
+| `app/Core/Database`, `app/Database.php` | `Connection` Laravel (`config/database.php`) |
+| `app/config.php`, `config/*.php` lama | `config/jago.php`, `config/services.php`, `.env` |
+| `app/Shared/Runtime`, `Modules/*/Module.php` | service provider + container |
+| `public/index.php`, `public/*.php`, `public/api/*.php` | rute Laravel (URL sama, mis. `/api/rpc.php`) |
+| `app/Http/RpcRequest`, `JsonResponse` | `KonveksiRpcController` + `UnavailableResponse` |
+| `app/Modules/Marketplace/**` | `app/Services/Marketplace/**` |
+| `app/Modules/Konveksi/Views` | `resources/konveksi/views` |
+| `Bridges/KonveksiMarketplace/ExplicitStockTransfer` | tidak dipakai; tanpa pemotongan stok implisit |
+| `bin/workers/*.php`, `scripts/marketplace-cron.php` | `php artisan schedule:run`, `queue:work`, `marketplace:sync` |

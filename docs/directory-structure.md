@@ -1,28 +1,31 @@
-# Struktur Direktori Target
+# Struktur Direktori
 
 ```text
-app/
-  Core/                         # infrastruktur inti, termasuk PDO Database
-  Http/                         # request/response HTTP JSON
-  Shared/                       # runtime lintas modul
-  Modules/
-    Konveksi/                   # loader dan manifest view Konveksi
-    Marketplace/                # loader dan kontrak integrasi Marketplace
-  Bridges/KonveksiMarketplace/  # DTO transfer eksplisit lintas modul
-  Services/                     # lokasi implementasi historis yang masih dijaga adapter
-  views/                        # view legacy aktif, dimuat oleh manifest modul
-config/                         # konfigurasi terpisah per concern
-database/                       # migration, seed terkontrol, snapshot migrasi
-public/                         # entrypoint web, asset, endpoint HTTP
-scripts/                        # backup dan worker CLI
-storage/                        # backup, cache, log, upload server
-tests/                          # smoke dan integration test aktif
-docs/                           # arsitektur, mapping, verifikasi
+laravel-foundation/
+  app/
+    Audit/            # AuditRecorded + listener WriteAuditLog
+    Auth/             # AuthenticatedUser, provider, AuthenticationService
+    Authorization/    # RequestContext, ability/peran
+    Console/          # perintah artisan (konveksi:*, marketplace:*)
+    Enums/            # Platform, ConnectionStatus, FinanceState, PayoutStatus, StockStatus, AnalyticsMode
+    Http/             # controller, middleware, FormRequest
+    Jobs/             # MarketplaceSyncJob, MarketplaceLiveSyncJob
+    Services/
+      Marketplace/    # Analytics, Catalog, Expenses, Export, Http, Income, Integrations,
+                      # Marketing, OAuth, Price, Shipping, Stock, Sync, Withdrawal, Concerns/RunsSql
+      Konveksi/       # koleksi bertipe, sinkron + HPP, akun pengguna, baca pilot
+  config/             # jago.php, services.php, ...
+  database/
+    migrations/       # satu-satunya sumber skema
+    schema/           # registri koleksi Konveksi (konveksi.php, konveksi_typed.php)
+    seeders/          # MarketplaceDemoSeeder
+    snapshots/        # snapshot awal Konveksi
+  resources/
+    js/               # Inertia + Vue 3
+    konveksi/views/   # tampilan SPA Konveksi
+    css/legacy/       # utilitas Tailwind yang dibangun dari sumber Vue
+  routes/             # web, api, console
+  tests/              # Feature, Unit, e2e (Playwright), visual
+docs/                 # dokumen ini
+scripts/              # run-local, build release
 ```
-
-## Status migrasi folder
-
-- `Core`, `Http`, `Shared`, `Modules`, dan `config` sudah menjadi boundary runtime nyata.
-- Service historis di `app/Services` belum dipindahkan massal karena banyak endpoint dan migrasi lama merujuk path tersebut. Loader modul memusatkan pemuatan dan menjaga URL lama tetap kompatibel.
-- View Konveksi tetap berada di `app/views` untuk sementara; daftar view sekarang dikelola oleh `KonveksiModule::viewNames()`.
-- Pemindahan fisik service/view berikutnya harus dilakukan satu modul per commit dengan adapter tipis, lint, smoke test, dan verifikasi browser.

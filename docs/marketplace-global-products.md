@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Produk Global
 
 Menu `marketplace.php?scope=global&tab=produk` memiliki submenu `product_section=hpp`, `harga`, dan `stok`. Produk dikelompokkan menurut toko dan ID produk marketplace; baris anak memakai ID varian/SKU sumber. Penjualan default meliputi hari ini dan 13 hari sebelumnya, mengecualikan pesanan batal, retur, dan arsip. Filter tanggal menggantikan rentang default.

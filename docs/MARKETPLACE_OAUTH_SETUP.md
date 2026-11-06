@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Setup OAuth Marketplace Jago Laba
 
 Status implementasi: administrator dapat memasukkan dan menguji kredensial partner dari **Marketplace → Integrasi API**. Rahasia disimpan terenkripsi di database, atau tetap dapat disediakan lewat environment server. Token dan refresh token seller disimpan terenkripsi. Koneksi seller baru hanya berstatus terverifikasi setelah pertukaran token dan panggilan identitas resmi berhasil.

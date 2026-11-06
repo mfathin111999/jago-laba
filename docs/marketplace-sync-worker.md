@@ -1,3 +1,5 @@
+> **Catatan arsip (6 Nov 2026):** dokumen ini ditulis saat aplikasi masih PHP murni. Jalur file, skrip, dan kelas yang disebut di bawah (`app/Modules`, `public/*.php`, `bin/workers`, dll.) sudah dihapus dan digantikan Laravel; lihat [penghapusan kode lama](architecture/legacy-removal.md) dan [arsitektur aktif](architecture/../architecture.md). Perilaku bisnis yang dijelaskan tetap berlaku.
+
 # Sinkronisasi Sandbox TikTok
 
 Menu: `marketplace.php?scope=global&tab=sinkronisasi`. Hanya administrator dalam workspace Marketplace aktif yang dapat memulai atau memproses antrean. Dukungan pengembangan dibatasi ke koneksi TikTok terverifikasi dengan nama toko sumber berawalan SANDBOX. Shopee dan toko produksi tidak dijalankan oleh worker ini.
@@ -29,3 +31,10 @@ C:\xampp\php\php.exe scripts/marketplace-cron.php --company=LOCAL-COMPANY --stor
 Tambahkan `--enqueue` untuk run penuh baru, atau `--list` untuk melihat identifier Sandbox yang terhubung tanpa mencetak token. Penjadwalan Windows Task Scheduler belum dipasang otomatis. Setelah membuka kembali halaman gunakan Lanjutkan Antrean.
 
 Tes `tests/marketplace_sync_smoke.php` memakai database sementara dan respons API fixture untuk signing body, pagination, idempotensi, HPP, pembatasan Sandbox, isolasi perusahaan, serta kegagalan scope. Uji nyata pada toko Sandbox terhubung telah mengembalikan sukses untuk produk, order dan finance, serta respons retur kosong. Data ini berasal dari Sandbox, bukan transaksi toko produksi.
+
+## Cara menjalankan sekarang (Laravel)
+
+- Worker: `php artisan queue:work` (job `MarketplaceSyncJob` / `MarketplaceLiveSyncJob`, `WithoutOverlapping` per toko).
+- Penjadwalan: `php artisan schedule:run` tiap menit (lihat `routes/console.php`).
+- Manual: `php artisan marketplace:sync` (atau tombol Sinkronisasi di UI).
+- Skema dibuat oleh `php artisan migrate`; `scripts/marketplace-cron.php` dan `database/migration_marketplace_*.php` sudah tidak ada.
