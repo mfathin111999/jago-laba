@@ -962,7 +962,7 @@ final class SyncService
             }
             $snapshot = json_decode((string) $raw, true) ?: [];
             $snapshot = FinanceNormalizer::applyShopeeEscrow($snapshot, $f);
-            $this->pdo()->prepare('UPDATE marketplace_orders SET net_settlement_amount=?,other_deductions=0,net_margin_profit=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$snapshot['net_income'], isset($snapshot['net_income'],$snapshot['total_cogs']) ? $snapshot['net_income'] - $snapshot['total_cogs'] : null, json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $id, $store]);
+            $this->pdo()->prepare('UPDATE marketplace_orders SET net_settlement_amount=?,other_deductions=0,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$snapshot['net_income'], json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $id, $store]);
 
             return;
         }
@@ -984,7 +984,7 @@ final class SyncService
         }
         $snapshot['finance_updated_at'] = date('Y-m-d H:i:s');
         // Root totals and available fee components are kept separately; do not invent fee categories.
-        $this->pdo()->prepare('UPDATE marketplace_orders SET net_settlement_amount=?,other_deductions=0,net_margin_profit=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$snapshot['net_income'], isset($snapshot['net_income'],$snapshot['total_cogs']) ? $snapshot['net_income'] - $snapshot['total_cogs'] : null, json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $id, $store]);
+        $this->pdo()->prepare('UPDATE marketplace_orders SET net_settlement_amount=?,other_deductions=0,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$snapshot['net_income'], json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $id, $store]);
     }
 
     private function pdo(): PDO

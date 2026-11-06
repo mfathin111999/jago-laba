@@ -96,7 +96,6 @@ final class MarketplaceOrderWriteService
                 'adjustment_amount' => 0,
                 'net_settlement_amount' => $net,
                 'total_cogs_hpp' => $cogs,
-                'net_margin_profit' => $margin,
                 'escrow_status' => 'Tertahan',
                 'source_kind' => 'manual',
                 'created_at' => now(),
@@ -170,7 +169,6 @@ final class MarketplaceOrderWriteService
                 'buyer_username' => $buyer,
                 'order_status' => $status,
                 'total_cogs_hpp' => $hpp,
-                'net_margin_profit' => $net - $hpp,
                 'completion_date' => $status === 'Selesai' ? ($order->completion_date ?: now()) : $order->completion_date,
             ]);
 

@@ -63,10 +63,16 @@ final class MarketplaceStoreDeletionService
         if (! $this->mysql()) {
             return;
         }
-        $tables = array_merge(self::OWNED, ['jl_data_marketplace_sync_queue', 'jl_data_marketplace_product_mapping', 'marketplace_orders', 'marketplace_oauth_connections', 'marketplace_store_files']);
+        $tables = array_merge(self::OWNED, ['marketplace_orders', 'marketplace_oauth_connections', 'marketplace_store_files']);
         foreach ($tables as $table) {
             if (Schema::hasTable($table)) {
                 $this->guard($table, 'NEW.store_id');
+            }
+        }
+        // Collections kept as JSON documents have no store_id column; the store is a field of the document.
+        foreach (['jl_data_marketplace_sync_queue', 'jl_data_marketplace_product_mapping'] as $table) {
+            if (Schema::hasTable($table)) {
+                $this->guard($table, "IF(JSON_VALID(NEW._data_json), JSON_UNQUOTE(JSON_EXTRACT(NEW._data_json, '$.store_id')), NULL)");
             }
         }
         $this->guard('marketplace_stores', 'NEW.id');

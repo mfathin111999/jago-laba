@@ -28,7 +28,7 @@ final class MarketplaceHppRecalculationTest extends TestCase
             $table->string('order_date');
             $table->decimal('net_settlement_amount', 16, 2)->nullable();
             $table->decimal('total_cogs_hpp', 16, 2)->default(0);
-            $table->decimal('net_margin_profit', 16, 2)->nullable();
+            $table->decimal('net_margin_profit', 16, 2)->nullable()->storedAs('net_settlement_amount - total_cogs_hpp'); // generated, like the real schema
             $table->longText('transaction_detail_json')->nullable();
         });
         Schema::create('marketplace_order_items', function (Blueprint $table): void {
@@ -83,9 +83,9 @@ final class MarketplaceHppRecalculationTest extends TestCase
         DB::table('marketplace_catalog_variants')->insert([['store_id' => 'a', 'sku' => 'S1']]);
         DB::table('marketplace_hpp_history')->insert(['store_id' => 'a', 'marketplace_sku' => 'S1', 'unit_hpp' => 10, 'effective_from' => '2026-01-01']);
         DB::table('marketplace_orders')->insert([
-            ['id' => 'O-OLD', 'store_id' => 'a', 'order_date' => '2026-10-01 10:00:00', 'net_settlement_amount' => 100, 'total_cogs_hpp' => 20, 'net_margin_profit' => 80],
-            ['id' => 'O-NEW', 'store_id' => 'a', 'order_date' => '2026-11-03 10:00:00', 'net_settlement_amount' => 100, 'total_cogs_hpp' => 30, 'net_margin_profit' => 70],
-            ['id' => 'O-UNKNOWN', 'store_id' => 'a', 'order_date' => '2026-11-03 11:00:00', 'net_settlement_amount' => null, 'total_cogs_hpp' => 5, 'net_margin_profit' => null],
+            ['id' => 'O-OLD', 'store_id' => 'a', 'order_date' => '2026-10-01 10:00:00', 'net_settlement_amount' => 100, 'total_cogs_hpp' => 20],
+            ['id' => 'O-NEW', 'store_id' => 'a', 'order_date' => '2026-11-03 10:00:00', 'net_settlement_amount' => 100, 'total_cogs_hpp' => 30],
+            ['id' => 'O-UNKNOWN', 'store_id' => 'a', 'order_date' => '2026-11-03 11:00:00', 'net_settlement_amount' => null, 'total_cogs_hpp' => 5],
         ]);
         DB::table('marketplace_order_items')->insert([
             ['order_id' => 'O-OLD', 'sku' => 'S1', 'qty' => 2, 'unit_cogs_hpp' => 10, 'subtotal_cogs' => 20],

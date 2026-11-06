@@ -312,15 +312,11 @@ final class MarketplaceHppService
                 }
 
                 $net = is_array($snapshot) && array_key_exists('net_income', $snapshot) ? $snapshot['net_income'] : $order->net_settlement_amount;
-                $profit = $net === null || $total === null ? null : (float) $net - (float) $total;
 
                 $updateData = [
                     'total_cogs_hpp' => $total ?? 0,
                     'transaction_detail_json' => is_array($snapshot) ? json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) : null,
                 ];
-                if (property_exists($order, 'net_margin_profit')) {
-                    $updateData['net_margin_profit'] = $profit;
-                }
 
                 $connection->table('marketplace_orders')
                     ->where('id', $order->id)

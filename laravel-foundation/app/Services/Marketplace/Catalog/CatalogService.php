@@ -253,9 +253,7 @@ final class CatalogService
                 }
                 $total = count(array_filter($snapshot['items'], static fn ($item) => ! isset($item['total_cogs']))) ? null : array_sum(array_column($snapshot['items'], 'total_cogs'));
                 $snapshot['total_cogs'] = $total;
-                $net = $snapshot['net_income'] ?? null;
-                $profit = $net === null || $total === null ? null : (float) $net - $total;
-                $this->pdo()->prepare('UPDATE marketplace_orders SET total_cogs_hpp=?,net_margin_profit=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$total ?? 0, $profit, json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $order['id'], $storeId]);
+                $this->pdo()->prepare('UPDATE marketplace_orders SET total_cogs_hpp=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$total ?? 0, json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), $order['id'], $storeId]);
                 $affected++;
             }
             foreach ($audits as $sku => $count) {
@@ -386,8 +384,7 @@ final class CatalogService
                 if (is_array($snapshot)) {
                     $snapshot['total_cogs'] = $total;
                 }
-                $net = is_array($snapshot) && array_key_exists('net_income', $snapshot) ? $snapshot['net_income'] : $order['net_settlement_amount'];
-                $this->pdo()->prepare('UPDATE marketplace_orders SET total_cogs_hpp=?,net_margin_profit=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$total ?? 0, $net === null || $total === null ? null : (float) $net - $total, is_array($snapshot) ? json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) : null, $order['id'], $storeId]);
+                $this->pdo()->prepare('UPDATE marketplace_orders SET total_cogs_hpp=?,transaction_detail_json=? WHERE id=? AND store_id=?')->execute([$total ?? 0, is_array($snapshot) ? json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) : null, $order['id'], $storeId]);
                 $affected++;
             }
             if ($effectiveFrom <= date('Y-m-d')) {

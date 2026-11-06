@@ -42,7 +42,7 @@ final class MarketplaceOrderWriteTest extends TestCase
             $table->decimal('adjustment_amount', 16, 2)->default(0);
             $table->decimal('net_settlement_amount', 16, 2)->default(0);
             $table->decimal('total_cogs_hpp', 16, 2)->default(0);
-            $table->decimal('net_margin_profit', 16, 2)->default(0);
+            $table->decimal('net_margin_profit', 16, 2)->nullable()->storedAs('net_settlement_amount - total_cogs_hpp'); // generated, like the real schema
             $table->string('escrow_status')->nullable();
             $table->string('source_kind')->default('api');
             $table->string('internal_state')->nullable();
