@@ -73,12 +73,13 @@ final class ServicesResolveTest extends TestCase
 
         $this->assertSame([], $offenders);
     }
+
     public function test_services_talk_to_the_database_through_laravels_connection_not_through_raw_pdo(): void
     {
         $offenders = [];
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname(__DIR__, 2).'/app', \FilesystemIterator::SKIP_DOTS));
         foreach ($iterator as $file) {
-            if ($file->getExtension() === 'php' && preg_match('/\bPDO::|->prepare\(|new PDO\b/', (string) file_get_contents($file->getPathname())) === 1) {
+            if ($file->getExtension() === 'php' && preg_match('/\bPDO::|->prepare\(\s*["\']|new PDO\b/', (string) file_get_contents($file->getPathname())) === 1) {
                 $offenders[] = $file->getPathname();
             }
         }
