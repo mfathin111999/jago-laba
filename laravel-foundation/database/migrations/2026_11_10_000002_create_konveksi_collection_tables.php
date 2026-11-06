@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         $connection = app(KonveksiConnection::class)->connection();
-        $schema = new KonveksiSchema();
+        $schema = new KonveksiSchema;
 
         $schema->createCollectionTables($connection->getSchemaBuilder());
         $schema->seedTableMap($connection);

@@ -13,7 +13,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        (new KonveksiSchema())->createSupportTables(app(KonveksiConnection::class)->connection()->getSchemaBuilder());
+        (new KonveksiSchema)->createSupportTables(app(KonveksiConnection::class)->connection()->getSchemaBuilder());
     }
 
     public function down(): void

@@ -1,6 +1,8 @@
 <?php
 
+use App\Services\Konveksi\KonveksiConnection;
 use App\Services\Konveksi\Typed\KonveksiTypedMigrator;
+use App\Services\Konveksi\TypedCollections;
 use Illuminate\Database\Migrations\Migration;
 
 /**
@@ -20,8 +22,8 @@ return new class extends Migration
         if (! app()->environment(['local', 'testing'])) {
             throw new RuntimeException('Migrasi tabel bertipe Konveksi tidak bisa dibatalkan di luar local/testing.');
         }
-        $schema = app(App\Services\Konveksi\KonveksiConnection::class)->connection()->getSchemaBuilder();
-        foreach (app(App\Services\Konveksi\TypedCollections::class)->definitions() as $definition) {
+        $schema = app(KonveksiConnection::class)->connection()->getSchemaBuilder();
+        foreach (app(TypedCollections::class)->definitions() as $definition) {
             $schema->dropIfExists($definition->table);
         }
     }

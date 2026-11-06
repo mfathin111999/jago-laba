@@ -11,11 +11,9 @@ final class KonveksiPilotReadService
 {
     public const COLLECTIONS = [
         'rekening', 'produk', 'bahan', 'bahan_hpp', 'hpp_model_bom', 'hpp_history', 'bahan_hpp_history',
-        'pegawai', 'supplier', 'pembelian', 'pembelian_item', 'potong', 'potong_item', 'jahit', 'jahit_item',
-        'keuangan', 'kasbon', 'profil', 'distribusi', 'pengguna', 'hak_akses', 'master_stok', 'mutasi_stok',
+        'pegawai', 'supplier', 'pembelian', 'pembelian_item', 'potong', 'jahit', 'keuangan', 'kasbon', 'profil', 'distribusi', 'pengguna', 'hak_akses', 'master_stok', 'mutasi_stok',
         'pembelian_vendor', 'riwayat_bayar_hutang', 'hutang_konveksi', 'riwayat_bayar_hutang_konveksi',
-        'template_dokumen', 'penjualan', 'penjualan_item', 'penjualan_koreksi', 'material_alias', 'quality_control',
-        'mutasi_stok_konveksi', 'hutangsupplier', 'hutang_supplier',
+        'template_dokumen', 'penjualan', 'penjualan_item', 'penjualan_koreksi', 'material_alias', 'hutangsupplier', 'hutang_supplier',
     ];
 
     public function __construct(

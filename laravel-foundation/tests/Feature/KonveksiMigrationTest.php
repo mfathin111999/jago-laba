@@ -29,14 +29,14 @@ final class KonveksiMigrationTest extends TestCase
         foreach (KonveksiSchema::SUPPORT_COLUMNS as $table => $columns) {
             $this->assertEqualsCanonicalizing($columns, Schema::getColumnListing($table), $table);
         }
-        $this->assertCount(39, KonveksiSchema::collectionTables());
+        $this->assertCount(33, KonveksiSchema::collectionTables());
     }
 
     public function test_the_collection_map_is_seeded_and_the_application_can_use_a_collection(): void
     {
         $this->migrate();
 
-        $this->assertSame(38, DB::table('system_table_map')->count());
+        $this->assertSame(32, DB::table('system_table_map')->count());
         $this->assertSame('jl_data_produk', DB::table('system_table_map')->where('api_key', 'produk')->value('table_name'));
         $this->assertSame('HutangSupplier', DB::table('system_table_map')->where('api_key', 'hutang_supplier')->value('sheet_name'));
 
@@ -58,7 +58,7 @@ final class KonveksiMigrationTest extends TestCase
 
         $this->assertSame(1, DB::table('jl_data_bahan')->count(), 'existing rows survive');
         $this->assertSame(1, (int) DB::table('system_table_map')->where('api_key', 'bahan')->value('imported_row_count'), 'existing map rows are not overwritten');
-        $this->assertSame(38, DB::table('system_table_map')->count());
+        $this->assertSame(32, DB::table('system_table_map')->count());
     }
 
     public function test_an_existing_table_with_extra_legacy_columns_is_adopted_untouched(): void

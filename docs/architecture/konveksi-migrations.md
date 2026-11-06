@@ -6,7 +6,7 @@ Konveksi awalnya aplikasi Google Apps Script dengan Google Sheets sebagai databa
 | Migrasi | Isi |
 |---|---|
 | `2026_11_10_000001_create_konveksi_support_tables` | `system_settings`, `system_table_map`, `system_audit_logs`, `backup_log`, `document_files`, `idempotency_keys`, `konveksi_request_receipts` |
-| `2026_11_10_000002_create_konveksi_collection_tables` | 39 tabel `jl_data_*` + 38 baris `system_table_map` (sheet → kunci → tabel) |
+| `2026_11_10_000002_create_konveksi_collection_tables` | 33 tabel `jl_data_*` + 38 baris `system_table_map` (sheet → kunci → tabel) |
 
 - Logika skema ada di `app/Database/KonveksiSchema.php`; daftar koleksi di `database/schema/konveksi.php`.
 - Tabel dibuat di database tempat Konveksi berada (`KonveksiConnection`): database terpisah bila diisolasi, atau database bawaan.

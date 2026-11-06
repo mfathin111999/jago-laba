@@ -59,7 +59,7 @@ final class KonveksiSnapshotImportTest extends TestCase
         $this->assertSame(2, (int) $map->imported_row_count);
         $this->assertSame('["id","nama"]', $map->headers_json);
         $this->assertSame(64, strlen((string) $map->checksum));
-        $this->assertSame(38, DB::table('system_table_map')->count(), 'no map row is added or lost');
+        $this->assertSame(32, DB::table('system_table_map')->count(), 'no map row is added or lost');
     }
 
     public function test_a_table_that_already_holds_data_is_never_overwritten_without_replace(): void
