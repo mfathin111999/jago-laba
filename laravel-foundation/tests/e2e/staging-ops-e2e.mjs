@@ -3,7 +3,11 @@
  * deletion worker, mysqldump backups and the scheduler. It drives the running app (for the owner-only deletion API)
  * and artisan, and inspects the database with the mysql client.
  *
- *   . scripts/development/staging-env.sh   # in the shell that runs this, so artisan and the app share one database
+ * Disposable staging database (MariaDB/MySQL), built with artisan only:
+ *   php artisan migrate --force && php artisan konveksi:import-snapshot && php artisan konveksi:typed migrate --all
+ *   php artisan jago:create-owner --password=owner123 && php artisan db:seed --class=MarketplaceDemoSeeder
+ *   then start the app on it:  php artisan serve --port=8800   (DB_DATABASE pointing at that database)
+ *   export DB_DATABASE=<that db> DB_HOST=127.0.0.1 DB_PORT=<port> DB_USERNAME=root DB_PASSWORD=<pw> MYSQL_PWD=<pw>   # artisan and the app share one database
  *   PHP_BIN=/path/to/php8.4 MYSQL_BIN=/path/to/mysql MYSQLDUMP_BIN=/path/to/mysqldump node tests/e2e/staging-ops-e2e.mjs
  *
  * It creates and deletes a throw-away store (STR-OPS) in the staging database.
@@ -53,8 +57,8 @@ await page.goto(base + '/', { waitUntil: 'networkidle' });
 await page.fill('input[placeholder="Username"]', process.env.E2E_USER || 'owner');
 await page.fill('input[placeholder="Password"]', process.env.E2E_PASSWORD || 'owner123');
 await page.click('button[type="submit"]');
-await page.waitForSelector('.workspace-marketplace');
-await page.click('.workspace-marketplace');
+await page.waitForSelector('.dialog .card.marketplace');
+await page.click('.dialog .card.marketplace');
 await page.waitForURL('**/pilot/marketplace**');
 const csrf = await page.evaluate(() => document.querySelector('meta[name="csrf-token"]')?.content || '');
 const api = (body) => page.evaluate(async ([payload, token]) => {

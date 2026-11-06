@@ -9,7 +9,10 @@ use PDO;
 
 final class IncrementalSync
 {
-    public function __construct(private readonly DatabaseManager $database) {}
+    public function __construct(
+        private readonly DatabaseManager $database,
+        private readonly PartnerSettings $settings,
+    ) {}
 
     public function ready(): bool
     {
@@ -22,7 +25,7 @@ final class IncrementalSync
             throw new MarketplaceIntegrationException('Skema checkpoint sinkronisasi belum dipasang.', 'CHECKPOINT_SCHEMA_MISSING');
         }
         $dataset = $type === 'transactions' ? 'finance' : ($type === 'orders' && $mode === 'unpaid' ? 'orders_unpaid' : $type);
-        $config = (new PartnerSettings($this->pdo()))->configFor($c['platform']);
+        $config = $this->settings->configFor($c['platform']);
         $environment = IntegrationPolicy::environment($c['platform'], $config);
         $scope = hash('sha256', implode('|', [$c['company_key'], $c['platform'], $environment, $c['store_id'], $c['external_store_id'], $dataset]));
         $this->pdo()->prepare('INSERT IGNORE INTO marketplace_sync_checkpoints(scope_key,company_key,store_id,platform,environment,dataset,history_start) VALUES (?,?,?,?,?,?,?)')->execute([$scope, $c['company_key'], $c['store_id'], $c['platform'], $environment, $dataset, $anchor['window_start']]);

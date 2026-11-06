@@ -168,8 +168,11 @@ if ($tables -gt 0) {
     if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'jago:create-owner gagal (lihat pesan di atas).' }
     Pop-Location
     if ($Seed) {
-        & $phpExe (Join-Path $repo 'scripts\development\local-staging-seed.php')
-        if ($LASTEXITCODE -ne 0) { Fail 'Pengisian data contoh gagal.' }
+        Push-Location $app
+        & $phpExe artisan db:seed --class=MarketplaceDemoSeeder --force --no-interaction
+        $seedExit = $LASTEXITCODE
+        Pop-Location
+        if ($seedExit -ne 0) { Fail 'Pengisian data contoh gagal.' }
         Sql "DELETE FROM $DbName.marketplace_product_ads WHERE store_id LIKE 'STR-%-JAGOIN'" | Out-Null
     }
 }

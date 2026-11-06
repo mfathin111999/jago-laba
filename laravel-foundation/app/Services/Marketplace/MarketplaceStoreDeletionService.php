@@ -374,8 +374,13 @@ final class MarketplaceStoreDeletionService
         foreach (self::OWNED as $table) {
             $plan[$table] = 'store_id=?';
         }
-        foreach (['jl_data_marketplace_sync_queue', 'jl_data_marketplace_product_mapping', 'marketplace_orders', 'marketplace_oauth_connections', 'marketplace_store_files'] as $table) {
+        foreach (['marketplace_orders', 'marketplace_oauth_connections', 'marketplace_store_files'] as $table) {
             $plan[$table] = 'store_id=?';
+        }
+        // Collections kept as JSON documents have no store_id column; the store is a field of the document.
+        $jsonStore = $this->mysql() ? "JSON_UNQUOTE(JSON_EXTRACT(_data_json, '$.store_id'))=?" : "json_extract(_data_json, '$.store_id')=?";
+        foreach (['jl_data_marketplace_sync_queue', 'jl_data_marketplace_product_mapping'] as $table) {
+            $plan[$table] = $jsonStore;
         }
 
         // Fail closed: any other table carrying store_id must be reviewed before erasure is allowed.

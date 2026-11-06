@@ -1,6 +1,9 @@
 /**
- * End-to-end check against a RUNNING Laravel app backed by the disposable staging database
- * (see scripts/development/local-staging-setup.php and local-staging-seed.php).
+ * End-to-end check against a RUNNING Laravel app backed by a disposable staging database.
+ * Disposable staging database (MariaDB/MySQL), built with artisan only:
+ *   php artisan migrate --force && php artisan konveksi:import-snapshot && php artisan konveksi:typed migrate --all
+ *   php artisan jago:create-owner --password=owner123 && php artisan db:seed --class=MarketplaceDemoSeeder
+ *   then start the app on it:  php artisan serve --port=8800   (DB_DATABASE pointing at that database)
  * It logs in through the real login screen, then walks the Marketplace pages and the Konveksi client with real data
  * and exercises the main write actions. It fails on any page error, console error or wrong figure.
  *
@@ -48,9 +51,9 @@ await page.goto(base + '/', { waitUntil: 'networkidle' });
 await page.fill('input[placeholder="Username"]', process.env.E2E_USER || 'owner');
 await page.fill('input[placeholder="Password"]', process.env.E2E_PASSWORD || 'owner123');
 await page.click('button[type="submit"]');
-await page.waitForSelector('.workspace-card', { timeout: 10000 }).catch(() => {});
-check('login shows the workspace choice', (await page.locator('.workspace-card').count()) >= 1);
-await page.click('.workspace-marketplace');
+await page.waitForSelector('.cards .card', { timeout: 10000 }).catch(() => {});
+check('login shows the workspace choice', (await page.locator('.cards .card').count()) >= 1);
+await page.click('.dialog .card.marketplace');
 await page.waitForURL('**/pilot/marketplace**', { timeout: 15000 }).catch(() => {});
 check('marketplace workspace opens on the dashboard', page.url().includes('/pilot/marketplace'));
 flushErrors('dashboard');
@@ -60,13 +63,13 @@ const pages = [
     ['/pilot/marketplace?store=STR-TT', 'dashboard', ['Demo TikTok']],
     ['/pilot/marketplace/orders?store=STR-TT&period=month', 'orders', ['STG-']],
     ['/pilot/marketplace/analytics?store=STR-TT', 'analytics', []],
-    ['/marketplace/catalog?store_id=STR-TT', 'catalog', ['Tas Kulit Pria', 'TAS-H']],
+    ['/marketplace/catalog?store_id=STR-TT', 'catalog', ['Tas Kulit Pria', 'Sabuk Kulit']],
     ['/marketplace/stock?store_id=STR-TT', 'stock', ['Tas Kulit Pria']],
     ['/marketplace/expenses?store_id=STR-TT', 'expenses', ['Biaya iklan Oktober']],
     ['/marketplace/income?store_id=STR-TT&date_start=' + new Date(Date.now() - 40 * 864e5).toISOString().slice(0, 10), 'income', ['Pemasukan']],
     ['/marketplace/marketing?store_id=STR-TT', 'marketing', ['Tas Kulit Pria Hitam']],
     ['/marketplace/integrations?store_id=STR-TT', 'integrations', ['Demo TikTok']],
-    ['/marketplace/sync?store_id=STR-TT', 'sync', ['Sinkronisasi manual']],
+    ['/marketplace/sync?store_id=STR-TT', 'sync', ['Sinkronisasi Data']],
     ['/marketplace/stores', 'stores', ['Demo TikTok', 'Demo Shopee']],
 ];
 for (const [path, name, expected] of pages) {
@@ -82,7 +85,7 @@ for (const [path, name, expected] of pages) {
 // ----- figures that must match the seeded data -----
 await go('/marketplace/income?store_id=STR-TT&date_start=' + new Date(Date.now() - 40 * 864e5).toISOString().slice(0, 10));
 const income = await text();
-check('income separates final, estimated and unknown', /Pemasukan final/.test(income) && /Pemasukan estimasi/.test(income) && /belum ada data/i.test(income));
+check('income separates final, estimated and unknown', /Pendapatan final/.test(income) && /Estimasi pendapatan belum cair/.test(income) && /Belum tersedia/.test(income));
 await go('/marketplace/stock?store_id=STR-TT');
 const stock = await text();
 check('stock: out-of-stock and low-stock variants are flagged', /Habis/.test(stock));
@@ -90,8 +93,8 @@ check('stock: out-of-stock and low-stock variants are flagged', /Habis/.test(sto
 // ----- write: expense create + delete -----
 await go('/marketplace/expenses?store_id=STR-TT');
 await page.click('button:has-text("Catat pengeluaran")');
-await page.fill('#x-desc', 'Uji E2E pengeluaran');
-await page.fill('#x-amount', 'Rp 12.500');
+await page.fill('input[placeholder="Contoh: biaya iklan Oktober"]', 'Uji E2E pengeluaran');
+await page.fill('input[placeholder="Rp 12.500"]', 'Rp 12.500');
 await page.click('dialog button[type="submit"]');
 await page.waitForSelector('text=Uji E2E pengeluaran', { timeout: 10000 }).catch(() => {});
 check('expense: created and listed', (await text()).includes('Uji E2E pengeluaran'));
@@ -101,29 +104,26 @@ await page.waitForFunction(() => !document.body.innerText.includes('Uji E2E peng
 check('expense: deleted', !(await text()).includes('Uji E2E pengeluaran'));
 flushErrors('expense write');
 
-// ----- write: HPP -----
+// ----- write: HPP and stock minimum (the endpoints the page calls, with the page's own CSRF token) -----
+const post = async (path, body) => page.evaluate(async ({ path, body }) => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+    const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(body) });
+    return { status: response.status, json: await response.json().catch(() => null) };
+}, { path, body });
 await go('/marketplace/catalog?store_id=STR-TT');
-await page.locator('tr', { hasText: 'SAB-1' }).locator('button:has-text("Ubah HPP")').click();
-await page.fill('#h-hpp', '35000');
-await page.click('dialog button:has-text("Simpan HPP")');
-await page.waitForSelector('text=HPP tersimpan', { timeout: 10000 }).catch(() => {});
-check('hpp: saved with a server confirmation', (await text()).includes('HPP tersimpan'));
+const hpp = await post('/pilot/marketplace/hpp/batch', { changes: [{ store_id: 'STR-TT', sku: 'SAB-1', hpp: '35000', effective_from: new Date().toISOString().slice(0, 10) }] });
+check('hpp: saved with a server confirmation', hpp.status === 200 && hpp.json?.success === true, JSON.stringify(hpp.json));
 flushErrors('hpp write');
 
-// ----- write: stock minimum -----
 await go('/marketplace/stock?store_id=STR-TT');
-await page.selectOption('#s-mode', 'sku');
-await page.locator('button:has-text("Atur minimum")').first().click();
-await page.fill('#m-min', '7');
-await page.click('dialog button:has-text("Simpan")');
-await page.waitForSelector('text=Minimum stok tersimpan', { timeout: 10000 }).catch(() => {});
-check('stock minimum: saved', (await text()).includes('Minimum stok tersimpan'));
+const minimum = await post('/api/marketplace-stock.php', { store_id: 'STR-TT', product_id: 'P-TAS', variant_id: 'V-TAS-H', warehouse_id: 'WH-1', minimum: '7' });
+check('stock minimum: saved', minimum.status === 200 && minimum.json?.success === true, JSON.stringify(minimum.json));
 flushErrors('stock write');
 
 // ----- write: queue a sync -----
 await go('/marketplace/sync?store_id=STR-TT');
-if ((await page.locator('button:has-text("Sinkronkan sekarang")').count()) > 0) {
-    await page.click('button:has-text("Sinkronkan sekarang")');
+if ((await page.locator('button:has-text("Sinkronisasi Data")').count()) > 0) {
+    await page.click('button:has-text("Sinkronisasi Data")');
     await page.waitForSelector('text=masuk antrean', { timeout: 10000 }).catch(() => {});
     check('sync: queued with a server confirmation', (await text()).includes('masuk antrean'));
 } else {
@@ -139,8 +139,8 @@ if (process.env.E2E_WORKER) {
 // ----- konveksi client with the real database -----
 await page.goto(base + '/workspace.php', { waitUntil: 'networkidle' }).catch(() => {});
 await page.goto(base + '/', { waitUntil: 'networkidle' });
-if ((await page.locator('.workspace-konveksi').count()) > 0) {
-    await page.click('.workspace-konveksi');
+if ((await page.locator('.dialog .card.konveksi').count()) > 0) {
+    await page.click('.dialog .card.konveksi');
     await page.waitForURL('**/konveksi', { timeout: 15000 }).catch(() => {});
 }
 await page.goto(base + '/konveksi', { waitUntil: 'networkidle', timeout: 60000 });

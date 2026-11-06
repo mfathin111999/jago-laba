@@ -1,5 +1,9 @@
 /**
- * Write-path E2E for the Konveksi client against the RUNNING app and the disposable staging database.
+ * Write-path E2E for the Konveksi client against the RUNNING app and a disposable staging database.
+ * Disposable staging database (MariaDB/MySQL), built with artisan only:
+ *   php artisan migrate --force && php artisan konveksi:import-snapshot && php artisan konveksi:typed migrate --all
+ *   php artisan jago:create-owner --password=owner123 && php artisan db:seed --class=MarketplaceDemoSeeder
+ *   then start the app on it:  php artisan serve --port=8800   (DB_DATABASE pointing at that database)
  * It uses the legacy client's own API library (window.jlApi) in a real logged-in browser, so every call carries the
  * real CSRF token, idempotency key, collection versions and reset epoch, and runs through the real MySQL gate
  * (GET_LOCK, receipts, collection versions). Reads go through loadSemuaData, the same way the screens refresh.
@@ -27,8 +31,8 @@ await page.goto(base + '/', { waitUntil: 'networkidle' });
 await page.fill('input[placeholder="Username"]', process.env.E2E_USER || 'owner');
 await page.fill('input[placeholder="Password"]', process.env.E2E_PASSWORD || 'owner123');
 await page.click('button[type="submit"]');
-await page.waitForSelector('.workspace-konveksi');
-await page.click('.workspace-konveksi');
+await page.waitForSelector('.dialog .card.konveksi');
+await page.click('.dialog .card.konveksi');
 await page.waitForURL('**/konveksi', { timeout: 15000 });
 await page.waitForFunction(() => window.jlApi && window.jlApi.ready, null, { timeout: 60000 });
 await page.waitForTimeout(1500);
