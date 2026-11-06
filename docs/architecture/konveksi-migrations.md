@@ -30,4 +30,6 @@ php artisan konveksi:schema-check     # hanya membaca; exit 1 bila ada tabel/kol
 
 ## Catatan
 - `jl_data_hutangsupplier` adalah tabel "yatim" (ejaan lain dari `hutang_supplier`, tanpa baris peta) yang tetap dibuat agar sama dengan hasil installer legacy.
-- Belum dikerjakan: `konveksi:import-snapshot` (port `SnapshotImporter` untuk memuat data awal), `konveksi:isolate` (port `bin/konveksi-setup.php`), serta pemakaian `migrate` di `run-local` dan runbook cutover.
+- `php artisan konveksi:import-snapshot` memuat data awal spreadsheet (`database/legacy/current_database_snapshot.json`) ke tabel hasil migrasi. Menolak menimpa tabel yang sudah berisi data kecuali `--replace` (di production butuh `--force`); `--only=produk,bahan` membatasi koleksi. Terbukti identik dengan hasil `SnapshotImporter` legacy pada 39 tabel (38 sheet, 226 baris).
+- `scripts/development/run-local.ps1` menjalankan `php artisan migrate --force` dan `konveksi:schema-check` pada setiap peluncuran.
+- Belum dikerjakan: `konveksi:isolate` (port `bin/konveksi-setup.php`), perintah pembuat owner, migrasi tabel Marketplace/sistem, serta runbook cutover.

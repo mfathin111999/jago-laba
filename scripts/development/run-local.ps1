@@ -165,10 +165,11 @@ if ($tables -gt 0) {
     }
 }
 Push-Location $app
-if ((Sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='$DbName' AND table_name='jobs'") -eq '0') {
-    & $phpExe artisan migrate --path=database/migrations/0001_01_01_000002_create_jobs_table.php --force --no-interaction | Out-Null
-    Write-Host 'Tabel antrean dipasang.'
-}
+# Laravel migrations: queue/session/cache tables and the Konveksi schema. Adopt-only, so tables that already exist are never changed.
+& $phpExe artisan migrate --force --no-interaction
+if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'php artisan migrate gagal (lihat pesan di atas).' }
+& $phpExe artisan konveksi:schema-check --no-interaction
+if ($LASTEXITCODE -ne 0) { Write-Host 'Peringatan: skema Konveksi belum lengkap (lihat di atas).' -ForegroundColor Yellow }
 & $phpExe artisan marketplace:store-deletion --install --no-interaction 2>&1 | Out-Null
 Pop-Location
 
