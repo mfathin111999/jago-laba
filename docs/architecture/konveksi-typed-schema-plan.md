@@ -1,0 +1,64 @@
+# Rencana: Konveksi dari tabel JSON ke tabel MySQL bertipe (tingkat B)
+
+Status: rencana, belum dikerjakan. Melanjutkan [konveksi-migrations.md](konveksi-migrations.md) (tingkat A: skema sekarang dikelola migrasi Laravel, tapi tiap sheet masih satu tabel `jl_data_<kunci>` berisi `_data_json`).
+
+## 1. Tujuan dan batas
+- Tiap koleksi menjadi tabel dengan kolom bertipe (`DECIMAL`, `DATE`, `INT`, `VARCHAR`), primary key, indeks, dan akhirnya foreign key.
+- **Kontrak ke klien tidak berubah**: RPC Konveksi tetap mengembalikan/menerima array objek dengan nama field yang sama. Perubahan hanya di lapisan penyimpanan.
+- Tidak ada data hilang: field yang belum dipetakan disimpan di kolom `_extra_json` sampai dipetakan.
+- Logika bisnis tidak diubah (keputusan pemilik 4 Nov 2026).
+
+## 2. Temuan dari snapshot (38 sheet, 226 baris; 17 sheet berisi, 21 kosong)
+- **Tipe campur dalam satu kolom**: `tanggal` ada yang angka (serial Google Sheets) dan ada yang teks; `no_wa`, `password`, `id_*` kadang angka kadang teks (`PRD-…`). Kolom `Pengguna.password` bernilai numerik di snapshot: perlu dicek apakah hash atau teks polos.
+- **Data bersarang sebagai teks**: kolom `items` (Pembelian, Potong, Jahit), `permissions_json`, `before_json/after_json` berisi JSON dalam string → kandidat tabel anak (`pembelian_items`) atau kolom `JSON`.
+- **Skema ganda dalam satu sheet**: `Bahan` memuat kolom lama (`id, jenis, harga_beli`) dan baru (`id_bahan, kode_bahan, harga_satuan…`) berdampingan; `Distribusi` juga.
+- **Gaya penamaan campur**: snake_case (sheet lama) vs PascalCase (`PembelianID`, `QtyTarget`) pada sheet baru (semuanya masih kosong).
+- 21 sheet kosong (Penjualan 55 kolom, HPP_Model_BOM 27, Bahan_HPP 43, …): skemanya hanya bisa diturunkan dari header dan kode, tanpa contoh data.
+- Snapshot hanya 226 baris. **Data produksi nyata lebih besar dan lebih kotor**; desain final wajib divalidasi terhadap salinan produksi.
+
+## 3. Titik sentuh di kode
+- Akses terpusat di `KonveksiCollections` (`rows/insert/update/delete`), tetapi ada ±38 pemakaian `_data_json` langsung di 10 berkas: Backup, DocumentAndAi, Hutang, Inventory, PilotRead, PurchaseWrite, SalesWrite, SyncAndHpp, plus importer/isolate. Ini harus dilewatkan satu pintu lebih dulu.
+- Sinkron koleksi (versi, penggantian seluruh koleksi) dan backup/snapshot berasumsi dokumen JSON; keduanya perlu adaptor.
+
+## 4. Strategi: per koleksi, dengan bayangan (shadow) dan saklar
+Satu koleksi pindah sendiri-sendiri; tidak ada "big bang".
+
+1. **Profiling** — perintah `konveksi:profile` (baca saja): per kolom tipe terdeteksi, persentase null, panjang maksimum, nilai jenis campur, ID yatim. Dijalankan pada salinan produksi. Hasilnya menjadi dasar tipe kolom.
+2. **Definisi koleksi** — satu kelas per koleksi (`Collections/ProdukCollection`): nama tabel baru (`kv_produk`), kolom, cast dua arah (baris ⇄ objek JSON klien), aturan normalisasi (tanggal serial → `DATE`, "Rp 1.000" → `DECIMAL`, ID teks/angka), dan `_extra_json` untuk field tak terpetakan.
+3. **Satu pintu akses** — `KonveksiCollections` memilih driver per koleksi (`json` atau `typed`) dari konfigurasi; 10 berkas di atas dialihkan ke pintu itu. Test karakterisasi memastikan keluaran identik sebelum dan sesudah.
+4. **Backfill + rekonsiliasi** — `konveksi:backfill {koleksi}`: salin dari `jl_data_*` ke tabel bertipe, lalu bandingkan setiap baris dengan membangun ulang objek JSON dan membandingkannya dengan aslinya (setelah normalisasi yang disepakati). Baris yang gagal dilaporkan, bukan diperbaiki diam-diam.
+5. **Tulis ganda lalu saklar** — selama masa transisi tulis ke dua tabel, baca dari satu; cek berkala selisih. Setelah stabil, baca dari tabel bertipe.
+6. **Pensiun** — tabel JSON dijadikan arsip baca-saja beberapa minggu, lalu dihapus lewat migrasi terpisah.
+7. **Constraint terakhir** — FK dan `NOT NULL` ditambah setelah data bersih (yatim dibereskan lebih dulu), bukan di awal.
+
+Rollback tiap koleksi: kembalikan saklar ke `json` (tabel JSON tetap utuh dan terus diperbarui selama tulis ganda).
+
+## 5. Urutan pengerjaan yang disarankan
+| Gelombang | Isi | Alasan |
+|---|---|---|
+| 0 | Satu pintu akses + `konveksi:profile` + test karakterisasi | Tanpa ini semua gelombang berisiko |
+| 1 | Master kecil: Rekening, Supplier, Pegawai, Profil | Sederhana; melatih pola |
+| 2 | Produk, Bahan, Master_Stok, Mutasi_Stok | Inti stok; skema ganda `Bahan` diputuskan di sini |
+| 3 | Pembelian (+`items`), Potong, Jahit, Keuangan, Kasbon, Hutang | Transaksi; kolom `items` jadi tabel anak; uang jadi `DECIMAL` |
+| 4 | Pengguna, Hak_Akses, Template_Dokumen | Sensitif; periksa `password` dulu |
+| 5 | Sheet kosong (Penjualan, HPP_*, Bahan_HPP, …) | Dirancang dari kode; ditunda sampai fiturnya dipakai |
+
+## 6. Estimasi (dengan asumsi data produksi tersedia)
+- Gelombang 0: 2-3 hari. Gelombang 1: 1-2 hari. Gelombang 2: 3-4 hari. Gelombang 3: 4-6 hari. Gelombang 4: 1-2 hari. Gelombang 5: menyusul.
+- Total gelombang 0-4: ±2-3 minggu kerja. Tiap gelombang berhenti dalam keadaan hijau dan bisa dijeda.
+- Pembanding dari diskusi sebelumnya: tingkat A selesai dalam hitungan hari; B lebih lama karena ada normalisasi data, tulis ganda, dan pengujian dengan data nyata.
+
+## 7. Keputusan yang dibutuhkan dari pemilik
+1. **Salinan data produksi** (anonimkan bila perlu) untuk profiling. Tanpa ini desain berisiko.
+2. **Tipe uang**: `DECIMAL(18,2)` (saran) atau lebih presisi untuk HPP/kuantitas?
+3. **Penamaan kolom**: pertahankan nama Indonesia/snake_case yang ada (saran, agar pemetaan klien mudah) dan samakan gaya PascalCase sheet baru ke snake_case?
+4. **Format ID**: pertahankan nilai asli (campur angka/teks) sebagai `VARCHAR` untuk transisi (saran), atau seragamkan ke `BIGINT` + kolom kode?
+5. **Aturan data kotor**: baris yang tak lolos normalisasi → ditolak, atau disimpan apa adanya di `_extra_json` dengan peringatan (saran)?
+6. **`Pengguna.password`**: apakah hash? Bila teks polos, hash ulang perlu direncanakan terpisah.
+7. Apakah FK ketat (menolak data yatim) diinginkan, atau hanya indeks?
+
+## 8. Risiko
+- Pembulatan uang/float: `DECIMAL` harus diserialisasi ke JSON sebagai angka yang sama dengan sekarang (uji batas pembulatan).
+- Tanggal serial Sheets dan zona waktu: aturan konversi harus eksplisit dan diuji.
+- Kunci/idempotensi dan penguncian baris di layanan (`lockForUpdate`) harus tetap berlaku pada tabel baru.
+- Backup/snapshot dan impor lama mengasumsikan JSON: ikut diadaptasi, dan hasil pemulihan diuji.
