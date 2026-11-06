@@ -188,13 +188,13 @@ Diperbarui setelah pengerjaan fase 0–5. Setiap langkah dikerjakan dengan test 
 | Temuan | Status | Commit / catatan |
 |---|---|---|
 | A1 Eloquent | **Sebagian** | `2f8ebd6`, `fb3f7e4`: model `MarketplaceStore` + `CompanyScope`; dipakai pembacaan toko, service tulis toko, `StoreContext`. Model pengeluaran/pesanan belum (tabel pengeluaran tidak punya `company_key`) |
-| A2 Enum | Belum | Nilai status masih string |
+| A2 Enum | Ditunda (tidak sepadan) | Diukur ulang: status keuangan `final/estimated/unknown` hanya muncul di satu berkas Laravel (`MarketplacePilotReadService`, ±7 kemunculan); logika statusnya selebihnya ada di service legacy yang tidak boleh diubah. Enum hanya akan mengganti beberapa string. Layak dibuat bila status itu mulai dipakai di banyak tempat |
 | A3 Cek skema runtime | Belum | Mayoritas untuk tabel milik legacy, sengaja dipertahankan |
 | B1 Exception per controller | **Sebagian** | `5526f2b`, `cf052b5`, `944687a`, `eb42ac4`: `ApiException`, `ApiResponse::guard`; controller pengeluaran, toko, HPP, sinkronisasi. Price, WithdrawalPreview, OrderWrite sengaja tidak diubah (bentuk error legacy berbeda) |
 | B2 Request ID | Selesai | `a671089` |
 | B3 `LegacyRpcController` | **Sebagian** | `604a2fe`: 682 → 581 baris; 10 method seragam lewat satu peta handler. Handler berkondisi khusus belum dipecah |
 | B4 Blok "belum ada toko" berulang | Belum | |
-| B5 Input manual / FormRequest | Belum | `authorize()` masih `true` |
+| B5 Input manual / FormRequest | Ditunda | `authorize()` masih `true` di 18 kelas, tetapi setiap route sudah dijaga `can:<aksi>` (D1); menduplikasinya di FormRequest menambah risiko ketidakcocokan karena sebagian kelas dipakai oleh lebih dari satu route (pilot dan legacy ajax) |
 | C1/C2 Route berulang, alias ganda | Selesai | `7390dad`: 254 → 221 baris, 4 alias dihapus |
 | C3 Konteks via `attributes` | **Sebagian** | `b593a9c`: `RequestContext` + `$request->companyKey()`; CSRF ganda dibiarkan sampai pasca-cutover |
 | D1 Gate/Policy | Selesai (rute) | `c6957ea`: `can:<aksi>`, `EnsureRoleAction` dihapus. `authorize()` di FormRequest belum |
