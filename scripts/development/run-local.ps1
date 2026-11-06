@@ -162,6 +162,8 @@ if ($tables -gt 0) {
     if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'php artisan migrate gagal (lihat pesan di atas).' }
     & $phpExe artisan konveksi:import-snapshot --no-interaction
     if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'konveksi:import-snapshot gagal (lihat pesan di atas).' }
+    & $phpExe artisan konveksi:typed migrate --all --no-interaction
+    if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'konveksi:typed migrate gagal (lihat pesan di atas).' }
     & $phpExe artisan jago:create-owner --password=$OwnerPassword --no-interaction
     if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'jago:create-owner gagal (lihat pesan di atas).' }
     Pop-Location

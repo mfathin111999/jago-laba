@@ -3,6 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Database\KonveksiSchema;
+use App\Services\Konveksi\Storage\JsonCollectionDriver;
+use App\Services\Konveksi\Typed\KonveksiTypedMigrator;
+use App\Services\Konveksi\TypedCollections;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
@@ -90,17 +93,20 @@ final class KonveksiIsolateCommand extends Command
         $schema = new KonveksiSchema;
         $schema->createSupportTables($admin->getSchemaBuilder());
         $schema->createCollectionTables($admin->getSchemaBuilder());
+        app(KonveksiTypedMigrator::class)->createTables($admin);
+        $typed = app(TypedCollections::class);
         $admin->table('system_table_map')->delete();
 
         $rows = [];
         $admin->beginTransaction();
         try {
             $mapped = $source->table('system_table_map')->get()->map(fn ($row) => (array) $row)
-                ->filter(fn (array $row) => isset(KonveksiSchema::mappedCollections()[$row['table_name']]))->values();
+                ->filter(fn (array $row) => isset(KonveksiSchema::mappedCollections()[$row['table_name']]) || $typed->driverFor((string) $row['table_name']) !== null)->values();
             foreach ($mapped as $map) {
                 $table = $map['table_name'];
-                $this->copy($source, $admin, $table, KonveksiSchema::COLLECTION_COLUMNS);
-                $this->assertSame($source, $admin, $table);
+                $definition = collect($typed->definitions())->first(fn ($candidate) => $candidate->table === $table);
+                $this->copy($source, $admin, $table, $definition?->tableColumns() ?? KonveksiSchema::COLLECTION_COLUMNS);
+                $this->assertSame($source, $admin, $table, $typed);
                 $admin->table('system_table_map')->insert($map);
                 $rows[] = (int) $admin->table($table)->count();
             }
@@ -162,10 +168,10 @@ final class KonveksiIsolateCommand extends Command
         });
     }
 
-    private function assertSame(Connection $source, Connection $target, string $table): void
+    private function assertSame(Connection $source, Connection $target, string $table, TypedCollections $typed): void
     {
-        $read = fn (Connection $connection) => $connection->table($table)->orderBy('_row_order')->orderBy('_row_id')->pluck('_data_json')->all();
-        if ($read($source) !== $read($target)) {
+        $driver = $typed->driverFor($table) ?? new JsonCollectionDriver;
+        if ($driver->rows($source, $table) !== $driver->rows($target, $table)) {
             throw new RuntimeException("Rekonsiliasi tabel {$table} gagal.");
         }
     }

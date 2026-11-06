@@ -17,8 +17,8 @@ final class KonveksiCollections
 {
     private const TABLE_PATTERN = '/^(jl_data|kv)_[a-z0-9_]+$/';
 
-    /** @var array<string, string> */
-    private array $tables = [];
+    /** Tables already confirmed to exist. The key -> table lookup is not cached, so a switch to another layout applies at once, even in a long-running worker. */
+    private array $present = [];
 
     public function __construct(
         private readonly KonveksiConnection $konveksi,
@@ -168,10 +168,6 @@ final class KonveksiCollections
 
     private function table(string $key): string
     {
-        if (isset($this->tables[$key])) {
-            return $this->tables[$key];
-        }
-
         $connection = $this->konveksi->connection();
         $table = (string) $connection->table('system_table_map')->where('api_key', $key)->value('table_name');
         // The snapshot importer maps the HutangSupplier sheet as hutang_supplier while purchases say hutangsupplier;
@@ -185,11 +181,14 @@ final class KonveksiCollections
         if (preg_match(self::TABLE_PATTERN, $table) !== 1) {
             throw new RuntimeException("Tabel {$key} tidak valid.");
         }
-        if (! $connection->getSchemaBuilder()->hasTable($table)) {
-            // Mapped but absent is a broken installation, not a business error: it surfaces as a masked 500.
-            throw KonveksiTableMissing::for($table);
+        if (! isset($this->present[$table])) {
+            if (! $connection->getSchemaBuilder()->hasTable($table)) {
+                // Mapped but absent is a broken installation, not a business error: it surfaces as a masked 500.
+                throw KonveksiTableMissing::for($table);
+            }
+            $this->present[$table] = true;
         }
 
-        return $this->tables[$key] = $table;
+        return $table;
     }
 }

@@ -1,6 +1,6 @@
 # Rencana: Konveksi dari tabel JSON ke tabel MySQL bertipe (tingkat B)
 
-Status: rencana, belum dikerjakan. Melanjutkan [konveksi-migrations.md](konveksi-migrations.md) (tingkat A: skema sekarang dikelola migrasi Laravel, tapi tiap sheet masih satu tabel `jl_data_<kunci>` berisi `_data_json`).
+Status: **gelombang 0-4 selesai dan terverifikasi** (21 koleksi berisi data; sheet kosong/Gelombang 5 belum). Lihat bagian "Yang sudah dibuat" di bawah. Melanjutkan [konveksi-migrations.md](konveksi-migrations.md) (tingkat A: skema sekarang dikelola migrasi Laravel, tapi tiap sheet masih satu tabel `jl_data_<kunci>` berisi `_data_json`).
 
 ## 1. Tujuan dan batas
 - Tiap koleksi menjadi tabel dengan kolom bertipe (`DECIMAL`, `DATE`, `INT`, `VARCHAR`), primary key, indeks, dan akhirnya foreign key.
@@ -62,3 +62,18 @@ Rollback tiap koleksi: kembalikan saklar ke `json` (tabel JSON tetap utuh dan te
 - Tanggal serial Sheets dan zona waktu: aturan konversi harus eksplisit dan diuji.
 - Kunci/idempotensi dan penguncian baris di layanan (`lockForUpdate`) harus tetap berlaku pada tabel baru.
 - Backup/snapshot dan impor lama mengasumsikan JSON: ikut diadaptasi, dan hasil pemulihan diuji.
+
+## 9. Yang sudah dibuat
+- **Satu pintu akses**: `KonveksiCollections` (rows/documents/insert/update/delete/replace/eachSheet) dipakai semua layanan; penyimpanan di balik `CollectionDriver` (`JsonCollectionDriver`, `TypedCollectionDriver`). Pemetaan koleksi → tabel dibaca setiap panggilan, jadi pengalihan layout berlaku langsung, juga di worker antrean.
+- **Definisi bertipe** di `database/schema/konveksi_typed.php` (21 koleksi, tipe mengikuti data nyata: `bigint` untuk ID, `decimal(18,2)` uang, `decimal(18,4)` kuantitas, `date`/`datetime`, `string:n`, `text`, `bool`). Tabel `kv_<koleksi>` dibuat migrasi `2026_11_12_000001`.
+- **Tanpa kehilangan data**: `TypedRowMapper` menyimpan field tanpa kolom di `_extra_json.x`, nilai asli yang berubah saat melewati kolom (angka sebagai teks, serial tanggal Sheets, `null` vs `''`) di `.o`, dan field yang memang tidak ada di `.a`. Record yang dibaca = record yang ditulis (sama kunci, nilai, dan tipe).
+- **`php artisan konveksi:profile`** (baca saja): profil tipe per field dari data nyata.
+- **`php artisan konveksi:typed status|migrate|rollback`**: `migrate` menyalin (row id dipertahankan), membandingkan setiap record dengan JSON, baru mengalihkan `system_table_map`; verifikasi gagal = tidak ada pengalihan. `rollback` menyalin baris bertipe kembali ke tabel JSON (tulisan baru ikut) lalu mengalihkan balik. Tabel JSON tetap sebagai arsip. Memakai kunci tulis yang sama dengan `konveksi:isolate`.
+- `konveksi:isolate`, `konveksi:schema-check`, dan `konveksi:import-snapshot` sudah mengenali tabel bertipe (importer tidak mengalihkan koleksi bertipe kembali ke JSON).
+- Bukti (MariaDB, snapshot nyata): 21 koleksi, semua record identik setelah dipindah dan setelah rollback + migrate ulang; isolasi database menyalin tabel bertipe.
+
+## 10. Temuan data
+- `Pengguna.password` bernilai angka enam digit: kemungkinan kata sandi polos pada koleksi Konveksi (bukan login Laravel, yang memakai hash di `auth_users_v2`). Perlu diputuskan terpisah; kolom dibuat `string:255`.
+- `Keuangan.tanggal` dll. campuran serial Sheets dan ISO; kini kolom `date` sungguhan, nilai asli tetap dikembalikan ke klien.
+- Nomor telepon disimpan sebagai angka di sebagian baris (angka 0 di depan hilang); kolom dibuat teks.
+- Kolom yang di snapshot selalu kosong tipenya ditebak dari nama field; periksa lagi dengan data produksi (`konveksi:profile`).

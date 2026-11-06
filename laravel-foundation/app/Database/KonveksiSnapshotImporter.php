@@ -78,10 +78,10 @@ final class KonveksiSnapshotImporter
                     $this->connection->table($table)->insert($insert);
                 }
 
-                $this->connection->table('system_table_map')->updateOrInsert(
-                    ['api_key' => $key],
-                    ['sheet_name' => $sheet, 'table_name' => $table, 'headers_json' => json_encode($headers, JSON_UNESCAPED_UNICODE), 'source_row_count' => count($rows), 'imported_row_count' => count($rows), 'checksum' => hash('sha256', json_encode($rows, self::JSON_FLAGS)), 'updated_at' => $now],
-                );
+                $map = ['sheet_name' => $sheet, 'headers_json' => json_encode($headers, JSON_UNESCAPED_UNICODE), 'source_row_count' => count($rows), 'imported_row_count' => count($rows), 'checksum' => hash('sha256', json_encode($rows, self::JSON_FLAGS)), 'updated_at' => $now];
+                // A collection already moved to a typed table keeps pointing at it; only a new map row names the JSON table.
+                $exists = $this->connection->table('system_table_map')->where('api_key', $key)->exists();
+                $this->connection->table('system_table_map')->updateOrInsert(['api_key' => $key], $exists ? $map : $map + ['table_name' => $table]);
             });
 
             $count = $this->connection->table($table)->count();

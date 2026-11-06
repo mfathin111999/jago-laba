@@ -13,7 +13,7 @@ final class KonveksiMigrationTest extends TestCase
 {
     private function migrate(): void
     {
-        foreach (['2026_11_10_000001_create_konveksi_support_tables', '2026_11_10_000002_create_konveksi_collection_tables'] as $name) {
+        foreach (['2026_11_10_000001_create_konveksi_support_tables', '2026_11_10_000002_create_konveksi_collection_tables', '2026_11_12_000001_create_konveksi_typed_tables'] as $name) {
             (require database_path('migrations/'.$name.'.php'))->up();
         }
     }

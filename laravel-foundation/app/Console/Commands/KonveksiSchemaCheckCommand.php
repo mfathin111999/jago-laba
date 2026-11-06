@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Database\KonveksiSchema;
 use App\Services\Konveksi\KonveksiConnection;
+use App\Services\Konveksi\TypedCollections;
 use Illuminate\Console\Command;
 
 /**
@@ -32,6 +33,9 @@ final class KonveksiSchemaCheckCommand extends Command
         foreach (KonveksiSchema::SUPPORT_COLUMNS as $table => $columns) {
             $expected[$table] = $columns;
         }
+        foreach (app(TypedCollections::class)->definitions() as $definition) {
+            $expected[$definition->table] = $definition->tableColumns();
+        }
 
         foreach ($expected as $table => $columns) {
             if (! $schema->hasTable($table)) {
@@ -50,7 +54,7 @@ final class KonveksiSchemaCheckCommand extends Command
             foreach (KonveksiSchema::mappedCollections() as $table => [, $key]) {
                 if (! isset($map[$key])) {
                     $problems[] = "system_table_map tidak memuat koleksi: {$key}";
-                } elseif ($map[$key] !== $table) {
+                } elseif ($map[$key] !== $table && $map[$key] !== app(TypedCollections::class)->definition($key)?->table) {
                     $problems[] = "system_table_map: {$key} menunjuk {$map[$key]}, seharusnya {$table}";
                 }
             }

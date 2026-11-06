@@ -6,6 +6,7 @@ Semua skema database kini dikelola migrasi Laravel. Perintah di bawah dijalankan
 1. Buat database (`utf8mb4_unicode_ci`) dan isi kredensial `DB_*` di `.env`.
 2. `php artisan migrate --force` — tabel Laravel, Konveksi (39 `jl_data_*` + pendukung), Marketplace/sistem (46 tabel).
 3. `php artisan konveksi:import-snapshot` — data awal spreadsheet (menolak menimpa tabel berisi).
+3b. Opsional: `php artisan konveksi:typed migrate --all` untuk memakai tabel bertipe.
 4. `php artisan jago:create-owner --username=owner --password=...` — login Owner.
 5. Periksa: `php artisan konveksi:schema-check` dan `php artisan marketplace:schema-check` (exit 0).
 6. Pasang trigger hapus toko: `php artisan marketplace:store-deletion --install`.
@@ -17,6 +18,13 @@ Semua skema database kini dikelola migrasi Laravel. Perintah di bawah dijalankan
 2. `php artisan konveksi:schema-check` dan `php artisan marketplace:schema-check` (read-only) untuk melihat selisih.
 3. `php artisan migrate --force` — hanya membuat yang belum ada; tabel yang ada tidak diubah.
 4. Ulangi kedua schema-check sampai exit 0.
+
+## B2. Tabel bertipe Konveksi (opsional, per koleksi)
+1. `php artisan migrate --force` membuat tabel `kv_*` kosong.
+2. `php artisan konveksi:profile` pada salinan produksi; tinjau `database/schema/konveksi_typed.php`.
+3. `php artisan konveksi:typed migrate rekening supplier` (atau `--all`): salin, bandingkan record demi record, lalu alihkan. Tambahkan `--no-switch` untuk hanya menyalin dan memverifikasi.
+4. `php artisan konveksi:typed status` menampilkan layout tiap koleksi.
+5. Rollback: `php artisan konveksi:typed rollback <koleksi>` (tulisan yang terjadi sejak pengalihan ikut disalin balik).
 
 ## C. Memisahkan database Konveksi (opsional)
 1. Pastikan user MySQL aplikasi boleh `CREATE DATABASE`, `CREATE USER`, `GRANT` (hanya saat langkah ini).
