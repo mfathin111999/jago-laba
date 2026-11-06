@@ -33,3 +33,10 @@ php artisan konveksi:schema-check     # hanya membaca; exit 1 bila ada tabel/kol
 - `php artisan konveksi:import-snapshot` memuat data awal spreadsheet (`database/legacy/current_database_snapshot.json`) ke tabel hasil migrasi. Menolak menimpa tabel yang sudah berisi data kecuali `--replace` (di production butuh `--force`); `--only=produk,bahan` membatasi koleksi. Terbukti identik dengan hasil `SnapshotImporter` legacy pada 39 tabel (38 sheet, 226 baris).
 - `scripts/development/run-local.ps1` menjalankan `php artisan migrate --force` dan `konveksi:schema-check` pada setiap peluncuran.
 - Belum dikerjakan: `konveksi:isolate` (port `bin/konveksi-setup.php`), perintah pembuat owner, migrasi tabel Marketplace/sistem, serta runbook cutover.
+
+## Tabel Marketplace dan sistem (migrasi 2026_11_10_000003)
+- 46 tabel (`marketplace_*`, `system_users`, `auth_users_v2`, `migration_log`) dibuat dari DDL emas `laravel-foundation/database/schema/marketplace.sql`, diambil dari database hasil installer legacy (termasuk kolom generated `net_margin_profit`, `roas`, `source_order_status`). `CREATE TABLE IF NOT EXISTS`: tabel yang ada tidak diubah. Hanya MySQL/MariaDB; test SQLite membuat tabelnya sendiri.
+- FK `fk_store_account`, `fk_payout_acc`, `fk_map_variant` menunjuk tabel `accounts`/`product_variants` yang tidak ada di installer legacy; dipertahankan apa adanya dan dibuat dengan `FOREIGN_KEY_CHECKS=0`.
+- Trigger `jl_erase_*` (hapus toko) tetap dipasang oleh `marketplace:store-deletion --install`, bukan migrasi.
+- Bukti (MariaDB): database kosong + `migrate` → 0 selisih kolom (tipe, null, default, generated) dan 0 tabel hilang dibanding `jago_laba`; `createMissing` di `jago_laba` = 0 tabel baru.
+- `php artisan marketplace:schema-check` (read-only) memeriksa tabel dan kolom.
