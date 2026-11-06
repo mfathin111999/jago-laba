@@ -3,6 +3,7 @@
 namespace App\Services\Marketplace;
 
 use App\Auth\LegacyUser;
+use App\Enums\ConnectionStatus;
 use App\Exceptions\MarketplaceOAuthException;
 use App\Marketplace\OAuth\LiveOAuthProvider;
 use App\Marketplace\OAuth\MarketplaceOAuthProvider;
@@ -281,7 +282,7 @@ final class MarketplaceOAuthService
                 'token_expires_at' => $tokens['token_expires_at'],
                 'refresh_token_expires_at' => $tokens['refresh_token_expires_at'],
                 'granted_scopes' => json_encode($tokens['granted_scopes'], JSON_THROW_ON_ERROR),
-                'status' => 'verified',
+                'status' => ConnectionStatus::Verified->value,
                 'last_error_code' => null,
                 'verified_at' => now(),
                 'updated_at' => now(),
@@ -293,7 +294,7 @@ final class MarketplaceOAuthService
             }
             if ($row !== null) {
                 $connection->table('marketplace_oauth_connections')->where('id', $row->id)->update([
-                    'status' => 'reauthorize',
+                    'status' => ConnectionStatus::Reauthorize->value,
                     'last_error_code' => $exception->errorCode,
                     'updated_at' => now(),
                 ]);
@@ -309,7 +310,7 @@ final class MarketplaceOAuthService
         }
 
         return [
-            'status' => 'verified',
+            'status' => ConnectionStatus::Verified->value,
             'store_id' => $storeId,
             'platform' => (string) $row->platform,
             'token_expires_at' => $tokens['token_expires_at'],
@@ -503,7 +504,7 @@ final class MarketplaceOAuthService
             'granted_scopes' => json_encode($tokens['granted_scopes'], JSON_THROW_ON_ERROR),
             'authorized_at' => now(),
             'verified_at' => now(),
-            'status' => 'verified',
+            'status' => ConnectionStatus::Verified->value,
             'last_error_code' => null,
             'updated_at' => now(),
         ];

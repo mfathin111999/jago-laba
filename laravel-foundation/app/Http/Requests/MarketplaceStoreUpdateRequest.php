@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Platform;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 final class MarketplaceStoreUpdateRequest extends FormRequest
 {
@@ -27,7 +29,7 @@ final class MarketplaceStoreUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('integration.manage') ?? false;
     }
 
     /**
@@ -38,7 +40,7 @@ final class MarketplaceStoreUpdateRequest extends FormRequest
         return [
             'store_id' => ['required', 'string', 'max:50'],
             'store_name' => ['required', 'string', 'max:150'],
-            'platform' => ['required', 'string', 'in:Shopee,TikTok Shop,Tokopedia,Lazada'],
+            'platform' => ['required', 'string', Rule::enum(Platform::class)->only([Platform::Shopee, Platform::TikTokShop, Platform::Tokopedia, Platform::Lazada])],
             'store_identifier' => ['nullable', 'string', 'max:100'],
             'sync_mode' => ['nullable', 'string', 'max:20'],
             'default_account_id' => ['nullable', 'integer'],

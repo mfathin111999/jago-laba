@@ -8,7 +8,7 @@ final class MarketplaceSyncRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('sync.trigger') ?? false;
     }
 
     /** @return array<string, list<string>> */

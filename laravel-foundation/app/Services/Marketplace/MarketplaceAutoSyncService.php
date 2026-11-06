@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketplace;
 
+use App\Enums\ConnectionStatus;
 use DomainException;
 use Illuminate\Database\DatabaseManager;
 use InvalidArgumentException;
@@ -164,7 +165,7 @@ final class MarketplaceAutoSyncService
                 $join->on('s.id', '=', 'c.store_id')->on('s.company_key', '=', 'c.company_key');
             })
             ->where('c.store_id', $storeId)->where('c.company_key', $companyKey)
-            ->where('c.status', 'verified')->whereNull('s.archived_at')
+            ->where('c.status', ConnectionStatus::Verified->value)->whereNull('s.archived_at')
             ->whereIn('c.platform', self::PLATFORMS)->exists();
     }
 

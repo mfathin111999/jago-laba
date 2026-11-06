@@ -25,7 +25,7 @@ final class MarketplaceGlobalHppUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('hpp.edit') ?? false;
     }
 
     /**

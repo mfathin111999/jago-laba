@@ -22,7 +22,7 @@ final class MarketplaceSkuHppUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('hpp.edit') ?? false;
     }
 
     /**

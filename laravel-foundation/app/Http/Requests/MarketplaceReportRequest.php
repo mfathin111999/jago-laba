@@ -8,7 +8,7 @@ class MarketplaceReportRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('report.view') ?? false;
     }
 
     protected function prepareForValidation(): void

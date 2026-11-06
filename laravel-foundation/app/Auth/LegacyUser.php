@@ -2,11 +2,15 @@
 
 namespace App\Auth;
 
+use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Foundation\Auth\Access\Authorizable;
 use JsonSerializable;
 
-final class LegacyUser implements Authenticatable, JsonSerializable
+final class LegacyUser implements Authenticatable, AuthorizableContract, JsonSerializable
 {
+    use Authorizable;
+
     /**
      * @param  array<string, mixed>  $attributes
      */

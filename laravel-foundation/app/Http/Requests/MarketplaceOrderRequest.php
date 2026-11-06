@@ -8,7 +8,7 @@ final class MarketplaceOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('report.view') ?? false;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Services\Marketplace\Sync;
 
+use App\Enums\ConnectionStatus;
 use App\Exceptions\MarketplaceIntegrationException;
 use App\Exceptions\MarketplaceOAuthException;
 use App\Marketplace\OAuth\MarketplaceOAuthProviderFactory;
@@ -59,7 +60,7 @@ final class TokenRefresher
             if (! $force && ! empty($connection['token_expires_at']) && strtotime((string) $connection['token_expires_at']) > time() + 60) {
                 $db->commit();
 
-                return ['status' => 'verified', 'message' => 'Token sudah diperbarui proses lain.'];
+                return ['status' => ConnectionStatus::Verified->value, 'message' => 'Token sudah diperbarui proses lain.'];
             }
 
             $this->runtime->assertContext($connection, $config);
@@ -75,19 +76,19 @@ final class TokenRefresher
                 'token_expires_at' => $tokens['token_expires_at'],
                 'refresh_token_expires_at' => $tokens['refresh_token_expires_at'],
                 'granted_scopes' => json_encode($tokens['granted_scopes'] ?? []),
-                'status' => 'verified',
+                'status' => ConnectionStatus::Verified->value,
                 'last_error_code' => null,
                 'verified_at' => now(),
                 'updated_at' => now(),
             ]);
             $db->commit();
 
-            return ['status' => 'verified', 'message' => 'Token toko berhasil diperbarui.'];
+            return ['status' => ConnectionStatus::Verified->value, 'message' => 'Token toko berhasil diperbarui.'];
         } catch (Throwable $error) {
             if ($db->transactionLevel() > 0) {
                 if ($error instanceof MarketplaceIntegrationException && in_array($error->errorCode, self::REAUTHORIZE_CODES, true)) {
                     $db->table('marketplace_oauth_connections')->where('store_id', $storeId)->where('company_key', $companyKey)
-                        ->update(['status' => 'reauthorize', 'last_error_code' => $error->errorCode]);
+                        ->update(['status' => ConnectionStatus::Reauthorize->value, 'last_error_code' => $error->errorCode]);
                 }
                 $db->commit();
             }

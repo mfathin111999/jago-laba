@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Audit\AuditRecorded;
+use App\Audit\Listeners\WriteAuditLog;
 use App\Auth\LegacyUserProvider;
 use App\Authorization\RequestContext;
 use App\Http\Responses\ApiResponse;
@@ -12,6 +14,7 @@ use App\Services\Marketplace\MarketplaceScope;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -57,6 +60,8 @@ class AppServiceProvider extends ServiceProvider
                 ->by($name.'|'.($request->user('web')?->getAuthIdentifier() ?: $request->ip()))
                 ->response(static fn (Request $request, array $headers) => ApiResponse::error($message.' Coba lagi sebentar lagi.', 'RATE_LIMITED', 429)->withHeaders($headers)));
         }
+
+        Event::listen(AuditRecorded::class, WriteAuditLog::class);
 
         Auth::provider('legacy', function ($app, array $config): LegacyUserProvider {
             return new LegacyUserProvider($app['db'], $config['connection'] ?? null);

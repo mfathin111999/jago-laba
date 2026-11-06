@@ -27,7 +27,7 @@ final class MarketplaceExpenseRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('expense.manage') ?? false;
     }
 
     /**

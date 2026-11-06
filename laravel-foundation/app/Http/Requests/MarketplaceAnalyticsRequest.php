@@ -2,13 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AnalyticsMode;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class MarketplaceAnalyticsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user('web')?->can('report.view') ?? false;
     }
 
     /**
@@ -24,7 +26,7 @@ final class MarketplaceAnalyticsRequest extends FormRequest
             'date_start' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom'],
             'date_end' => ['nullable', 'date_format:Y-m-d', 'required_if:period,custom'],
             'date_basis' => ['nullable', 'string', 'in:created,released'],
-            'analytics_mode' => ['nullable', 'string', 'in:all,settled'],
+            'analytics_mode' => ['nullable', 'string', Rule::enum(AnalyticsMode::class)],
         ];
     }
 
