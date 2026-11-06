@@ -9,7 +9,6 @@ use App\Http\Middleware\EnsureLegacyMarketplaceAjaxContract;
 use App\Http\Middleware\EnsureLegacyMarketplaceExpenseAction;
 use App\Http\Middleware\EnsureStoreContext;
 use App\Http\Middleware\EnsureWorkspace;
-use App\Http\Middleware\LegacySessionBridge;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -45,7 +44,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo(fn (): string => route('foundation'));
         $middleware->alias([
-            'legacy.session' => LegacySessionBridge::class,
             'company.context' => EnsureCompanyContext::class,
             'store.context' => EnsureStoreContext::class,
             'workspace.context' => EnsureWorkspace::class,
@@ -53,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'legacy.marketplace.expense' => EnsureLegacyMarketplaceExpenseAction::class,
             'browser.csrf' => EnsureBrowserCsrf::class,
         ]);
-        $middleware->web(prepend: [AssignRequestId::class], append: [LegacySessionBridge::class, InertiaMiddleware::class]);
+        $middleware->web(prepend: [AssignRequestId::class], append: [InertiaMiddleware::class]);
         $middleware->preventRequestForgery(except: ['api/rpc.php']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

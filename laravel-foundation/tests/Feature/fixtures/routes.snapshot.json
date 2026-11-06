@@ -34,7 +34,6 @@
         "middleware": [
             "auth",
             "can:store.delete",
-            "legacy.session",
             "web"
         ]
     },
@@ -49,7 +48,6 @@
         "middleware": [
             "auth",
             "can:store.delete",
-            "legacy.session",
             "web"
         ]
     },
@@ -76,7 +74,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:konveksi"
         ]
@@ -91,7 +88,6 @@
         "defaults": [],
         "middleware": [
             "auth",
-            "legacy.session",
             "web"
         ]
     },
@@ -108,7 +104,6 @@
             "browser.csrf",
             "company.context",
             "legacy.marketplace.ajax",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -125,7 +120,6 @@
             "auth",
             "can:report.view",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -142,7 +136,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -159,7 +152,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -175,7 +167,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -192,7 +183,6 @@
             "auth",
             "can:report.view",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -210,7 +200,6 @@
             "browser.csrf",
             "can:shipping.fulfill",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -227,7 +216,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -242,7 +230,6 @@
         "action": "App\\Http\\Controllers\\MarketplaceOAuthController",
         "defaults": [],
         "middleware": [
-            "legacy.session",
             "web"
         ]
     },
@@ -258,7 +245,6 @@
             "auth",
             "can:integration.manage",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -275,7 +261,6 @@
             "auth",
             "can:report.view",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -292,7 +277,6 @@
             "auth",
             "can:integration.manage",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -309,7 +293,6 @@
             "auth",
             "can:price.manage",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -327,7 +310,6 @@
             "auth",
             "can:shipping.fulfill",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -344,7 +326,6 @@
             "auth",
             "can:settings.manage",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -362,7 +343,6 @@
             "browser.csrf",
             "can:store.delete",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -380,7 +360,6 @@
             "auth",
             "can:integration.manage",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -398,7 +377,6 @@
             "auth",
             "can:withdrawal.manage",
             "company.context",
-            "legacy.session",
             "throttle:imports",
             "web",
             "workspace.context:marketplace"
@@ -413,7 +391,6 @@
         "action": "App\\Http\\Controllers\\LegacyRpcController",
         "defaults": [],
         "middleware": [
-            "legacy.session",
             "web"
         ]
     },
@@ -427,7 +404,6 @@
         "defaults": [],
         "middleware": [
             "auth",
-            "legacy.session",
             "web"
         ]
     },
@@ -522,7 +498,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:konveksi"
         ]
@@ -550,7 +525,6 @@
         "middleware": [
             "auth",
             "company.context",
-            "legacy.session",
             "web",
             "workspace.context:marketplace"
         ]
@@ -1164,7 +1138,6 @@
         "defaults": [],
         "middleware": [
             "auth",
-            "legacy.session",
             "web"
         ]
     }

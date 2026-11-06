@@ -1,0 +1,123 @@
+﻿"Analitik Global",2026-10-01,2026-10-31,created,all
+"Dibuat (WIB)","2026-11-06 13:41:52"
+"Sudah + Belum Cair"
+revenue,278340
+fees,44338
+net_income,"Menunggu data"
+cogs,"Menunggu data"
+gross_profit,"Menunggu data"
+expenses,0
+ads,0
+adjustments,0
+net_profit,"Menunggu data"
+orders,3
+cancelled,1
+returns,0
+pending_revenue,150000
+pending_net,"Menunggu data"
+missing_hpp,1
+missing_income,1
+missing_fees,0
+unreconciled,2
+known_profit_sum,0
+profit_complete_orders,0
+final_orders,1
+estimated_orders,1
+unknown_orders,1
+ready,1
+pickup,0
+shipped,1
+completed,1
+cancel_requested,0
+unpaid,1
+review,0
+known_profit_after_hpp,"Menunggu data"
+known_operating_subtotal,"Menunggu data"
+gross_margin,"Menunggu data"
+cost_coverage_complete,
+net_margin,"Menunggu data"
+roi,"Menunggu data"
+roas,"Menunggu data"
+average_order,92780
+cost_per_order,0
+expense_ratio,0
+operating,0
+complete_orders,2
+"Sudah Cair"
+revenue,128340
+fees,24338
+net_income,104002
+cogs,59000
+gross_profit,"Menunggu data"
+expenses,0
+ads,0
+adjustments,0
+net_profit,"Menunggu data"
+orders,1
+cancelled,0
+returns,0
+pending_revenue,0
+pending_net,0
+missing_hpp,0
+missing_income,0
+missing_fees,0
+unreconciled,1
+known_profit_sum,0
+profit_complete_orders,0
+final_orders,1
+estimated_orders,0
+unknown_orders,0
+ready,0
+pickup,0
+shipped,0
+completed,1
+cancel_requested,0
+unpaid,0
+review,0
+known_profit_after_hpp,"Menunggu data"
+known_operating_subtotal,"Menunggu data"
+gross_margin,"Menunggu data"
+cost_coverage_complete,
+net_margin,"Menunggu data"
+roi,"Menunggu data"
+roas,"Menunggu data"
+average_order,128340
+cost_per_order,0
+expense_ratio,0
+operating,0
+complete_orders,1
+Proyek,Platform,Omzet,Potongan,"Pendapatan Setelah Potongan",HPP,"Laba Kotor",Pengeluaran,Penyesuaian,"Laba Bersih",Pesanan
+"Toko A",Shopee,278340,44338,"Menunggu data","Menunggu data","Menunggu data",0,0,"Menunggu data",3
+Tanggal,Omzet,"Laba Bersih",Pengeluaran,Retur,Pesanan
+2026-10-01,0,"Menunggu data",0,0,0
+2026-10-02,0,"Menunggu data",0,0,0
+2026-10-03,0,"Menunggu data",0,0,0
+2026-10-04,0,"Menunggu data",0,0,0
+2026-10-05,0,"Menunggu data",0,0,0
+2026-10-06,0,"Menunggu data",0,0,0
+2026-10-07,0,"Menunggu data",0,0,0
+2026-10-08,0,"Menunggu data",0,0,0
+2026-10-09,0,"Menunggu data",0,0,0
+2026-10-10,0,"Menunggu data",0,0,0
+2026-10-11,0,"Menunggu data",0,0,0
+2026-10-12,0,"Menunggu data",0,0,0
+2026-10-13,0,"Menunggu data",0,0,0
+2026-10-14,0,"Menunggu data",0,0,0
+2026-10-15,278340,"Menunggu data",0,0,3
+2026-10-16,0,"Menunggu data",0,0,0
+2026-10-17,0,"Menunggu data",0,0,0
+2026-10-18,0,"Menunggu data",0,0,0
+2026-10-19,0,"Menunggu data",0,0,0
+2026-10-20,0,"Menunggu data",0,0,0
+2026-10-21,0,"Menunggu data",0,0,0
+2026-10-22,0,"Menunggu data",0,0,0
+2026-10-23,0,"Menunggu data",0,0,0
+2026-10-24,0,"Menunggu data",0,0,0
+2026-10-25,0,"Menunggu data",0,0,0
+2026-10-26,0,"Menunggu data",0,0,0
+2026-10-27,0,"Menunggu data",0,0,0
+2026-10-28,0,"Menunggu data",0,0,0
+2026-10-29,0,"Menunggu data",0,0,0
+2026-10-30,0,"Menunggu data",0,0,0
+2026-10-31,0,"Menunggu data",0,0,0
+"Rincian Biaya",Jenis,Jumlah

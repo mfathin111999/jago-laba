@@ -1,0 +1,122 @@
+{
+    "groups": {
+        "final": {
+            "count": 1,
+            "sales_known": 128340.0,
+            "net_known": 104002.0,
+            "hpp_known": 59000.0,
+            "fees_known": 24338.0,
+            "missing_sales": 0,
+            "missing_net": 0,
+            "missing_hpp": 0,
+            "unreconciled": 0,
+            "profit_known": 45002.0,
+            "profit_count": 1,
+            "sales": 128340.0,
+            "net": 104002.0,
+            "hpp": 59000.0,
+            "fees": 24338.0,
+            "profit": 45002.0
+        },
+        "estimated": {
+            "count": 1,
+            "sales_known": 100000.0,
+            "net_known": 80000.0,
+            "hpp_known": 45000.0,
+            "fees_known": 20000.0,
+            "missing_sales": 0,
+            "missing_net": 0,
+            "missing_hpp": 0,
+            "unreconciled": 0,
+            "profit_known": 35000.0,
+            "profit_count": 1,
+            "sales": 100000.0,
+            "net": 80000.0,
+            "hpp": 45000.0,
+            "fees": 20000.0,
+            "profit": 35000.0
+        },
+        "unknown": {
+            "count": 1,
+            "sales_known": 50000.0,
+            "net_known": 0.0,
+            "hpp_known": 0.0,
+            "fees_known": 0.0,
+            "missing_sales": 0,
+            "missing_net": 1,
+            "missing_hpp": 1,
+            "unreconciled": 0,
+            "profit_known": 0.0,
+            "profit_count": 0,
+            "sales": 50000.0,
+            "net": null,
+            "hpp": null,
+            "fees": null,
+            "profit": null
+        }
+    },
+    "attention": {
+        "cancelled": 1,
+        "unpaid": 1,
+        "returns": 0,
+        "loss": 0,
+        "missing_finance": 1,
+        "missing_hpp": 1,
+        "unreconciled": 0,
+        "cancel_finance": 0
+    },
+    "daily": [
+        {
+            "date": "2026-10-15",
+            "sales": 278340.0,
+            "net": 184002.0,
+            "profit": 80002.0,
+            "orders": 3,
+            "complete": false
+        }
+    ],
+    "costs": {
+        "ads": null,
+        "operational": null,
+        "count": 0
+    },
+    "rows": [
+        {
+            "id": "EST",
+            "state": "estimated",
+            "sales": 100000.0,
+            "net": 80000.0,
+            "hpp": 45000.0,
+            "profit": 35000.0
+        },
+        {
+            "id": "FINAL",
+            "state": "final",
+            "sales": 128340.0,
+            "net": 104002.0,
+            "hpp": 59000.0,
+            "profit": 45002.0
+        },
+        {
+            "id": "UNKNOWN",
+            "state": "unknown",
+            "sales": 50000.0,
+            "net": null,
+            "hpp": null,
+            "profit": null
+        }
+    ],
+    "expenses": [],
+    "known_subtotal": 80002.0,
+    "subtotal_orders": 2,
+    "eligible_orders": 3,
+    "net_profit": null,
+    "cost_coverage_complete": false,
+    "period": {
+        "start": "2026-10-01",
+        "end": "2026-10-31",
+        "preset": "custom",
+        "exclusive_end": "2026-11-01"
+    },
+    "generated_at": "2026-11-06 13:41:49"
+}

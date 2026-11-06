@@ -6,21 +6,17 @@ use App\Auth\LegacyUser;
 use App\Policies\RolePolicy;
 use PHPUnit\Framework\TestCase;
 
+/** Role x action decisions captured from the retired legacy policy (fixtures/role-policy-matrix.json). */
 final class RolePolicyParityTest extends TestCase
 {
-    public function test_every_role_and_action_matches_the_legacy_policy(): void
+    public function test_every_role_and_action_matches_the_captured_legacy_decisions(): void
     {
-        require_once dirname(__DIR__, 3).'/app/Shared/Authorization/RolePolicy.php';
-        $actions = ['unknown.action', '', 'bank.manage'];
-        foreach ((new \ReflectionClass(\RolePolicy::class))->getConstants() as $name => $value) {
-            if (str_starts_with($name, 'ACTION_')) {
-                $actions[] = $value;
-            }
-        }
-        foreach (['ROLE-OWNER_SUPER_ADMIN', 'ROLE-ADMINISTRATOR', 'ROLE-KEUANGAN', 'ROLE-OPERASIONAL', 'ROLE-PEMBACA', 'ROLE-UNKNOWN'] as $role) {
+        $matrix = json_decode((string) file_get_contents(__DIR__.'/fixtures/role-policy-matrix.json'), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertNotEmpty($matrix);
+        foreach ($matrix as $role => $actions) {
             $user = new LegacyUser(['role_id' => $role]);
-            foreach ($actions as $action) {
-                $this->assertSame(\RolePolicy::can($action, $role), (new RolePolicy)->allows($user, $action), $role.':'.$action);
+            foreach ($actions as $action => $expected) {
+                $this->assertSame($expected, (new RolePolicy)->allows($user, (string) $action), $role.':'.$action);
             }
         }
     }

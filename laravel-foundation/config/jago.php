@@ -16,31 +16,10 @@ $konveksiIsolated = filter_var(
     FILTER_VALIDATE_BOOL,
 );
 
-// The legacy code reads its settings with getenv(). Laravel only exposes .env values through env() while the
-// configuration is being built, so collect every JL_* setting here: after `php artisan config:cache` the bridge
-// (LegacyRuntime, TokenVault) reads this array instead of calling env() at runtime.
-$legacyEnvironment = [];
-foreach (array_merge($_ENV, $_SERVER) as $name => $value) {
-    if (is_string($name) && str_starts_with($name, 'JL_') && is_string($value) && $value !== '') {
-        $legacyEnvironment[$name] = $value;
-    }
-}
-foreach (['DB_HOST' => 'JL_DB_HOST', 'DB_PORT' => 'JL_DB_PORT', 'DB_DATABASE' => 'JL_DB_NAME', 'DB_USERNAME' => 'JL_DB_USER', 'DB_PASSWORD' => 'JL_DB_PASS'] as $laravelName => $legacyName) {
-    $value = env($laravelName);
-    if (! isset($legacyEnvironment[$legacyName]) && is_scalar($value) && (string) $value !== '') {
-        $legacyEnvironment[$legacyName] = (string) $value;
-    }
-}
-
 return [
-    'legacy_env' => $legacyEnvironment,
     'company_key' => env('JL_COMPANY_KEY', 'LOCAL-COMPANY'),
     'konveksi_database_isolated' => $konveksiIsolated,
     'konveksi_database_config_path' => $konveksiDatabaseConfigPath,
-    'legacy_session' => [
-        'cookie' => env('JL_LEGACY_SESSION_COOKIE', 'JAGO_LABA_LOCAL_SESSION'),
-        'save_path' => env('JL_LEGACY_SESSION_PATH'),
-    ],
     'hosting' => [
         'document_root_public' => filter_var(env('JL_DOCUMENT_ROOT_PUBLIC', 'true'), FILTER_VALIDATE_BOOL),
         'allowed_hosts' => array_values(array_filter(array_map(

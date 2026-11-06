@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Auth\LegacySessionStore;
 use App\Authorization\WorkspaceContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +12,6 @@ final class WorkspaceController
 {
     public function __construct(
         private readonly WorkspaceContext $workspace,
-        private readonly LegacySessionStore $legacySession,
     ) {}
 
     public function select(Request $request): JsonResponse
@@ -29,8 +27,6 @@ final class WorkspaceController
         } catch (InvalidArgumentException|AuthorizationException $exception) {
             return response()->json(['success' => false, 'message' => $exception->getMessage()], 403);
         }
-
-        $this->legacySession->syncWorkspace($request, $selected);
 
         return response()->json([
             'success' => true,

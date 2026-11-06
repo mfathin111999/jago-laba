@@ -190,7 +190,6 @@ final class PilotReadOnlyTest extends TestCase
     public function test_marketplace_legacy_and_laravel_runtime_match_on_the_same_fixture(): void
     {
         $this->loginAndSelect('marketplace');
-        $_SESSION['company_key'] = 'LOCAL-COMPANY';
         $filters = [
             'period' => 'custom',
             'date_start' => '2026-10-01',
@@ -198,9 +197,7 @@ final class PilotReadOnlyTest extends TestCase
             'finance_mode' => 'final',
         ];
 
-        $legacyStarted = hrtime(true);
         $legacy = $this->legacyMarketplaceReport('store-a', $filters);
-        $legacyElapsed = (hrtime(true) - $legacyStarted) / 1_000_000_000;
 
         $laravelStarted = hrtime(true);
         $response = $this->inertiaGet('/pilot/marketplace?store=store-a&period=custom&date_start=2026-10-01&date_end=2026-10-31&finance_mode=final');
@@ -229,16 +226,8 @@ final class PilotReadOnlyTest extends TestCase
         $this->assertSame($legacy['period']['exclusive_end'], $props['query']['orders']['where']['order_date_lt']);
         $this->assertSame(['order_date', 'id'], $props['query']['orders']['order_by']);
         $this->assertSame(['expense_date', 'id'], $props['query']['expenses']['order_by']);
-        $this->assertLessThan(2.0, $legacyElapsed, 'Legacy fixture read took unexpectedly long.');
         $this->assertLessThan(2.0, $laravelElapsed, 'Laravel/Inertia fixture read took unexpectedly long.');
 
-        $legacyForeignDenied = false;
-        try {
-            $this->legacyMarketplaceReport('store-foreign', $filters);
-        } catch (\DomainException) {
-            $legacyForeignDenied = true;
-        }
-        $this->assertTrue($legacyForeignDenied, 'Legacy runtime did not reject a foreign-company store.');
         $this->inertiaGet('/pilot/marketplace?store=store-foreign')->assertForbidden();
     }
 
@@ -325,12 +314,7 @@ final class PilotReadOnlyTest extends TestCase
         $this->loginAndSelect('marketplace');
         $filters = ['period' => 'custom', 'date_start' => '2026-10-01', 'date_end' => '2026-10-31', 'date_basis' => 'created', 'analytics_mode' => 'all'];
         $report = $this->legacyMarketplaceAnalyticsReport('store-a', $filters);
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceAnalyticsCsv.php';
-        $out = fopen('php://temp', 'w+');
-        \MarketplaceAnalyticsCsv::write($out, $report);
-        rewind($out);
-        $expected = stream_get_contents($out);
-        fclose($out);
+        $expected = $this->legacyFile('analytics-store-a.csv');
         $response = $this->get('/marketplace/analytics/export?'.http_build_query($filters + ['store' => 'store-a', 'format' => 'csv']));
         $response->assertOk()->assertDownload('analitik-global-2026-10-01-2026-10-31.csv');
         $withoutClock = static fn ($s) => preg_replace('/^"Dibuat \(WIB\)".*$/m', '', $s);
@@ -342,8 +326,7 @@ final class PilotReadOnlyTest extends TestCase
         $this->loginAndSelect('marketplace');
         $filters = ['period' => 'custom', 'date_start' => '2026-10-01', 'date_end' => '2026-10-31', 'date_basis' => 'created', 'analytics_mode' => 'all'];
         $report = $this->legacyMarketplaceAnalyticsReport('store-a', $filters);
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceAnalyticsXlsx.php';
-        $expected = \MarketplaceAnalyticsXlsx::bytes($report);
+        $expected = $this->legacyFile('analytics-store-a.xlsx');
         $response = $this->get('/marketplace/analytics/export?'.http_build_query($filters + ['store' => 'store-a', 'format' => 'xlsx']))->assertOk();
         $files = [];
         try {
@@ -946,11 +929,8 @@ final class PilotReadOnlyTest extends TestCase
     public function test_konveksi_legacy_and_laravel_runtime_match_on_the_same_fixture(): void
     {
         $this->loginAndSelect('konveksi');
-        $_SESSION['company_key'] = 'LOCAL-COMPANY';
 
-        $legacyStarted = hrtime(true);
         $legacy = $this->legacyKonveksiData();
-        $legacyElapsed = (hrtime(true) - $legacyStarted) / 1_000_000_000;
 
         $laravelStarted = hrtime(true);
         $response = $this->inertiaGet('/pilot/konveksi?tab=dashboard');
@@ -967,10 +947,9 @@ final class PilotReadOnlyTest extends TestCase
         $this->assertSame('konveksi', $props['workspace']);
         $this->assertSame('LOCAL-COMPANY', $props['scope']['company_key']);
         $this->assertSame('dashboard', $props['tab']);
-        $this->assertSame(\KonveksiCollectionStore::COLLECTIONS, $props['query']['tables']);
+        $this->assertSame(\App\Services\Konveksi\KonveksiPilotReadService::COLLECTIONS, $props['query']['tables']);
         $this->assertSame(['_row_order', '_row_id'], $props['query']['order_by']);
         $this->assertSame('loadSemuaData', $props['query']['method']);
-        $this->assertLessThan(2.0, $legacyElapsed, 'Legacy Konveksi fixture read took unexpectedly long.');
         $this->assertLessThan(2.0, $laravelElapsed, 'Laravel/Inertia Konveksi fixture read took unexpectedly long.');
     }
 
@@ -1042,10 +1021,7 @@ final class PilotReadOnlyTest extends TestCase
      */
     private function legacyMarketplaceReport(string $storeId, array $filters): array
     {
-        $root = dirname(__DIR__, 3);
-        require_once $root.'/app/Modules/Marketplace/Services/MarketplaceDashboardService.php';
-
-        return (new \MarketplaceDashboardService(DB::connection()->getPdo()))->report($storeId, $filters);
+        return $this->legacyFixture('dashboard-'.$storeId);
     }
 
     /**
@@ -1056,52 +1032,14 @@ final class PilotReadOnlyTest extends TestCase
      */
     private function legacyMarketplaceAnalyticsReport(string $storeId, array $filters): array
     {
-        $root = dirname(__DIR__, 3);
-        require_once $root.'/app/Shared/Companies/MarketplaceScopeService.php';
-        require_once $root.'/app/Modules/Marketplace/Services/MarketplaceOrderPresentation.php';
-        require_once $root.'/app/Modules/Marketplace/Services/MarketplaceAnalyticsService.php';
-
-        $hadCompany = array_key_exists('company_key', $_SESSION ?? []);
-        $previousCompany = $_SESSION['company_key'] ?? null;
-        $_SESSION['company_key'] = 'LOCAL-COMPANY';
-
-        try {
-            return (new \MarketplaceAnalyticsService(DB::connection()->getPdo()))->report($filters + [
-                'store_id' => $storeId,
-                'analytics_stores' => [],
-                'include_disconnected' => false,
-            ]);
-        } finally {
-            if ($hadCompany) {
-                $_SESSION['company_key'] = $previousCompany;
-            } else {
-                unset($_SESSION['company_key']);
-            }
-        }
+        return $this->legacyFixture('analytics-'.$storeId);
     }
 
-    /**
-     * Execute the actual legacy Konveksi collection read against this test's
-     * PDO. Only allowlisted collection reads are exercised here.
-     *
-     * @return array<string, mixed>
-     */
     private function legacyKonveksiData(): array
     {
-        $root = dirname(__DIR__, 3);
-        require_once $root.'/app/Core/Database/Database.php';
-        require_once $root.'/app/Shared/Support/SnapshotImporter.php';
-        require_once $root.'/app/Shared/Support/CollectionStore.php';
-        require_once $root.'/app/Modules/Konveksi/Services/KonveksiDatabase.php';
-        require_once $root.'/app/Modules/Konveksi/Repositories/KonveksiCollectionStore.php';
+        config()->set('jago.konveksi_database_isolated', false);
 
-        // The isolated-database flag is a scope fact. Mirror the legacy
-        // deployment flag in this isolated fixture before reading Laravel.
-        $legacyConfig = \KonveksiDatabase::config();
-        config()->set('jago.konveksi_database_isolated', (bool) ($legacyConfig['isolated'] ?? false));
-        \KonveksiDatabase::assertCompany();
-
-        return (new \KonveksiCollectionStore(DB::connection()->getPdo()))->allKnown();
+        return $this->legacyFixture('konveksi-all-known');
     }
 
     /**
@@ -1116,6 +1054,21 @@ final class PilotReadOnlyTest extends TestCase
         unset($data['__meta']['loaded_at']);
 
         return $data;
+    }
+
+    /**
+     * Output of the retired legacy implementation on this test's fixture, captured once into tests/Feature/fixtures/legacy.
+     *
+     * @return array<string, mixed>
+     */
+    private function legacyFixture(string $name): array
+    {
+        return json_decode((string) file_get_contents(__DIR__.'/fixtures/legacy/'.$name.'.json'), true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function legacyFile(string $name): string
+    {
+        return (string) file_get_contents(__DIR__.'/fixtures/legacy/'.$name);
     }
 
     private function normalizeParityValue(mixed $value): mixed

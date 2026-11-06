@@ -1,0 +1,63 @@
+{
+    "products": [
+        {
+            "name": "=SUM(1+1)",
+            "sku": "P1",
+            "store_id": "a",
+            "store_name": "Toko A",
+            "platform": "Shopee",
+            "variants": [
+                {
+                    "id": 1,
+                    "store_id": "a",
+                    "external_product_id": "P1",
+                    "external_variant_id": "V1",
+                    "product_name": "=SUM(1+1)",
+                    "parent_sku": "P1",
+                    "sku": "SKU-1",
+                    "variant_name": "Hitam",
+                    "price": 100000,
+                    "original_price": null,
+                    "stock_qty": 0,
+                    "source_status": "NORMAL",
+                    "catalog_visible": 1,
+                    "hpp": 45000.0,
+                    "sold": 2.0
+                }
+            ],
+            "sold": 2.0
+        },
+        {
+            "name": "Unknown",
+            "sku": "P2",
+            "store_id": "a",
+            "store_name": "Toko A",
+            "platform": "Shopee",
+            "variants": [
+                {
+                    "id": 2,
+                    "store_id": "a",
+                    "external_product_id": "P2",
+                    "external_variant_id": "V2",
+                    "product_name": "Unknown",
+                    "parent_sku": "P2",
+                    "sku": "SKU-2",
+                    "variant_name": "Biru",
+                    "price": null,
+                    "original_price": null,
+                    "stock_qty": null,
+                    "source_status": "NORMAL",
+                    "catalog_visible": 1,
+                    "hpp": null,
+                    "sold": 0.0
+                }
+            ],
+            "sold": 0.0
+        }
+    ],
+    "sold": 2.0,
+    "statuses": [
+        "NORMAL"
+    ],
+    "missing_hpp": 1
+}

@@ -143,79 +143,77 @@ Route::prefix('auth')->group(function (): void {
 });
 
 // Old entry points and *.php endpoints stay available for the legacy clients (kept until the post-cutover cleanup).
-Route::middleware('legacy.session')->group(function (): void {
-    Route::middleware(['auth', 'company.context'])->group(function (): void {
-        Route::middleware('workspace.context:konveksi')->group(function (): void {
-            Route::get('/konveksi', KonveksiLegacyAppController::class)->name('legacy.konveksi.page');
-            Route::get('/api/konveksi-document.php', KonveksiDocumentController::class)->name('legacy.konveksi.document');
-        });
-
-        Route::middleware('workspace.context:marketplace')->group(function (): void {
-            Route::get('/marketplace.php', [LegacyPilotPageController::class, 'marketplace'])->name('legacy.marketplace.page');
-
-            Route::post('/api/marketplace-fulfillment.php', [MarketplaceFulfillmentController::class, 'handle'])
-                ->middleware(['can:shipping.fulfill', 'browser.csrf'])
-                ->name('legacy.marketplace.fulfillment');
-            Route::post('/api/marketplace-store-deletion.php', MarketplaceStoreDeletionController::class)
-                ->middleware(['can:store.delete', 'browser.csrf'])
-                ->name('legacy.marketplace.store-deletion');
-            Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
-                ->middleware('can:integration.manage')
-                ->name('legacy.marketplace.sync');
-            Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
-                ->middleware(['can:withdrawal.manage', 'throttle:imports'])
-                ->name('legacy.marketplace.withdrawals');
-            Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
-                ->middleware('can:price.manage')
-                ->name('legacy.marketplace.price');
-            Route::post('/api/marketplace-stock.php', MarketplaceStockMinimumController::class)
-                ->middleware('can:settings.manage')
-                ->name('legacy.marketplace.stock');
-            Route::match(['GET', 'POST'], '/api/marketplace-auto-sync.php', [MarketplaceAutoSyncController::class, 'states'])->name('legacy.marketplace.auto-sync');
-            Route::post('/api/marketplace-browser-pulse.php', [MarketplaceAutoSyncController::class, 'pulse'])->name('legacy.marketplace.browser-pulse');
-            Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)->name('legacy.marketplace.branding');
-
-            Route::middleware('can:report.view')->group(function (): void {
-                Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])->name('legacy.marketplace.orders');
-                Route::get('/api/marketplace-analytics.php', [MarketplaceLegacyReportController::class, 'analytics'])->name('legacy.marketplace.analytics');
-                Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])->name('legacy.marketplace.dashboard');
-            });
-
-            Route::post('/api/marketplace-order-finance.php', [MarketplaceProviderBoundaryController::class, 'orderFinance'])
-                ->middleware('can:integration.manage')
-                ->name('legacy.marketplace.order-finance');
-            Route::post('/api/marketplace-partner-settings.php', [MarketplaceProviderBoundaryController::class, 'partnerSettings'])
-                ->middleware('can:integration.manage')
-                ->name('legacy.marketplace.partner-settings');
-            Route::match(['GET', 'POST'], '/api/marketplace-integration-status.php', MarketplaceIntegrationStatusController::class)->name('legacy.marketplace.integration-status');
-            Route::match(['GET', 'POST'], '/api/marketplace-shipping-document.php', MarketplaceShippingDocumentController::class)
-                ->middleware('can:shipping.fulfill')
-                ->name('legacy.marketplace.shipping-document');
-        });
+Route::middleware(['auth', 'company.context'])->group(function (): void {
+    Route::middleware('workspace.context:konveksi')->group(function (): void {
+        Route::get('/konveksi', KonveksiLegacyAppController::class)->name('legacy.konveksi.page');
+        Route::get('/api/konveksi-document.php', KonveksiDocumentController::class)->name('legacy.konveksi.document');
     });
 
-    // The marketplace AJAX contract guard runs before authentication, so this route keeps its own explicit list.
-    Route::post('/api/marketplace-ajax.php', LegacyMarketplaceAjaxController::class)
-        ->middleware(['legacy.marketplace.ajax', 'auth', 'company.context', 'workspace.context:marketplace', 'browser.csrf'])
-        ->name('legacy.marketplace.ajax');
+    Route::middleware('workspace.context:marketplace')->group(function (): void {
+        Route::get('/marketplace.php', [LegacyPilotPageController::class, 'marketplace'])->name('legacy.marketplace.page');
 
-    // Login stays on the old RPC contract; every other method is gated inside the controller.
-    Route::post('/api/rpc.php', LegacyRpcController::class)->name('legacy.rpc');
+        Route::post('/api/marketplace-fulfillment.php', [MarketplaceFulfillmentController::class, 'handle'])
+            ->middleware(['can:shipping.fulfill', 'browser.csrf'])
+            ->name('legacy.marketplace.fulfillment');
+        Route::post('/api/marketplace-store-deletion.php', MarketplaceStoreDeletionController::class)
+            ->middleware(['can:store.delete', 'browser.csrf'])
+            ->name('legacy.marketplace.store-deletion');
+        Route::match(['GET', 'POST'], '/api/marketplace-sync.php', MarketplaceSyncApiController::class)
+            ->middleware('can:integration.manage')
+            ->name('legacy.marketplace.sync');
+        Route::match(['GET', 'POST'], '/api/marketplace-withdrawals.php', MarketplaceWithdrawalLegacyController::class)
+            ->middleware(['can:withdrawal.manage', 'throttle:imports'])
+            ->name('legacy.marketplace.withdrawals');
+        Route::post('/api/marketplace-price.php', MarketplacePriceController::class)
+            ->middleware('can:price.manage')
+            ->name('legacy.marketplace.price');
+        Route::post('/api/marketplace-stock.php', MarketplaceStockMinimumController::class)
+            ->middleware('can:settings.manage')
+            ->name('legacy.marketplace.stock');
+        Route::match(['GET', 'POST'], '/api/marketplace-auto-sync.php', [MarketplaceAutoSyncController::class, 'states'])->name('legacy.marketplace.auto-sync');
+        Route::post('/api/marketplace-browser-pulse.php', [MarketplaceAutoSyncController::class, 'pulse'])->name('legacy.marketplace.browser-pulse');
+        Route::match(['GET', 'POST'], '/api/marketplace-branding.php', MarketplaceBrandingController::class)->name('legacy.marketplace.branding');
 
-    Route::middleware('auth')->group(function (): void {
-        Route::get('/workspace.php', FoundationController::class)->name('legacy.workspace.page');
-        Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])->name('legacy.workspace.select');
-        Route::post('/api/logout.php', [AuthController::class, 'logout'])->name('legacy.logout');
-
-        Route::middleware('can:store.delete')->group(function (): void {
-            Route::get('/api/diagnostics.php', [DiagnosticsController::class, 'health'])->name('legacy.diagnostics');
-            Route::get('/api/auth-diagnostic.php', [DiagnosticsController::class, 'auth'])->name('legacy.auth-diagnostic');
+        Route::middleware('can:report.view')->group(function (): void {
+            Route::get('/api/marketplace-orders.php', [MarketplaceLegacyReportController::class, 'orders'])->name('legacy.marketplace.orders');
+            Route::get('/api/marketplace-analytics.php', [MarketplaceLegacyReportController::class, 'analytics'])->name('legacy.marketplace.analytics');
+            Route::get('/api/marketplace-dashboard.php', [MarketplaceLegacyReportController::class, 'dashboard'])->name('legacy.marketplace.dashboard');
         });
-    });
 
-    // The OAuth provider calls back without our session.
-    Route::match(['GET', 'POST'], '/api/marketplace-oauth.php', MarketplaceOAuthController::class)->name('legacy.marketplace.oauth');
+        Route::post('/api/marketplace-order-finance.php', [MarketplaceProviderBoundaryController::class, 'orderFinance'])
+            ->middleware('can:integration.manage')
+            ->name('legacy.marketplace.order-finance');
+        Route::post('/api/marketplace-partner-settings.php', [MarketplaceProviderBoundaryController::class, 'partnerSettings'])
+            ->middleware('can:integration.manage')
+            ->name('legacy.marketplace.partner-settings');
+        Route::match(['GET', 'POST'], '/api/marketplace-integration-status.php', MarketplaceIntegrationStatusController::class)->name('legacy.marketplace.integration-status');
+        Route::match(['GET', 'POST'], '/api/marketplace-shipping-document.php', MarketplaceShippingDocumentController::class)
+            ->middleware('can:shipping.fulfill')
+            ->name('legacy.marketplace.shipping-document');
+    });
 });
+
+// The marketplace AJAX contract guard runs before authentication, so this route keeps its own explicit list.
+Route::post('/api/marketplace-ajax.php', LegacyMarketplaceAjaxController::class)
+    ->middleware(['legacy.marketplace.ajax', 'auth', 'company.context', 'workspace.context:marketplace', 'browser.csrf'])
+    ->name('legacy.marketplace.ajax');
+
+// Login stays on the old RPC contract; every other method is gated inside the controller.
+Route::post('/api/rpc.php', LegacyRpcController::class)->name('legacy.rpc');
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/workspace.php', FoundationController::class)->name('legacy.workspace.page');
+    Route::post('/api/workspace.php', [WorkspaceController::class, 'select'])->name('legacy.workspace.select');
+    Route::post('/api/logout.php', [AuthController::class, 'logout'])->name('legacy.logout');
+
+    Route::middleware('can:store.delete')->group(function (): void {
+        Route::get('/api/diagnostics.php', [DiagnosticsController::class, 'health'])->name('legacy.diagnostics');
+        Route::get('/api/auth-diagnostic.php', [DiagnosticsController::class, 'auth'])->name('legacy.auth-diagnostic');
+    });
+});
+
+// The OAuth provider calls back without our session.
+Route::match(['GET', 'POST'], '/api/marketplace-oauth.php', MarketplaceOAuthController::class)->name('legacy.marketplace.oauth');
 
 Route::get('/__sandbox/marketplace/oauth/authorize', SandboxMarketplaceOAuthController::class)
     ->name('sandbox.marketplace.oauth.authorize');

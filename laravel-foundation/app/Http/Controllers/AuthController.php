@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Auth\LegacyAuthenticationService;
-use App\Auth\LegacySessionStore;
 use App\Auth\LegacyUser;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
@@ -15,7 +14,6 @@ final class AuthController
 {
     public function __construct(
         private readonly LegacyAuthenticationService $authentication,
-        private readonly LegacySessionStore $legacySession,
     ) {}
 
     public function login(Request $request): JsonResponse
@@ -63,15 +61,9 @@ final class AuthController
     public function logout(Request $request): JsonResponse
     {
         Auth::guard('web')->logout();
-        $this->legacySession->destroy($request);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json(['status' => 'success'])
-            ->withCookie(cookie()->forget(
-                $this->legacySession->cookieName(),
-                config('session.path', '/'),
-                config('session.domain'),
-            ));
+        return response()->json(['status' => 'success']);
     }
 }

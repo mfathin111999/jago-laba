@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Auth\LegacyAuthenticationService;
-use App\Auth\LegacySessionStore;
 use App\Auth\LegacyUser;
 use App\Authorization\CompanyContext;
 use App\Authorization\WorkspaceContext;
@@ -49,7 +48,6 @@ final class LegacyRpcController
 
     public function __construct(
         private readonly LegacyAuthenticationService $authentication,
-        private readonly LegacySessionStore $legacySession,
         private readonly CsrfTokenValidator $csrf,
         private readonly CompanyContext $company,
         private readonly WorkspaceContext $workspace,
@@ -496,27 +494,10 @@ final class LegacyRpcController
             ]);
         }
 
-        $legacySessionId = $this->legacySession->syncUser($request, $user);
-        $response = response()->json([
+        return response()->json([
             'ok' => true,
             'result' => $this->authentication->legacyResult($user, $request),
         ]);
-
-        if ($legacySessionId !== null) {
-            $response->withCookie(cookie()->make(
-                $this->legacySession->cookieName(),
-                $legacySessionId,
-                (int) config('session.lifetime', 120),
-                config('session.path', '/'),
-                config('session.domain'),
-                (bool) config('session.secure', false),
-                (bool) config('session.http_only', true),
-                false,
-                config('session.same_site', 'lax'),
-            ));
-        }
-
-        return $response;
     }
 
     /**

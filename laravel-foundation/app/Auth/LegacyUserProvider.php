@@ -36,17 +36,6 @@ final class LegacyUserProvider implements UserProvider
         return null;
     }
 
-    public function retrieveByLegacyIdentity(array $identity): ?LegacyUser
-    {
-        $userId = trim((string) ($identity['user_id'] ?? ''));
-        $user = $userId !== '' ? $this->retrieveById($userId) : null;
-
-        if (! $user && trim((string) ($identity['username'] ?? '')) !== '') {
-            $user = $this->retrieveByCredentials(['username' => $identity['username']]);
-        }
-
-        return $user instanceof LegacyUser ? $user->withLegacyContext($identity) : null;
-    }
 
     public function retrieveByToken($identifier, #[\SensitiveParameter] $token): ?Authenticatable
     {

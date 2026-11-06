@@ -1,0 +1,107 @@
+{
+    "rekening": [],
+    "produk": [
+        {
+            "id": "P-1",
+            "id_stok_item": "STOK-1"
+        },
+        {
+            "id": "P-2",
+            "id_stok_item": "STOK-1"
+        }
+    ],
+    "bahan": [
+        {
+            "id": "B-1",
+            "nama": "Kain"
+        }
+    ],
+    "bahan_hpp": [],
+    "hpp_model_bom": [],
+    "hpp_history": [],
+    "bahan_hpp_history": [],
+    "pegawai": [],
+    "supplier": [],
+    "pembelian": [],
+    "pembelian_item": [],
+    "potong": [],
+    "potong_item": [],
+    "jahit": [],
+    "jahit_item": [],
+    "keuangan": [],
+    "kasbon": [],
+    "profil": [],
+    "distribusi": [],
+    "pengguna": [],
+    "hak_akses": [],
+    "master_stok": [
+        {
+            "id": "STOK-1",
+            "stok_akhir": -2
+        }
+    ],
+    "mutasi_stok": [],
+    "pembelian_vendor": [],
+    "riwayat_bayar_hutang": [],
+    "hutang_konveksi": [],
+    "riwayat_bayar_hutang_konveksi": [],
+    "template_dokumen": [],
+    "penjualan": [],
+    "penjualan_item": [],
+    "penjualan_koreksi": [],
+    "material_alias": [],
+    "quality_control": [],
+    "mutasi_stok_konveksi": [],
+    "hutangsupplier": [],
+    "hutang_supplier": [],
+    "__meta": {
+        "versions": {
+            "rekening": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "produk": "2a97ac262a03c1c41dbd994d8d2bd96f808a4925809771f3eb3d821e879b6107",
+            "bahan": "265348fa929bc82e490a7a4afafbb7536a76d6ae8df2cac2546dbb005a7f92e9",
+            "bahan_hpp": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hpp_model_bom": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hpp_history": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "bahan_hpp_history": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pegawai": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "supplier": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pembelian": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pembelian_item": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "potong": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "potong_item": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "jahit": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "jahit_item": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "keuangan": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "kasbon": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "profil": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "distribusi": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pengguna": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hak_akses": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "master_stok": "899d3531e989876fc3f33fd12f360883f61c4ccf692b00151b6c0b663175b3e8",
+            "mutasi_stok": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "pembelian_vendor": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "riwayat_bayar_hutang": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hutang_konveksi": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "riwayat_bayar_hutang_konveksi": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "template_dokumen": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "penjualan": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "penjualan_item": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "penjualan_koreksi": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "material_alias": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "quality_control": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "mutasi_stok_konveksi": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hutangsupplier": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "hutang_supplier": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        "domain": "konveksi",
+        "database_isolated": false,
+        "reset_epoch": "epoch-1",
+        "loaded_at": "2026-11-06T13:42:12+07:00",
+        "health": {
+            "missing_stock_ids": 0,
+            "duplicate_stock_ids": 1,
+            "negative_stock": 1
+        },
+        "company_bound": true
+    }
+}

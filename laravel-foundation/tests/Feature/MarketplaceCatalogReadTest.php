@@ -41,18 +41,12 @@ final class MarketplaceCatalogReadTest extends TestCase
         session(['workspace' => 'marketplace']);
     }
 
-    public function test_catalog_http_matches_legacy_fixture_with_null_and_zero_preserved(): void
+    public function test_catalog_http_matches_the_captured_legacy_listing_with_null_and_zero_preserved(): void
     {
-        require_once dirname(__DIR__, 3).'/app/Modules/Marketplace/Services/MarketplaceCatalogService.php';
         $before = DB::table('marketplace_catalog_variants')->get()->toJson();
         $filters = ['date_start' => '2026-10-01', 'date_end' => '2026-10-31'];
-        $previous = $_SESSION ?? [];
-        $_SESSION = ['company_key' => 'A'];
-        try {
-            $legacy = (new \MarketplaceCatalogService(DB::connection()->getPdo()))->listingForStore('a', $filters);
-        } finally {
-            $_SESSION = $previous;
-        }
+        $fixture = __DIR__.'/fixtures/legacy/catalog-listing.json';
+        $legacy = json_decode((string) file_get_contents($fixture), true, 512, JSON_THROW_ON_ERROR);
         $response = $this->getJson('/marketplace/catalog?'.http_build_query($filters + ['store_id' => 'a']));
         $response->assertOk()->assertExactJson(['catalog' => $legacy, 'filters' => $filters + ['store_id' => 'a'], 'read_only' => true]);
         $response->assertJsonPath('catalog.products.0.variants.0.stock_qty', 0)
