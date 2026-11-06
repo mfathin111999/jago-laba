@@ -23,15 +23,11 @@ Rollback berarti mengembalikan web root ke aplikasi lama; data tidak perlu dipul
 
 ```bash
 cd laravel-foundation && npm ci && npm run build
-cd .. && php scripts/deployment/build-release.php /path/ke/release --composer=/path/ke/composer.phar
+composer install --no-dev --optimize-autoloader
 ```
 
-Skrip: menyalin hanya `app/` (modul legacy yang masih dimuat) dan `laravel-foundation/`, **tanpa** `public/` legacy
-(`install.php`, `repair_owner.php`), `.env`, tes, `node_modules`, dan `storage/`; memasang dependensi produksi tanpa paket dev; memindai secret;
-menulis `RELEASE-MANIFEST.json` (SHA-256 setiap file). Keluar dengan kode 1 bila ada secret, file terlarang, atau file wajib hilang.
-
-Bukti: 6.392 file, pindai secret bersih, `install.php`, `repair_owner.php`, dan `.env` menjawab 404 dari server rilis, `build/manifest.json` 200.
-Pindai itu sempat menemukan nilai bawaan `webhook_global_secret` di controller UI legacy; controller dan view legacy kini tidak ikut dikirim.
+Catatan (6 Nov 2026): `scripts/deployment/build-release.php` dan folder PHP lama sudah dihapus. Rilis kini hanya isi `laravel-foundation/`
+(tanpa `.env`, `node_modules`, tes, dan `storage/`); arahkan web root ke `laravel-foundation/public`. Pindai secret sebelum mengunggah.
 
 ## 2. Rehearsal artifact (wajib lulus sebelum dipasang)
 
