@@ -14,7 +14,7 @@ $tiktokAuthHost = $tiktokRegion === 'us'
     : 'services.tiktokshop.com';
 $konveksiDatabaseConfigPath = (string) env(
     'JL_KONVEKSI_DATABASE_CONFIG',
-    dirname(__DIR__, 2).'/storage/private/konveksi/database.php',
+    storage_path('private/konveksi/database.php'),
 );
 $konveksiFileIsolated = false;
 if (is_file($konveksiDatabaseConfigPath)) {
@@ -132,7 +132,7 @@ return [
     ],
     'konveksi' => [
         // The legacy Konveksi single-page client (HTML views) is served by Laravel; see KonveksiLegacyAppController.
-        'views_path' => env('JL_KONVEKSI_VIEWS_PATH') ?: dirname(__DIR__, 2).'/app/Modules/Konveksi/Views',
+        'views_path' => env('JL_KONVEKSI_VIEWS_PATH') ?: resource_path('konveksi/views'),
         // Cache-busting token for assets/konveksi/js/jl-api.js.
         'client_version' => '20261029',
     ],

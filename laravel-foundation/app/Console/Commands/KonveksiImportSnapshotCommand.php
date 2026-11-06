@@ -15,7 +15,7 @@ use Throwable;
 final class KonveksiImportSnapshotCommand extends Command
 {
     protected $signature = 'konveksi:import-snapshot
-        {--file= : Snapshot JSON (default: database/legacy/current_database_snapshot.json)}
+        {--file= : Snapshot JSON (default: database/snapshots/current_database_snapshot.json)}
         {--only= : Comma-separated collection keys to load, e.g. produk,bahan}
         {--replace : Replace the rows of the collections being loaded}
         {--force : Allow --replace in production}';
@@ -52,15 +52,8 @@ final class KonveksiImportSnapshotCommand extends Command
         return $failed === [] ? self::SUCCESS : self::FAILURE;
     }
 
-    /** The snapshot lives in database/legacy: next to the Laravel app when it is the project root, else one level up. */
     private function defaultSnapshot(): string
     {
-        foreach ([base_path('database/legacy/current_database_snapshot.json'), dirname(base_path()).'/database/legacy/current_database_snapshot.json'] as $candidate) {
-            if (is_file($candidate)) {
-                return $candidate;
-            }
-        }
-
-        return base_path('database/legacy/current_database_snapshot.json');
+        return database_path('snapshots/current_database_snapshot.json');
     }
 }

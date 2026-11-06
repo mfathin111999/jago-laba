@@ -8,7 +8,7 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Loads the original spreadsheet data (database/legacy/current_database_snapshot.json: sheets of headers and rows)
+ * Loads the original spreadsheet data (database/snapshots/current_database_snapshot.json: sheets of headers and rows)
  * into the Konveksi collection tables. Only the fixed columns are written: the record key, the row order and the
  * record as JSON. The tables and the system_table_map rows come from the migrations.
  *

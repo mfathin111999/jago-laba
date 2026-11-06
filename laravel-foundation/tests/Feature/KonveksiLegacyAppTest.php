@@ -61,15 +61,13 @@ final class KonveksiLegacyAppTest extends TestCase
         $this->assertStringContainsString('/api/rpc.php', (string) file_get_contents(public_path('assets/konveksi/js/jl-api.js')));
     }
 
-    public function test_the_view_list_matches_the_legacy_module(): void
+    public function test_every_view_the_client_is_built_from_ships_with_laravel(): void
     {
-        $module = (string) file_get_contents(dirname(__DIR__, 3).'/app/Modules/Konveksi/Module.php');
-        preg_match_all("/'(\d\d_[A-Za-z_]+)'/", substr($module, (int) strpos($module, 'function viewNames')), $match);
-
-        $this->assertSame($match[1], KonveksiLegacyAppController::VIEWS);
-        foreach (KonveksiLegacyAppController::VIEWS as $view) {
+        $this->assertSame(resource_path('konveksi/views'), config('jago.konveksi.views_path'));
+        foreach (['00_Base', '27_UI_Components', '28_Core', ...KonveksiLegacyAppController::VIEWS] as $view) {
             $this->assertFileExists(config('jago.konveksi.views_path').'/'.$view.'.html');
         }
+        $this->assertSame(array_values(array_unique(KonveksiLegacyAppController::VIEWS)), KonveksiLegacyAppController::VIEWS, 'no view is listed twice');
     }
 
     public function test_other_workspaces_and_guests_do_not_get_the_client(): void
