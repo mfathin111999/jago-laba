@@ -155,9 +155,16 @@ if ((Sql "SELECT COUNT(*) FROM information_schema.schemata WHERE schema_name='$D
 if ($tables -gt 0) {
     Write-Host "Database $DbName sudah berisi tabel Jago: tidak diubah. (Data Anda aman.)" -ForegroundColor Green
 } else {
-    Write-Host 'Database belum ada isinya: membuat skema, data Konveksi contoh, dan login owner...'
-    & $phpExe (Join-Path $repo 'scripts\development\local-staging-setup.php') "--owner-password=$OwnerPassword"
-    if ($LASTEXITCODE -ne 0) { Fail 'Pembuatan skema gagal (lihat pesan di atas).' }
+    Write-Host 'Database belum ada isinya: migrasi Laravel, data Konveksi contoh, dan login owner...'
+    Sql "CREATE DATABASE IF NOT EXISTS ``$DbName`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" | Out-Null
+    Push-Location $app
+    & $phpExe artisan migrate --force --no-interaction
+    if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'php artisan migrate gagal (lihat pesan di atas).' }
+    & $phpExe artisan konveksi:import-snapshot --no-interaction
+    if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'konveksi:import-snapshot gagal (lihat pesan di atas).' }
+    & $phpExe artisan jago:create-owner --password=$OwnerPassword --no-interaction
+    if ($LASTEXITCODE -ne 0) { Pop-Location; Fail 'jago:create-owner gagal (lihat pesan di atas).' }
+    Pop-Location
     if ($Seed) {
         & $phpExe (Join-Path $repo 'scripts\development\local-staging-seed.php')
         if ($LASTEXITCODE -ne 0) { Fail 'Pengisian data contoh gagal.' }
