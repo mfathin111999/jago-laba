@@ -404,7 +404,7 @@
                     { role_id: 'ROLE-VIEWER', nama_peran: 'Viewer', deskripsi: 'Role bawaan Viewer', status: 'Aktif', permissions_json: '' }
                 ];
                 const defaultUsersList = [
-                    { id: 'USR-1', username: 'user', password: 'user123', nama: '-', email: '-', role_id: 'User', status: 'Aktif' },
+                    { id: 'USR-1', username: 'user', password: '', nama: '-', email: '-', role_id: 'User', status: 'Aktif' },
                     { id: 'USR-2', username: 'owner', password: '', nama: 'Owner PT JAGO LABA', email: '-', role_id: 'ROLE-OWNER_SUPER_ADMIN', status: 'Aktif' }
                 ];
                 const pengguna = ref(Array.isArray(cachedInitial?.pengguna) && cachedInitial.pengguna.length ? cachedInitial.pengguna : defaultUsersList);

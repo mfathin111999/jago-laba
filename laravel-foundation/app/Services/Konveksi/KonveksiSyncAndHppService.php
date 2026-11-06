@@ -13,6 +13,7 @@ final class KonveksiSyncAndHppService
         private readonly KonveksiConnection $konveksi,
         private readonly AuditLogger $audit,
         private readonly KonveksiCollections $collections,
+        private readonly KonveksiUserAccounts $accounts,
     ) {}
 
     public function syncTab(LegacyUser $user, string $companyKey, string $tab, mixed $payload): array
@@ -26,9 +27,14 @@ final class KonveksiSyncAndHppService
             throw new RuntimeException("Tabel untuk tab {$tab} belum dipetakan.");
         }
 
+        $accounts = $tab === KonveksiUserAccounts::COLLECTION ? $this->accounts->protect($rows) : null;
+        $rows = $accounts['records'] ?? $rows;
         $this->konveksi->connection()->transaction(function () use ($tab, $rows): void {
             $this->collections->replace($tab, $rows);
         });
+        if ($accounts !== null) {
+            $this->accounts->mirror($user, $accounts['changed'], $rows, $accounts['previous']);
+        }
 
         $this->audit->record(
             $user,
@@ -53,15 +59,23 @@ final class KonveksiSyncAndHppService
 
         $synced = [];
 
-        $this->konveksi->connection()->transaction(function () use ($map, &$synced): void {
+        $accounts = null;
+        $this->konveksi->connection()->transaction(function () use ($map, &$synced, &$accounts): void {
             foreach ($map as $tab => $rows) {
                 if (! is_array($rows) || ! $this->collections->mapped((string) $tab)) {
                     continue;
+                }
+                if ($tab === KonveksiUserAccounts::COLLECTION) {
+                    $accounts = $this->accounts->protect($rows);
+                    $rows = $accounts['records'];
                 }
                 $this->collections->replace((string) $tab, $rows);
                 $synced[$tab] = count($rows);
             }
         });
+        if ($accounts !== null) {
+            $this->accounts->mirror($user, $accounts['changed'], $accounts['records'], $accounts['previous']);
+        }
 
         $this->audit->record(
             $user,

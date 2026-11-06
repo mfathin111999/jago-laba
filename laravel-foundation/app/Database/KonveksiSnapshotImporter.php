@@ -2,6 +2,7 @@
 
 namespace App\Database;
 
+use App\Services\Konveksi\KonveksiUserAccounts;
 use Illuminate\Database\ConnectionInterface;
 use InvalidArgumentException;
 use RuntimeException;
@@ -58,6 +59,17 @@ final class KonveksiSnapshotImporter
         foreach ($targets as $sheet => [$key, $table, $payload]) {
             $rows = array_values(is_array($payload['rows'] ?? null) ? $payload['rows'] : []);
             $headers = is_array($payload['headers'] ?? null) ? $payload['headers'] : [];
+            if ($key === 'pengguna') {
+                // Passwords in the old export are clear text and never worked for login (Laravel's session guard uses
+                // auth_users_v2); they are not copied. Each account gets a password from the user screen instead.
+                $rows = array_map(static function ($row) {
+                    if (is_array($row) && isset($row['password']) && ! KonveksiUserAccounts::isHash((string) $row['password'])) {
+                        $row['password'] = '';
+                    }
+
+                    return $row;
+                }, $rows);
+            }
 
             $this->connection->transaction(function () use ($sheet, $key, $table, $rows, $headers, $replace): void {
                 if ($replace) {

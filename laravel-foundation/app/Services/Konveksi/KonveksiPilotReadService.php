@@ -123,7 +123,10 @@ final class KonveksiPilotReadService
             throw new RuntimeException('Tabel Konveksi yang dipetakan tidak ditemukan.');
         }
 
-        return array_values(array_filter($this->collections->documentsOfTable($table)));
+        $records = array_values(array_filter($this->collections->documentsOfTable($table)));
+
+        // Password hashes of the user list never leave the server.
+        return $key === KonveksiUserAccounts::COLLECTION ? KonveksiUserAccounts::redact($records) : $records;
     }
 
     /**
